@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from fastapi.testclient import TestClient
 
 from control_plane.api.app import app
@@ -75,6 +77,25 @@ def test_control_plane_api_roundtrip(tmp_path):
         )
         assert config_linuxdo.status_code == 200
         assert config_linuxdo.json()["payload"]["accounts"][0]["username"] == "alice"
+
+        run_response = client.post("/api/jobs/linuxdo_read/run", headers=headers)
+        assert run_response.status_code == 200
+        run_id = run_response.json()["id"]
+        assert run_response.json()["status"] == "queued"
+
+        final_run = None
+        for _ in range(100):
+            current = client.get(f"/api/jobs/{run_id}", headers=headers)
+            assert current.status_code == 200
+            run_payload = current.json()
+            if run_payload["finished_at"] is not None:
+                final_run = run_payload
+                break
+            time.sleep(0.05)
+
+        assert final_run is not None
+        assert final_run["status"] == "failed"
+        assert final_run["error_message"] == "Linux.do read requires browser support. Enable browser execution first."
 
         schedules_response = client.get("/api/schedules", headers=headers)
         assert schedules_response.status_code == 200

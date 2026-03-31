@@ -23,7 +23,6 @@ from control_plane.security import hash_password, verify_password
 from control_plane.services.app_state import AppState, build_app_state
 from control_plane.settings import settings
 
-
 state_holder: dict[str, AppState] = {}
 CONFIG_MODELS = {
     ConfigDomain.SYSTEM: SystemConfig,
@@ -132,7 +131,7 @@ def get_job_logs(run_id: str, app_state: AppState = Depends(get_state)):
 
 
 @app.post("/api/jobs/{job_type}/run", dependencies=[Depends(require_internal_token)])
-def run_job(job_type: JobType, app_state: AppState = Depends(get_state)):
+async def run_job(job_type: JobType, app_state: AppState = Depends(get_state)):
     return app_state.job_service.start_job(job_type, TriggerType.MANUAL)
 
 
