@@ -21,6 +21,40 @@ Affs:
 - ✅ github 登录认证 (with OTP)
 - ✅ Cloudflare bypass
 
+## 本地部署与 WebUI
+
+当前仓库已支持本地 Docker 部署和 WebUI 管理。
+
+### Docker 启动
+
+```bash
+HOST_PORT=3300 docker compose up -d
+docker compose ps
+```
+
+说明：
+- `HOST_PORT` 可选，默认是 `3000`；如果本机端口冲突，改成别的端口即可。
+- 数据持久化在 compose 命名卷 `runtime_data` 中，不依赖宿主机目录共享。
+- 容器带健康检查；`docker compose ps` 显示 `healthy` 后再访问 WebUI。
+
+### WebUI 地址
+
+- 默认地址：`http://127.0.0.1:3000`
+- 若设置了 `HOST_PORT=3300`，则访问：`http://127.0.0.1:3300`
+
+### 默认本地登录口径
+
+- bootstrap 管理员密码：`admin123`
+- 首次登录后，可在 WebUI 的 `Settings` 页面更新管理员密码。
+- 一旦写入持久化管理员密码，bootstrap 密码自动失效。
+
+### WebUI 已支持的管理范围
+
+- `Main Check-in`：主签到账号、Provider、全局 OAuth 账号、代理配置
+- `Aux Jobs`：`checkin_996`、`checkin_qaq_al`、`linuxdo_read`
+- `Schedules`：四类任务的 cron、时区、冷却时间
+- `Settings`：系统开关、通知配置、管理员密码
+
 ## 使用方法
 
 ### 1. Fork 本仓库

@@ -4,10 +4,13 @@ version = "0.1.0"
 description = "newapi.ai system check in"
 requires-python = ">=3.11"
 dependencies = [
+  "apscheduler>=3.10.4",
   "camoufox[geoip]>=0.4.11",
   "curl_cffi>=0.7.0",
+  "fastapi>=0.115.0",
   "playwright-captcha>=0.1.0",
   "python-dotenv>=1.0.0",
+  "uvicorn>=0.35.0",
 ]
 
 [dependency-groups]
@@ -33,3 +36,6 @@ unfixable = ["E101", "E402", "E501", "F841", "E731"]
 quote-style = "single"
 indent-style = "tab"
 docstring-code-format = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

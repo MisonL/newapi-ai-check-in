@@ -25,3 +25,7 @@ opencode.json
 
 # Git Worktree
 .worktree/
+runtime_data/
+web/node_modules/
+web/.nuxt/
+web/.output/

@@ -1,0 +1,30 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    environment:
+      CONTROL_PLANE_ADMIN_PASSWORD: admin123
+      CONTROL_PLANE_SESSION_SECRET: replace-me
+      CONTROL_PLANE_INTERNAL_TOKEN: change-me
+      CONTROL_PLANE_STORAGE_MODE: persistent
+      CONTROL_PLANE_DATA_DIR: /app/runtime_data
+      CONTROL_PLANE_BROWSER_ENABLED: "false"
+    volumes:
+      - runtime_data:/app/runtime_data
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - |
+          from urllib.request import urlopen
+          raise SystemExit(0 if urlopen("http://127.0.0.1:3000/api/auth/session", timeout=3).status == 200 else 1)
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  runtime_data:
