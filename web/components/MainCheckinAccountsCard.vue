@@ -16,6 +16,7 @@ type AccountRow = {
 }
 
 const accounts = defineModel<AccountRow[]>({ required: true })
+const { t } = useAppI18n()
 
 const createAccount = (): AccountRow => ({
   name: '',
@@ -47,72 +48,72 @@ const removeAccount = (index: number) => {
 <template>
   <section class="card">
     <div class="section-head">
-      <h2 class="card__title">Accounts</h2>
-      <button class="button button--secondary" @click="addAccount">Add account</button>
+      <h2 class="card__title">{{ t('账号') }}</h2>
+      <button class="button button--secondary" @click="addAccount">{{ t('新增账号') }}</button>
     </div>
     <div class="stack-list">
       <article v-for="(account, index) in accounts" :key="index" class="subcard">
         <div class="section-head">
-          <strong>Account {{ index + 1 }}</strong>
-          <button class="button button--danger" @click="removeAccount(index)">Remove</button>
+          <strong>{{ t('账号 {index}', { index: index + 1 }) }}</strong>
+          <button class="button button--danger" @click="removeAccount(index)">{{ t('移除') }}</button>
         </div>
         <div class="panel-grid panel-grid--two">
           <div class="field">
-            <label class="field__label">Name</label>
+            <label class="field__label">{{ t('名称') }}</label>
             <input v-model="account.name" class="input">
           </div>
           <div class="field">
-            <label class="field__label">Provider</label>
+            <label class="field__label">{{ t('提供商') }}</label>
             <input v-model="account.provider" class="input" placeholder="anyrouter">
           </div>
           <div class="field">
-            <label class="field__label">API user</label>
+            <label class="field__label">{{ t('API 用户') }}</label>
             <input v-model="account.api_user" class="input">
           </div>
           <div class="field">
-            <label class="field__label">Linux.do mode</label>
+            <label class="field__label">{{ t('Linux.do 模式') }}</label>
             <select v-model="account.linux_mode" class="select">
-              <option value="none">none</option>
-              <option value="global">global</option>
-              <option value="single">single</option>
+              <option value="none">{{ t('不使用') }}</option>
+              <option value="global">{{ t('全局账号') }}</option>
+              <option value="single">{{ t('单账号') }}</option>
             </select>
           </div>
           <div v-if="account.linux_mode === 'single'" class="field">
-            <label class="field__label">Linux.do username</label>
+            <label class="field__label">{{ t('Linux.do 用户名') }}</label>
             <input v-model="account.linux_user" class="input">
           </div>
           <div v-if="account.linux_mode === 'single'" class="field">
-            <label class="field__label">Linux.do password</label>
+            <label class="field__label">{{ t('Linux.do 密码') }}</label>
             <input v-model="account.linux_pass" class="input" type="password">
           </div>
           <div class="field">
-            <label class="field__label">GitHub mode</label>
+            <label class="field__label">{{ t('GitHub 模式') }}</label>
             <select v-model="account.github_mode" class="select">
-              <option value="none">none</option>
-              <option value="global">global</option>
-              <option value="single">single</option>
+              <option value="none">{{ t('不使用') }}</option>
+              <option value="global">{{ t('全局账号') }}</option>
+              <option value="single">{{ t('单账号') }}</option>
             </select>
           </div>
           <div v-if="account.github_mode === 'single'" class="field">
-            <label class="field__label">GitHub username</label>
+            <label class="field__label">{{ t('GitHub 用户名') }}</label>
             <input v-model="account.github_user" class="input">
           </div>
           <div v-if="account.github_mode === 'single'" class="field">
-            <label class="field__label">GitHub password</label>
+            <label class="field__label">{{ t('GitHub 密码') }}</label>
             <input v-model="account.github_pass" class="input" type="password">
           </div>
         </div>
         <div class="panel-grid panel-grid--two">
           <div class="field">
-            <label class="field__label">Cookies JSON</label>
+            <label class="field__label">{{ t('Cookies JSON') }}</label>
             <textarea v-model="account.cookies_json" class="textarea textarea--compact" placeholder='{"session":"..."}' />
           </div>
           <div class="field">
-            <label class="field__label">Proxy JSON</label>
+            <label class="field__label">{{ t('代理 JSON') }}</label>
             <textarea v-model="account.proxy_json" class="textarea textarea--compact" placeholder='{"server":"http://proxy.example.com:8080"}' />
           </div>
           <div class="field">
-            <label class="field__label">Extra JSON</label>
+            <label class="field__label">{{ t('扩展 JSON') }}</label>
             <textarea v-model="account.extra_json" class="textarea textarea--compact" placeholder='{"get_cdk_cookies":{"session":"..."}}' />
           </div>
         </div>

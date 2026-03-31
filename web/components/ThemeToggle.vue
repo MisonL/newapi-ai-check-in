@@ -1,17 +1,18 @@
 <script setup lang="ts">
 const { theme, setTheme } = useThemeMode()
+const { t, formatTheme } = useAppI18n()
 </script>
 
 <template>
   <div class="button-row">
     <button class="button button--secondary" :class="{ 'sidebar-nav__link--active': theme === 'light' }" @click="setTheme('light')">
-      Light
+      {{ t('亮色') }}
     </button>
     <button class="button button--secondary" :class="{ 'sidebar-nav__link--active': theme === 'dark' }" @click="setTheme('dark')">
-      Dark
+      {{ t('暗色') }}
     </button>
     <button class="button button--secondary" :class="{ 'sidebar-nav__link--active': theme === 'auto' }" @click="setTheme('auto')">
-      Auto
+      {{ formatTheme('auto') }}
     </button>
   </div>
 </template>

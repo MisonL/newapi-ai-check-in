@@ -1,0 +1,109 @@
+import { messages, supportedLocales, type AppLocale } from '../locales/messages'
+
+const serverMessageKeys: Record<string, string> = {
+  Unauthorized: '未授权',
+  'Invalid password': '密码错误',
+  'Admin password is not configured': '管理员密码未配置',
+  'Domain mismatch': '配置域不匹配',
+  'Job run not found': '未找到任务运行记录',
+  'Unknown API path': '未知 API 路径',
+  'Control plane request failed': '控制面请求失败',
+  'Password is required': '密码不能为空',
+  'Login failed': '登录失败',
+  'Config save failed': '配置保存失败',
+  'Settings save failed': '设置保存失败',
+  'Admin password update failed': '管理员密码更新失败',
+  'Schedule save failed': '调度保存失败',
+  'Run failed': '任务执行失败',
+  'A job of the same type is already running': '同类型任务已在运行中',
+  'No account configuration available': '没有可用的主签到账号配置',
+  'No 996 accounts configured': '未配置 996 账号',
+  'qaq.al check-in requires browser support. Enable browser execution first.': 'qaq.al 签到依赖浏览器支持，请先启用浏览器执行',
+  'Linux.do read requires browser support. Enable browser execution first.': 'Linux.do 阅读依赖浏览器支持，请先启用浏览器执行',
+  'Provider anyrouter requires browser support. Enable browser execution or switch to cookie-only accounts.':
+    '提供商 anyrouter 依赖浏览器支持，请启用浏览器执行或改用仅 cookies 账号',
+}
+
+const jobTypeKeys: Record<string, string> = {
+  main_checkin: '主签到任务',
+  checkin_996: '996 hub',
+  checkin_qaq_al: 'qaq.al 签到',
+  linuxdo_read: 'Linux.do 阅读',
+}
+
+const jobStatusKeys: Record<string, string> = {
+  queued: '已入队',
+  running: '运行中',
+  success: '成功',
+  failed: '失败',
+  skipped: '已跳过',
+}
+
+const triggerKeys: Record<string, string> = {
+  manual: '手动',
+  scheduled: '调度',
+}
+
+const notificationKeys: Record<string, string> = {
+  dingding_webhook: '钉钉 Webhook',
+  email_user: '邮箱用户名',
+  email_pass: '邮箱密码',
+  email_to: '收件人',
+  custom_smtp_server: '自定义 SMTP 服务器',
+  pushplus_token: 'PushPlus Token',
+  server_push_key: 'Server Push Key',
+  feishu_webhook: '飞书 Webhook',
+  weixin_webhook: '企业微信 Webhook',
+  telegram_bot_token: 'Telegram Bot Token',
+  telegram_chat_id: 'Telegram Chat ID',
+}
+
+function render(template: string, params?: Record<string, string | number>) {
+  if (!params) {
+    return template
+  }
+  return Object.entries(params).reduce(
+    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value)),
+    template,
+  )
+}
+
+export function useAppI18n() {
+  const localeCookie = useCookie<AppLocale>('app-locale', { default: () => 'zh-CN' })
+  const locale = useState<AppLocale>('app-locale', () => localeCookie.value || 'zh-CN')
+
+  const setLocale = (value: AppLocale) => {
+    locale.value = value
+    localeCookie.value = value
+  }
+
+  const t = (key: string, params?: Record<string, string | number>) => {
+    const template = messages[locale.value]?.[key] || messages['zh-CN'][key] || key
+    return render(template, params)
+  }
+
+  const translateError = (message?: string, fallbackKey = '任务执行失败') => {
+    if (!message) {
+      return t(fallbackKey)
+    }
+    const key = serverMessageKeys[message] || message
+    return messages['zh-CN'][key] ? t(key) : message
+  }
+
+  return {
+    locale,
+    locales: supportedLocales,
+    setLocale,
+    t,
+    translateError,
+    formatJobType: (value: string) => t(jobTypeKeys[value] || value),
+    formatJobStatus: (value: string) => t(jobStatusKeys[value] || value),
+    formatTrigger: (value: string) => t(triggerKeys[value] || value),
+    formatBoolean: (value: boolean) => t(value ? '已启用' : '已禁用'),
+    formatConfigured: (value: boolean) => t(value ? '已配置' : '未配置'),
+    formatTheme: (value: 'light' | 'dark' | 'auto') =>
+      t(value === 'light' ? '亮色' : value === 'dark' ? '暗色' : '跟随系统'),
+    formatNotificationField: (value: string) => t(notificationKeys[value] || value),
+    formatBrowserStrategy: (value: string) => t(value === 'http_only' ? '仅 HTTP' : '传统浏览器'),
+  }
+}

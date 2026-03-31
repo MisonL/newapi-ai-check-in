@@ -1,12 +1,13 @@
 <script setup lang="ts">
 const route = useRoute()
+const { t } = useAppI18n()
 
 const items = [
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/main-checkin', label: 'Main Check-in' },
-  { to: '/aux-jobs', label: 'Aux Jobs' },
-  { to: '/schedules', label: 'Schedules' },
-  { to: '/settings', label: 'Settings' }
+  { to: '/dashboard', label: '仪表盘' },
+  { to: '/main-checkin', label: '主签到' },
+  { to: '/aux-jobs', label: '辅助任务' },
+  { to: '/schedules', label: '调度计划' },
+  { to: '/settings', label: '系统设置' },
 ]
 
 const logout = async () => {
@@ -22,7 +23,7 @@ const logout = async () => {
         <div class="brand__mark" />
         <div>
           <div>newapi.ai check-in</div>
-          <div class="muted">Control plane</div>
+          <div class="muted">{{ t('控制面') }}</div>
         </div>
       </div>
       <nav class="sidebar-nav">
@@ -33,18 +34,19 @@ const logout = async () => {
           class="sidebar-nav__link"
           :class="{ 'sidebar-nav__link--active': route.path === item.to }"
         >
-          {{ item.label }}
+          {{ t(item.label) }}
         </NuxtLink>
       </nav>
     </aside>
     <div class="page-shell__content">
       <header class="topbar">
         <div>
-          <strong>{{ items.find((item) => item.to === route.path)?.label || 'Console' }}</strong>
+          <strong>{{ t(items.find((item) => item.to === route.path)?.label || '控制台') }}</strong>
         </div>
         <div class="button-row">
+          <LocaleToggle />
           <ThemeToggle />
-          <button class="button button--danger" @click="logout">Logout</button>
+          <button class="button button--danger" @click="logout">{{ t('退出登录') }}</button>
         </div>
       </header>
       <main class="content-wrap">

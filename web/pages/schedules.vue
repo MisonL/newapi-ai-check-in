@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const api = useControlPlane()
+const { formatJobType, t, translateError } = useAppI18n()
 
 type ScheduleForm = {
   job_type: string
@@ -36,9 +37,9 @@ const save = async (jobType: string) => {
   try {
     await api.saveSchedule(jobType, { ...scheduleForms[jobType] })
     await refresh()
-    messages[jobType] = 'Schedule saved'
+    messages[jobType] = t('调度已保存')
   } catch (error: any) {
-    messages[jobType] = error?.data?.message || error?.message || 'Schedule save failed'
+    messages[jobType] = translateError(error?.data?.message || error?.message, '调度保存失败')
   }
 }
 </script>
@@ -51,25 +52,25 @@ const save = async (jobType: string) => {
         :key="jobType"
         class="card"
       >
-        <h2 class="card__title">{{ jobType }} schedule</h2>
+        <h2 class="card__title">{{ t('{job} 调度', { job: formatJobType(jobType) }) }}</h2>
         <div v-if="scheduleForms[jobType]" class="stack-list">
           <div class="field">
-            <label class="field__label">Enabled</label>
+            <label class="field__label">{{ t('启用') }}</label>
             <select v-model="scheduleForms[jobType].enabled" class="select">
-              <option :value="true">true</option>
-              <option :value="false">false</option>
+              <option :value="true">{{ t('已启用') }}</option>
+              <option :value="false">{{ t('已禁用') }}</option>
             </select>
           </div>
           <div class="field">
-            <label class="field__label">Cron</label>
+            <label class="field__label">{{ t('Cron 表达式') }}</label>
             <input v-model="scheduleForms[jobType].cron" class="input">
           </div>
           <div class="field">
-            <label class="field__label">Timezone</label>
+            <label class="field__label">{{ t('时区') }}</label>
             <input v-model="scheduleForms[jobType].timezone" class="input">
           </div>
           <div class="field">
-            <label class="field__label">Cooldown seconds</label>
+            <label class="field__label">{{ t('冷却秒数') }}</label>
             <input
               v-model.number="scheduleForms[jobType].cooldown_seconds"
               class="input"
@@ -78,7 +79,7 @@ const save = async (jobType: string) => {
             >
           </div>
           <div class="button-row">
-            <button class="button button--primary" @click="save(jobType)">Save schedule</button>
+            <button class="button button--primary" @click="save(jobType)">{{ t('保存调度') }}</button>
           </div>
           <p class="muted">{{ messages[jobType] }}</p>
         </div>

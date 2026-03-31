@@ -8,11 +8,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   select: [runId: string]
 }>()
+
+const { t, formatJobStatus, formatJobType, formatTrigger } = useAppI18n()
 </script>
 
 <template>
   <section class="card">
-    <h2 class="card__title">Runs and logs</h2>
+    <h2 class="card__title">{{ t('运行与日志') }}</h2>
     <div class="panel-grid panel-grid--two">
       <div class="job-list">
         <button
@@ -22,9 +24,9 @@ const emit = defineEmits<{
           :class="{ 'job-item--selected': props.selectedRunId === job.id }"
           @click="emit('select', job.id)"
         >
-          <strong>{{ job.job_type }} / {{ job.status }}</strong>
+          <strong>{{ formatJobType(job.job_type) }} / {{ formatJobStatus(job.status) }}</strong>
           <div class="job-item__meta">
-            <span>{{ job.trigger }}</span>
+            <span>{{ formatTrigger(job.trigger) }}</span>
             <span>{{ job.started_at }}</span>
           </div>
         </button>

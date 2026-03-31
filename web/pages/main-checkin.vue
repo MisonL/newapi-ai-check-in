@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const api = useControlPlane()
+const { formatJobStatus, t, translateError } = useAppI18n()
 
 type AccountMode = 'none' | 'global' | 'single'
 type AccountRow = {
@@ -97,7 +98,11 @@ const parseObject = (value: string, emptyValue: any = undefined) => {
   if (!value.trim()) {
     return emptyValue
   }
-  return JSON.parse(value)
+  try {
+    return JSON.parse(value)
+  } catch {
+    throw new Error(t('JSON 格式不正确'))
+  }
 }
 
 const buildAccount = (row: AccountRow) => {
@@ -133,16 +138,16 @@ const buildAccount = (row: AccountRow) => {
     Object.assign(account, extra)
   }
   if (!account.cookies && !account['linux.do'] && !account.github) {
-    throw new Error('Each account must contain cookies, linux.do, or github authentication')
+    throw new Error(t('每个账号至少要配置 cookies、linux.do 或 github 之一'))
   }
   if (account.cookies && !account.api_user) {
-    throw new Error('Accounts using cookies must set api_user')
+    throw new Error(t('使用 cookies 的账号必须填写 api_user'))
   }
   if (row.linux_mode === 'single' && (!row.linux_user || !row.linux_pass)) {
-    throw new Error('Single linux.do mode requires username and password')
+    throw new Error(t('单账号 Linux.do 模式必须填写用户名和密码'))
   }
   if (row.github_mode === 'single' && (!row.github_user || !row.github_pass)) {
-    throw new Error('Single github mode requires username and password')
+    throw new Error(t('单账号 GitHub 模式必须填写用户名和密码'))
   }
   return account
 }
@@ -160,9 +165,9 @@ const saveConfig = async () => {
     }
     await api.saveConfig('main_checkin', payload)
     await refreshConfig()
-    saveMessage.value = 'Config saved'
+    saveMessage.value = t('配置已保存')
   } catch (error: any) {
-    saveMessage.value = error?.data?.message || error?.message || 'Config save failed'
+    saveMessage.value = translateError(error?.data?.message || error?.message, '配置保存失败')
   }
 }
 
@@ -170,12 +175,15 @@ const runJob = async () => {
   saveMessage.value = ''
   try {
     const result: any = await api.runJob('main_checkin')
-    runMessage.value = `Run created: ${result.id} (${result.status})`
+    runMessage.value = t('已创建运行：{id}（{status}）', {
+      id: result.id,
+      status: formatJobStatus(result.status),
+    })
     selectedRunId.value = result.id
     await refreshJobs()
     await refreshLogs()
   } catch (error: any) {
-    runMessage.value = error?.data?.message || error?.message || 'Run failed'
+    runMessage.value = translateError(error?.data?.message || error?.message, '任务执行失败')
   }
 }
 
@@ -190,51 +198,36 @@ const pickRun = async (runId: string) => {
     <div class="panel-grid">
       <MainCheckinAccountsCard v-model="accounts" />
       <div class="panel-grid panel-grid--two">
-        <OAuthAccountsCard v-model="linuxDoAccounts" title="Global Linux.do accounts" />
-        <OAuthAccountsCard v-model="githubAccounts" title="Global GitHub accounts" />
+        <OAuthAccountsCard v-model="linuxDoAccounts" title="全局 Linux.do 账号" />
+        <OAuthAccountsCard v-model="githubAccounts" title="全局 GitHub 账号" />
       </div>
       <div class="panel-grid panel-grid--two">
         <section class="card">
-          <h2 class="card__title">Providers</h2>
+          <h2 class="card__title">{{ t('自定义提供商') }}</h2>
           <div class="field">
-            <label class="field__label">Custom providers JSON</label>
+            <label class="field__label">{{ t('自定义提供商 JSON') }}</label>
             <textarea v-model="providersJson" class="textarea" />
           </div>
         </section>
         <section class="card">
-          <h2 class="card__title">Global proxy</h2>
+          <h2 class="card__title">{{ t('全局代理') }}</h2>
           <div class="field">
-            <label class="field__label">Proxy JSON</label>
+            <label class="field__label">{{ t('代理 JSON') }}</label>
             <textarea v-model="proxyJson" class="textarea" placeholder='{"server":"http://proxy.example.com:8080"}' />
           </div>
           <div class="button-row">
-            <button class="button button--primary" @click="saveConfig">Save config</button>
-            <button class="button button--secondary" @click="runJob">Run now</button>
+            <button class="button button--primary" @click="saveConfig">{{ t('保存配置') }}</button>
+            <button class="button button--secondary" @click="runJob">{{ t('立即运行') }}</button>
           </div>
           <p class="muted">{{ saveMessage || runMessage }}</p>
         </section>
       </div>
-      <section class="card">
-        <h2 class="card__title">Runs and logs</h2>
-        <div class="panel-grid panel-grid--two">
-          <div class="job-list">
-            <button
-              v-for="job in jobs || []"
-              :key="job.id"
-              class="job-item"
-              :class="{ 'job-item--selected': selectedRunId === job.id }"
-              @click="pickRun(job.id)"
-            >
-              <strong>{{ job.job_type }} / {{ job.status }}</strong>
-              <div class="job-item__meta">
-                <span>{{ job.trigger }}</span>
-                <span>{{ job.started_at }}</span>
-              </div>
-            </button>
-          </div>
-          <pre class="code-block">{{ (logs || []).map((item: any) => `[${item.stream}] ${item.message}`).join('\n') }}</pre>
-        </div>
-      </section>
+      <JobRunConsole
+        :jobs="jobs || []"
+        :logs="logs || []"
+        :selected-run-id="selectedRunId"
+        @select="pickRun"
+      />
     </div>
   </AppShell>
 </template>

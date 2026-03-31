@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const api = useControlPlane()
+const { formatJobStatus, t, translateError } = useAppI18n()
 
 type OAuthRow = { username: string; password: string }
 
@@ -54,7 +55,11 @@ const parseObject = (value: string) => {
   if (!value.trim()) {
     return null
   }
-  return JSON.parse(value)
+  try {
+    return JSON.parse(value)
+  } catch {
+    throw new Error(t('JSON 格式不正确'))
+  }
 }
 
 const cleanValues = (values: string[]) => values.map((item) => item.trim()).filter(Boolean)
@@ -71,9 +76,9 @@ const save996 = async () => {
       proxy: parseObject(hub996ProxyJson.value)
     })
     await refresh996()
-    setMessage('checkin_996', 'Config saved')
+    setMessage('checkin_996', t('配置已保存'))
   } catch (error: any) {
-    setMessage('checkin_996', error?.data?.message || error?.message || 'Config save failed')
+    setMessage('checkin_996', translateError(error?.data?.message || error?.message, '配置保存失败'))
   }
 }
 
@@ -86,9 +91,9 @@ const saveQaq = async () => {
       tier: qaqTier.value
     })
     await refreshQaq()
-    setMessage('checkin_qaq_al', 'Config saved')
+    setMessage('checkin_qaq_al', t('配置已保存'))
   } catch (error: any) {
-    setMessage('checkin_qaq_al', error?.data?.message || error?.message || 'Config save failed')
+    setMessage('checkin_qaq_al', translateError(error?.data?.message || error?.message, '配置保存失败'))
   }
 }
 
@@ -101,9 +106,9 @@ const saveLinuxdo = async () => {
       max_posts: linuxdoMaxPosts.value
     })
     await refreshLinuxdo()
-    setMessage('linuxdo_read', 'Config saved')
+    setMessage('linuxdo_read', t('配置已保存'))
   } catch (error: any) {
-    setMessage('linuxdo_read', error?.data?.message || error?.message || 'Config save failed')
+    setMessage('linuxdo_read', translateError(error?.data?.message || error?.message, '配置保存失败'))
   }
 }
 
@@ -114,9 +119,9 @@ const runJob = async (jobType: keyof typeof messages) => {
     selectedRunId.value = result.id
     await refreshJobs()
     await refreshLogs()
-    setMessage(jobType, `Run created: ${result.id} (${result.status})`)
+    setMessage(jobType, t('已创建运行：{id}（{status}）', { id: result.id, status: formatJobStatus(result.status) }))
   } catch (error: any) {
-    setMessage(jobType, error?.data?.message || error?.message || 'Run failed')
+    setMessage(jobType, translateError(error?.data?.message || error?.message, '任务执行失败'))
   }
 }
 
@@ -138,14 +143,14 @@ const selectedLogs = computed(() => (logs.value as any[]) || [])
       <div class="panel-grid panel-grid--two">
         <StringListCard
           v-model="hub996Accounts"
-          title="996 hub accounts"
-          label="Access token"
+          title="996 hub 账号"
+          label="访问令牌"
           placeholder="token-1"
         />
         <section class="card">
-          <h2 class="card__title">996 hub options</h2>
+          <h2 class="card__title">{{ t('996 hub 选项') }}</h2>
           <div class="field">
-            <label class="field__label">Proxy JSON</label>
+            <label class="field__label">{{ t('代理 JSON') }}</label>
             <textarea
               v-model="hub996ProxyJson"
               class="textarea"
@@ -153,8 +158,8 @@ const selectedLogs = computed(() => (logs.value as any[]) || [])
             />
           </div>
           <div class="button-row">
-            <button class="button button--primary" @click="save996">Save config</button>
-            <button class="button button--secondary" @click="runJob('checkin_996')">Run now</button>
+            <button class="button button--primary" @click="save996">{{ t('保存配置') }}</button>
+            <button class="button button--secondary" @click="runJob('checkin_996')">{{ t('立即运行') }}</button>
           </div>
           <p class="muted">{{ messages.checkin_996 }}</p>
         </section>
@@ -163,18 +168,18 @@ const selectedLogs = computed(() => (logs.value as any[]) || [])
       <div class="panel-grid panel-grid--two">
         <StringListCard
           v-model="qaqAccounts"
-          title="qaq.al accounts"
+          title="qaq.al 账号"
           label="SID"
           placeholder="sid-1"
         />
         <section class="card">
-          <h2 class="card__title">qaq.al options</h2>
+          <h2 class="card__title">{{ t('qaq.al 选项') }}</h2>
           <div class="field">
-            <label class="field__label">Tier</label>
+            <label class="field__label">{{ t('套餐等级') }}</label>
             <input v-model.number="qaqTier" class="input" type="number" min="1" max="4">
           </div>
           <div class="field">
-            <label class="field__label">Proxy JSON</label>
+            <label class="field__label">{{ t('代理 JSON') }}</label>
             <textarea
               v-model="qaqProxyJson"
               class="textarea"
@@ -182,28 +187,28 @@ const selectedLogs = computed(() => (logs.value as any[]) || [])
             />
           </div>
           <div class="button-row">
-            <button class="button button--primary" @click="saveQaq">Save config</button>
-            <button class="button button--secondary" @click="runJob('checkin_qaq_al')">Run now</button>
+            <button class="button button--primary" @click="saveQaq">{{ t('保存配置') }}</button>
+            <button class="button button--secondary" @click="runJob('checkin_qaq_al')">{{ t('立即运行') }}</button>
           </div>
           <p class="muted">{{ messages.checkin_qaq_al }}</p>
         </section>
       </div>
 
       <div class="panel-grid panel-grid--two">
-        <OAuthAccountsCard v-model="linuxdoAccounts" title="Linux.do read accounts" />
+        <OAuthAccountsCard v-model="linuxdoAccounts" title="Linux.do 阅读账号" />
         <section class="card">
-          <h2 class="card__title">Linux.do read options</h2>
+          <h2 class="card__title">{{ t('Linux.do 阅读选项') }}</h2>
           <div class="field">
-            <label class="field__label">Base topic ID</label>
+            <label class="field__label">{{ t('基准主题 ID') }}</label>
             <input v-model.number="linuxdoBaseTopicId" class="input" type="number" min="1">
           </div>
           <div class="field">
-            <label class="field__label">Max posts</label>
+            <label class="field__label">{{ t('最大帖子数') }}</label>
             <input v-model.number="linuxdoMaxPosts" class="input" type="number" min="1">
           </div>
           <div class="button-row">
-            <button class="button button--primary" @click="saveLinuxdo">Save config</button>
-            <button class="button button--secondary" @click="runJob('linuxdo_read')">Run now</button>
+            <button class="button button--primary" @click="saveLinuxdo">{{ t('保存配置') }}</button>
+            <button class="button button--secondary" @click="runJob('linuxdo_read')">{{ t('立即运行') }}</button>
           </div>
           <p class="muted">{{ messages.linuxdo_read }}</p>
         </section>
