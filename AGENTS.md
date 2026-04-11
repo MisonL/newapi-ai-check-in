@@ -1,0 +1,47 @@
+# Repository Guidelines
+
+## Project Structure & Module Organization
+
+- `control_plane/`: FastAPI control plane, schedulers, storage, API routes, and executors.
+- `web/`: Nuxt 3 WebUI with pages, components, composables, and locale files.
+- `tests/`: Python service and API tests such as `test_control_plane_api.py`.
+- `scripts/`: local helper scripts for starting and validating the stack.
+- `assets/`, `docs/`, `secret-json-generator.html`: static assets, review records, and config helpers.
+
+Keep backend changes inside `control_plane/` and UI changes inside `web/`. Avoid unrelated refactors in the same change.
+
+## Build, Test, and Development Commands
+
+- `uv sync --dev`: install Python dependencies into `.venv`.
+- `.venv/bin/pytest tests/test_control_plane_api.py tests/test_job_service.py`: run focused backend tests.
+- `.venv/bin/ruff check .`: run Python lint checks.
+- `npm --prefix web install`: install WebUI dependencies.
+- `npm --prefix web run dev`: start the Nuxt development server.
+- `npm --prefix web run build`: create the production WebUI build.
+- `HOST_PORT=3300 docker compose up -d --build`: run the full stack locally.
+
+Wait for `docker compose ps` to report `healthy` before opening the UI.
+
+## Coding Style & Naming Conventions
+
+- Python follows `pyproject.toml`: 120-char lines, single quotes, and tab indentation via Ruff format.
+- Vue/TypeScript follows the existing Nuxt style: `script setup`, typed composables, and small computed helpers.
+- Use descriptive names such as `deploy_mode`, `scheduler_enabled`, and `saveSchedule`.
+- Prefer explicit errors over hidden fallback behavior.
+
+## Testing Guidelines
+
+- Backend tests use `pytest`; add new tests under `tests/` with names like `test_<feature>.py`.
+- Start with the smallest regression test that covers the changed service or route.
+- For UI changes, always run `npm --prefix web run build`; verify affected pages in the browser when behavior changes.
+
+## Commit & Pull Request Guidelines
+
+- Match existing commit style: `feat: ...`, `fix: ...`, `ci(...): ...`, `chore(...): ...`.
+- Keep commits scoped to one logical change.
+- PRs should include the purpose, affected modules, validation commands, and screenshots for visible UI updates.
+
+## Security & Configuration Tips
+
+- Never commit real secrets. Use `.env.example`, `.env.control-plane.example`, and `.env.github-actions.example` as templates.
+- Choose exactly one deployment mode: `CONTROL_PLANE_DEPLOY_MODE=control_plane` or `github_actions`.
