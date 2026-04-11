@@ -1,8 +1,9 @@
 import { controlPlaneUrl } from '../../utils/controlPlane'
-import { issueSession, sessionCookieName } from '../../utils/auth'
+import { issueSession, sessionCookieName, sessionExpiresAt } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
+  const sessionMaxAgeSeconds = Number(config.sessionMaxAgeSeconds)
   const body = await readBody<{ password?: string }>(event)
   if (!body.password) {
     throw createError({ statusCode: 400, statusMessage: 'Password is required' })
@@ -18,10 +19,15 @@ export default defineEventHandler(async (event) => {
       statusMessage: error?.response?._data?.detail || error?.message || 'Login failed'
     })
   }
-  setCookie(event, sessionCookieName(), issueSession(config.sessionSecret), {
+  const sessionToken = issueSession(config.sessionSecret, sessionMaxAgeSeconds)
+  setCookie(event, sessionCookieName(), sessionToken, {
     httpOnly: true,
+    maxAge: sessionMaxAgeSeconds,
     sameSite: 'lax',
     path: '/'
   })
-  return { authenticated: true }
+  return {
+    authenticated: true,
+    expires_at: sessionExpiresAt(sessionToken, config.sessionSecret),
+  }
 })

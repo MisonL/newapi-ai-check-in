@@ -29,8 +29,13 @@ const selectedRunId = ref('')
 const saveMessage = ref('')
 const runMessage = ref('')
 
-const { data: configResponse, refresh: refreshConfig } = await useAsyncData('main-config', () => api.getConfig('main_checkin'))
-const { data: jobs, refresh: refreshJobs } = await useAsyncData('main-jobs', () => api.listJobs())
+const [
+  { data: configResponse, refresh: refreshConfig },
+  { data: jobs, refresh: refreshJobs }
+] = await Promise.all([
+  useAsyncData('main-config', () => api.getConfig('main_checkin')),
+  useAsyncData('main-jobs', () => api.listJobs({ jobType: 'main_checkin', limit: 20 }))
+])
 const { data: logs, refresh: refreshLogs } = await useAsyncData(
   'main-logs',
   () => selectedRunId.value ? api.getJobLogs(selectedRunId.value) : Promise.resolve([])
@@ -50,6 +55,25 @@ const createAccount = (): AccountRow => ({
   proxy_json: '',
   extra_json: ''
 })
+
+const isBlankAccountRow = (row: AccountRow) => (
+  !row.name.trim()
+  && !row.provider.trim()
+  && !row.api_user.trim()
+  && !row.cookies_json.trim()
+  && row.linux_mode === 'none'
+  && !row.linux_user.trim()
+  && !row.linux_pass.trim()
+  && row.github_mode === 'none'
+  && !row.github_user.trim()
+  && !row.github_pass.trim()
+  && !row.proxy_json.trim()
+  && !row.extra_json.trim()
+)
+
+const cleanOAuthRows = (rows: OAuthRow[]) => rows
+  .map((item) => ({ username: item.username.trim(), password: item.password.trim() }))
+  .filter((item) => item.username && item.password)
 
 watchEffect(() => {
   const payload = configResponse.value?.payload || {}
@@ -156,11 +180,12 @@ const saveConfig = async () => {
   saveMessage.value = ''
   runMessage.value = ''
   try {
+    const configuredAccounts = accounts.value.filter((row) => !isBlankAccountRow(row))
     const payload = {
-      accounts: accounts.value.map(buildAccount),
+      accounts: configuredAccounts.map(buildAccount),
       providers: parseObject(providersJson.value, {}),
-      accounts_linux_do: linuxDoAccounts.value.filter((item) => item.username && item.password),
-      accounts_github: githubAccounts.value.filter((item) => item.username && item.password),
+      accounts_linux_do: cleanOAuthRows(linuxDoAccounts.value),
+      accounts_github: cleanOAuthRows(githubAccounts.value),
       proxy: parseObject(proxyJson.value, null)
     }
     await api.saveConfig('main_checkin', payload)
@@ -191,43 +216,76 @@ const pickRun = async (runId: string) => {
   selectedRunId.value = runId
   await refreshLogs()
 }
+
+const pageMessage = computed(() => saveMessage.value || runMessage.value)
+const accountCount = computed(() => accounts.value.filter((row) => !isBlankAccountRow(row)).length)
+const linuxDoCount = computed(() => cleanOAuthRows(linuxDoAccounts.value).length)
+const githubCount = computed(() => cleanOAuthRows(githubAccounts.value).length)
+const accountCountLabel = computed(() => `${t('账号')} ${accountCount.value}`)
+const linuxDoCountLabel = computed(() => `${t('全局 Linux.do 账号')} ${linuxDoCount.value}`)
+const githubCountLabel = computed(() => `${t('全局 GitHub 账号')} ${githubCount.value}`)
+const mainRuns = computed(() => (jobs.value as any[]) || [])
 </script>
 
 <template>
   <AppShell>
-    <div class="panel-grid">
+    <PageHeader
+      title="主签到"
+      description="集中维护主签到账号、共享凭据和手动运行入口"
+      eyebrow="工作台"
+    >
+      <template #actions>
+        <div class="button-row">
+          <button class="button button--primary" @click="saveConfig">{{ t('保存配置') }}</button>
+          <button class="button button--secondary" @click="runJob">{{ t('立即运行') }}</button>
+        </div>
+      </template>
+    </PageHeader>
+    <div class="button-row page-summary-strip">
+      <StatusBadge :label="accountCountLabel" :state="accountCount ? 'configured' : 'unconfigured'" />
+      <StatusBadge :label="linuxDoCountLabel" :state="linuxDoCount ? 'configured' : 'unconfigured'" />
+      <StatusBadge :label="githubCountLabel" :state="githubCount ? 'configured' : 'unconfigured'" />
+    </div>
+    <p v-if="pageMessage" class="status-note" aria-live="polite">{{ pageMessage }}</p>
+    <div class="panel-grid main-checkin-layout">
       <MainCheckinAccountsCard v-model="accounts" />
-      <div class="panel-grid panel-grid--two">
+      <div class="panel-grid main-checkin-side">
         <OAuthAccountsCard v-model="linuxDoAccounts" title="全局 Linux.do 账号" />
         <OAuthAccountsCard v-model="githubAccounts" title="全局 GitHub 账号" />
-      </div>
-      <div class="panel-grid panel-grid--two">
-        <section class="card">
-          <h2 class="card__title">{{ t('自定义提供商') }}</h2>
+        <section class="card surface-card section-card section-card--editor">
+          <div class="section-head">
+            <h2 class="card__title">{{ t('自定义提供商') }}</h2>
+            <StatusBadge label="JSON" state="info" :dot="false" />
+          </div>
           <div class="field">
-            <label class="field__label">{{ t('自定义提供商 JSON') }}</label>
-            <textarea v-model="providersJson" class="textarea" />
+            <label class="field__label" for="main-checkin-providers">{{ t('自定义提供商 JSON') }}</label>
+            <textarea id="main-checkin-providers" v-model="providersJson" autocomplete="off" class="textarea textarea--code" spellcheck="false" />
           </div>
         </section>
-        <section class="card">
-          <h2 class="card__title">{{ t('全局代理') }}</h2>
+        <section class="card surface-card section-card section-card--editor">
+          <div class="section-head">
+            <h2 class="card__title">{{ t('全局代理') }}</h2>
+            <StatusBadge label="JSON" state="info" :dot="false" />
+          </div>
           <div class="field">
-            <label class="field__label">{{ t('代理 JSON') }}</label>
-            <textarea v-model="proxyJson" class="textarea" placeholder='{"server":"http://proxy.example.com:8080"}' />
+            <label class="field__label" for="main-checkin-proxy">{{ t('代理 JSON') }}</label>
+            <textarea
+              id="main-checkin-proxy"
+              v-model="proxyJson"
+              autocomplete="off"
+              class="textarea textarea--code"
+              placeholder='{"server":"http://proxy.example.com:8080"}'
+              spellcheck="false"
+            />
           </div>
-          <div class="button-row">
-            <button class="button button--primary" @click="saveConfig">{{ t('保存配置') }}</button>
-            <button class="button button--secondary" @click="runJob">{{ t('立即运行') }}</button>
-          </div>
-          <p class="muted">{{ saveMessage || runMessage }}</p>
         </section>
+        <JobRunConsole
+          :jobs="mainRuns"
+          :logs="logs || []"
+          :selected-run-id="selectedRunId"
+          @select="pickRun"
+        />
       </div>
-      <JobRunConsole
-        :jobs="jobs || []"
-        :logs="logs || []"
-        :selected-run-id="selectedRunId"
-        @select="pickRun"
-      />
     </div>
   </AppShell>
 </template>

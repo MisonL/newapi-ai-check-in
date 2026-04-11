@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from control_plane.models import ArtifactRef, ConfigDomain, JobLogLine, JobRun, JobStatus, JobType, ScheduleSpec, TriggerType
+from control_plane.models import (
+    ArtifactRef,
+    ConfigDomain,
+    JobLogLine,
+    JobRun,
+    JobStatus,
+    JobType,
+    ScheduleSpec,
+    TriggerType,
+)
 from control_plane.storage.memory import MemoryStorage
 from control_plane.storage.sqlite import SqliteStorage
 
@@ -34,6 +43,18 @@ def _exercise_backend(storage) -> None:
     assert loaded is not None
     assert loaded.artifacts[0].path == saved.path
     assert storage.get_job_logs("run-1")[0].message == "hello"
+
+    newer_run = JobRun(
+        id="run-2",
+        job_type=JobType.CHECKIN_996,
+        trigger=TriggerType.MANUAL,
+        status=JobStatus.FAILED,
+        finished_at=datetime.now(timezone.utc),
+        exit_code=1,
+    )
+    storage.create_job_run(newer_run)
+    assert [item.id for item in storage.list_job_runs(limit=1)] == ["run-2"]
+    assert [item.id for item in storage.list_job_runs(JobType.MAIN_CHECKIN, limit=1)] == ["run-1"]
 
 
 def test_memory_storage(tmp_path):

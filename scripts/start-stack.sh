@@ -12,6 +12,9 @@ if [[ ! -f "web/.output/server/index.mjs" ]]; then
 fi
 
 cleanup() {
+  if [[ -n "${XVFB_PID:-}" ]]; then
+    kill "${XVFB_PID}" 2>/dev/null || true
+  fi
   if [[ -n "${PY_PID:-}" ]]; then
     kill "${PY_PID}" 2>/dev/null || true
   fi
@@ -19,7 +22,24 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-.venv/bin/python control_plane_main.py &
+python_command=(.venv/bin/python control_plane_main.py)
+if [[ -z "${DISPLAY:-}" ]]; then
+  if command -v Xvfb >/dev/null 2>&1; then
+    export DISPLAY="${XVFB_DISPLAY:-:99}"
+    Xvfb "${DISPLAY}" -screen 0 1280x1024x24 -ac +extension GLX -nolisten tcp >/tmp/xvfb.log 2>&1 &
+    XVFB_PID=$!
+    sleep 1
+    if ! kill -0 "${XVFB_PID}" 2>/dev/null; then
+      echo "Xvfb failed to start." >&2
+      exit 1
+    fi
+  else
+    echo "DISPLAY is not configured and Xvfb is unavailable." >&2
+    exit 1
+  fi
+fi
+
+"${python_command[@]}" &
 PY_PID=$!
 
 wait_for_control_plane() {

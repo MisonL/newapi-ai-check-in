@@ -31,6 +31,10 @@ class JobService:
     def __init__(self, storage: StorageBackend) -> None:
         self._storage = storage
         self._locks: dict[str, asyncio.Lock] = {job_type.value: asyncio.Lock() for job_type in JobType}
+        self._loop: asyncio.AbstractEventLoop | None = None
+
+    def bind_loop(self, loop: asyncio.AbstractEventLoop) -> None:
+        self._loop = loop
 
     def running_jobs(self) -> dict[str, bool]:
         return {job_type: lock.locked() for job_type, lock in self._locks.items()}
@@ -60,11 +64,38 @@ class JobService:
             return run
         run = self._build_run(job_type, trigger, JobStatus.QUEUED)
         self._storage.create_job_run(run)
-        asyncio.create_task(self._run_job(run))
+        self._dispatch_run(run)
         return run
+
+    def _dispatch_run(self, run: JobRun) -> None:
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        target_loop = current_loop or self._loop
+        if target_loop is None:
+            raise RuntimeError("JobService event loop is not initialized")
+
+        if current_loop is target_loop:
+            asyncio.create_task(self._run_job(run))
+            return
+
+        asyncio.run_coroutine_threadsafe(self._run_job(run), target_loop)
 
     def _build_run(self, job_type: JobType, trigger: TriggerType, status: JobStatus) -> JobRun:
         return JobRun(id=uuid4().hex, job_type=job_type, trigger=trigger, status=status)
+
+    def _summary_has_failures(self, job_type: JobType, summary) -> bool:
+        failure_sensitive_jobs = {
+            JobType.MAIN_CHECKIN,
+            JobType.CHECKIN_996,
+            JobType.CHECKIN_QAQ_AL,
+            JobType.LINUXDO_READ,
+        }
+        if job_type not in failure_sensitive_jobs:
+            return False
+        return summary.total_count > 0 and summary.success_count < summary.total_count
 
     async def _run_job(self, run: JobRun) -> None:
         lock = self._locks[run.job_type.value]
@@ -108,9 +139,19 @@ class JobService:
                     )
                 else:
                     raise NotImplementedError(f"{current.job_type.value} is not wired yet")
-                current.status = JobStatus.SUCCESS
                 current.summary = summary
-                current.exit_code = 0
+                if self._summary_has_failures(current.job_type, summary):
+                    current.status = JobStatus.FAILED
+                    current.exit_code = 1
+                    current.error_code = "partial_failure"
+                    current.error_message = (
+                        f"{current.job_type.value} completed with failures: "
+                        f"{summary.success_count}/{summary.total_count} succeeded"
+                    )
+                    self._append_log(current.id, current.error_message, "stderr")
+                else:
+                    current.status = JobStatus.SUCCESS
+                    current.exit_code = 0
             except Exception as exc:
                 current.status = JobStatus.FAILED
                 current.exit_code = 1

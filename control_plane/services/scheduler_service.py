@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -9,12 +11,15 @@ from control_plane.storage.base import StorageBackend
 
 
 class SchedulerService:
-    def __init__(self, storage: StorageBackend, job_service: JobService) -> None:
+    def __init__(self, storage: StorageBackend, job_service: JobService, enabled: bool = True) -> None:
         self._storage = storage
         self._job_service = job_service
+        self._enabled = enabled
         self._scheduler = AsyncIOScheduler(timezone="UTC")
 
     def start(self) -> None:
+        if not self._enabled:
+            return
         if not self._scheduler.running:
             self._sync_jobs()
             self._scheduler.start()
@@ -24,7 +29,15 @@ class SchedulerService:
             self._scheduler.shutdown(wait=False)
 
     def sync(self) -> None:
+        if not self._enabled:
+            return
         self._sync_jobs()
+
+    def next_run_times(self) -> dict[str, datetime | None]:
+        if not self._enabled:
+            return {job_type.value: None for job_type in JobType}
+        jobs = {job.id: job.next_run_time for job in self._scheduler.get_jobs()}
+        return {job_type.value: jobs.get(job_type.value) for job_type in JobType}
 
     def _sync_jobs(self) -> None:
         existing = {job.id for job in self._scheduler.get_jobs()}

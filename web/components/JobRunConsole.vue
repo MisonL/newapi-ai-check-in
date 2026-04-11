@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { JobLogLineView, JobRunView } from '../types/controlPlane'
+
 const props = defineProps<{
-  jobs: Array<any>
-  logs: Array<any>
+  jobs: JobRunView[]
+  logs: JobLogLineView[]
   selectedRunId: string
 }>()
 
@@ -9,14 +11,30 @@ const emit = defineEmits<{
   select: [runId: string]
 }>()
 
-const { t, formatJobStatus, formatJobType, formatTrigger } = useAppI18n()
+const { locale, t, formatJobStatus, formatJobType, formatTrigger } = useAppI18n()
+const logText = computed(() => props.logs.map((item) => `[${item.stream}] ${item.message}`).join('\n'))
+const formatDateTime = (value: string) => new Intl.DateTimeFormat(locale.value, {
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+}).format(new Date(value))
 </script>
 
 <template>
-  <section class="card">
-    <h2 class="card__title">{{ t('运行与日志') }}</h2>
-    <div class="panel-grid panel-grid--two">
-      <div class="job-list">
+  <section class="card surface-card console-card">
+    <div class="section-head console-card__head">
+      <h2 class="card__title">{{ t('运行与日志') }}</h2>
+    </div>
+    <div class="panel-grid panel-grid--two console-card__grid">
+      <div class="job-list job-list--console console-card__list">
+        <div v-if="!props.jobs.length" class="console-empty console-empty--list">
+          <span class="console-empty__icon"><AppIcon name="jobs" :size="18" /></span>
+          <div class="console-empty__copy">
+            <strong>{{ t('暂无运行记录') }}</strong>
+            <p class="muted">{{ t('手动运行任务后，这里会显示最近执行历史') }}</p>
+          </div>
+        </div>
         <button
           v-for="job in props.jobs"
           :key="job.id"
@@ -24,14 +42,27 @@ const { t, formatJobStatus, formatJobType, formatTrigger } = useAppI18n()
           :class="{ 'job-item--selected': props.selectedRunId === job.id }"
           @click="emit('select', job.id)"
         >
-          <strong>{{ formatJobType(job.job_type) }} / {{ formatJobStatus(job.status) }}</strong>
+          <strong>{{ formatJobType(job.job_type) }}</strong>
           <div class="job-item__meta">
+            <StatusBadge :label="formatJobStatus(job.status)" :state="job.status" />
             <span>{{ formatTrigger(job.trigger) }}</span>
-            <span>{{ job.started_at }}</span>
+            <span>{{ formatDateTime(job.started_at) }}</span>
           </div>
         </button>
       </div>
-      <pre class="code-block">{{ props.logs.map((item: any) => `[${item.stream}] ${item.message}`).join('\n') }}</pre>
+      <div class="console-card__output">
+        <div class="console-card__toolbar">
+          <StatusBadge v-if="props.selectedRunId" :label="props.selectedRunId" state="neutral" :dot="false" />
+        </div>
+        <pre v-if="props.logs.length" class="code-block">{{ logText }}</pre>
+        <div v-else class="console-empty console-empty--output" role="status">
+          <span class="console-empty__icon"><AppIcon name="dashboard" :size="18" /></span>
+          <div class="console-empty__copy">
+            <strong>{{ t('请选择一条运行记录') }}</strong>
+            <p class="muted">{{ t('选中左侧记录后，这里会展示实时日志输出') }}</p>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </template>

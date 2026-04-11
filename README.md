@@ -28,25 +28,80 @@ Affs:
 ### Docker 启动
 
 ```bash
+cp .env.example .env
+$EDITOR .env
 HOST_PORT=3300 docker compose up -d
 docker compose ps
 ```
 
 说明：
 - `HOST_PORT` 可选，默认是 `3000`；如果本机端口冲突，改成别的端口即可。
+- `.env` 中至少需要配置 `CONTROL_PLANE_SESSION_SECRET` 和 `CONTROL_PLANE_INTERNAL_TOKEN`；首次部署通常也应设置 `CONTROL_PLANE_ADMIN_PASSWORD`。
+- `.env` 中通过 `CONTROL_PLANE_DEPLOY_MODE` 明确部署模式，避免本地调度和 GitHub Actions 双开。
 - 数据持久化在 compose 命名卷 `runtime_data` 中，不依赖宿主机目录共享。
 - 容器带健康检查；`docker compose ps` 显示 `healthy` 后再访问 WebUI。
+- Docker 镜像会预装 Camoufox 浏览器与 Xvfb 运行依赖，避免首次任务现场下载浏览器导致长时间卡顿。
+- Docker 默认启用浏览器执行；首次部署后如果需要关闭，可在 WebUI 的 `系统设置` 页面调整。
+
+### 两种部署模式
+
+#### 模式 1：控制面本地调度
+
+适用场景：
+- 由当前 Docker 容器负责定时执行任务
+- WebUI 除了编辑计划，也负责实际触发
+
+启动方式：
+
+```bash
+cp .env.control-plane.example .env
+$EDITOR .env
+HOST_PORT=3300 docker compose up -d
+```
+
+关键配置：
+- `CONTROL_PLANE_DEPLOY_MODE=control_plane`
+- 本地 APScheduler 启用
+- 仓库内 GitHub Actions 定时任务应关闭
+
+#### 模式 2：GitHub Actions 驱动
+
+适用场景：
+- 定时执行仍由 `.github/workflows/*.yml` 负责
+- 当前 Docker 只提供 WebUI、配置管理和手动触发
+
+启动方式：
+
+```bash
+cp .env.github-actions.example .env
+$EDITOR .env
+HOST_PORT=3300 docker compose up -d
+```
+
+关键配置：
+- `CONTROL_PLANE_DEPLOY_MODE=github_actions`
+- 本地 APScheduler 自动关闭
+- `Schedules` 页面中的 Cron 仅保留为计划，不在本机自动触发
+
+兼容说明：
+- 旧变量 `CONTROL_PLANE_SCHEDULER_ENABLED` 仍兼容。
+- 若同时设置 `CONTROL_PLANE_DEPLOY_MODE` 和 `CONTROL_PLANE_SCHEDULER_ENABLED`，且含义冲突，服务会直接启动失败，避免静默误配。
 
 ### WebUI 地址
 
 - 默认地址：`http://127.0.0.1:3000`
 - 若设置了 `HOST_PORT=3300`，则访问：`http://127.0.0.1:3300`
 
-### 默认本地登录口径
+### 本地登录口径
 
-- bootstrap 管理员密码：`admin123`
+- bootstrap 管理员密码来自 `.env` 中的 `CONTROL_PLANE_ADMIN_PASSWORD`
 - 首次登录后，可在 WebUI 的 `Settings` 页面更新管理员密码。
 - 一旦写入持久化管理员密码，bootstrap 密码自动失效。
+
+### 调度模式说明
+
+- 本地控制面调度与 GitHub Actions 定时任务不要同时启用。
+- 如果你继续使用仓库内 workflow，请将 `.env` 中的 `CONTROL_PLANE_DEPLOY_MODE=github_actions`。
 
 ### WebUI 已支持的管理范围
 

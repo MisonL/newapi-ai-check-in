@@ -91,13 +91,14 @@ class SqliteStorage(StorageBackend):
             row = conn.execute("SELECT payload FROM job_runs WHERE id = ?", (run_id,)).fetchone()
         return None if row is None else JobRun.model_validate_json(row["payload"])
 
-    def list_job_runs(self, job_type: JobType | None = None) -> list[JobRun]:
+    def list_job_runs(self, job_type: JobType | None = None, limit: int | None = None) -> list[JobRun]:
         with self._connect() as conn:
             rows = conn.execute("SELECT payload FROM job_runs").fetchall()
         runs = [JobRun.model_validate_json(row["payload"]) for row in rows]
         if job_type is not None:
             runs = [run for run in runs if run.job_type == job_type]
-        return sorted(runs, key=lambda item: item.started_at, reverse=True)
+        ordered = sorted(runs, key=lambda item: item.started_at, reverse=True)
+        return ordered[:limit] if limit is not None else ordered
 
     def append_job_log(self, log_line: JobLogLine) -> None:
         with self._connect() as conn:

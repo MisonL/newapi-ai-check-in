@@ -39,7 +39,7 @@ class StorageBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def list_job_runs(self, job_type: JobType | None = None) -> list[JobRun]:
+    def list_job_runs(self, job_type: JobType | None = None, limit: int | None = None) -> list[JobRun]:
         raise NotImplementedError
 
     @abstractmethod

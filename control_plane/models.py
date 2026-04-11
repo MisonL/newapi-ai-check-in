@@ -92,9 +92,29 @@ class LinuxDoReadConfig(BaseModel):
 class AppStatus(BaseModel):
     storage_mode: Literal["memory", "persistent"]
     timezone: str
+    deploy_mode: Literal["control_plane", "github_actions"]
     running_jobs: dict[str, bool]
+    scheduler_enabled: bool
     admin_password_configured: bool
     bootstrap_password_enabled: bool
+
+
+class DashboardMetrics(BaseModel):
+    enabled_schedule_count: int = 0
+    next_run_at: datetime | None = None
+    last_run_at: datetime | None = None
+    last_success_at: datetime | None = None
+    last_failure_at: datetime | None = None
+    consecutive_failures: int = 0
+
+
+class DashboardPayload(BaseModel):
+    status: AppStatus
+    recent_runs: list["JobRun"] = Field(default_factory=list)
+    total_runs: int = 0
+    schedules: list["ScheduleSpec"] = Field(default_factory=list)
+    metrics: DashboardMetrics = Field(default_factory=DashboardMetrics)
+    next_runs: dict[str, datetime | None] = Field(default_factory=dict)
 
 
 class ConfigEnvelope(BaseModel):

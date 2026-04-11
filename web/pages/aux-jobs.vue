@@ -20,10 +20,17 @@ const linuxdoAccounts = ref<OAuthRow[]>([])
 const linuxdoBaseTopicId = ref<number | null>(null)
 const linuxdoMaxPosts = ref(100)
 
-const { data: config996, refresh: refresh996 } = await useAsyncData('config-996', () => api.getConfig('checkin_996'))
-const { data: configQaq, refresh: refreshQaq } = await useAsyncData('config-qaq', () => api.getConfig('checkin_qaq_al'))
-const { data: configLinuxdo, refresh: refreshLinuxdo } = await useAsyncData('config-linuxdo', () => api.getConfig('linuxdo_read'))
-const { data: jobs, refresh: refreshJobs } = await useAsyncData('aux-job-runs', () => api.listJobs())
+const [
+  { data: config996, refresh: refresh996 },
+  { data: configQaq, refresh: refreshQaq },
+  { data: configLinuxdo, refresh: refreshLinuxdo },
+  { data: jobs, refresh: refreshJobs }
+] = await Promise.all([
+  useAsyncData('config-996', () => api.getConfig('checkin_996')),
+  useAsyncData('config-qaq', () => api.getConfig('checkin_qaq_al')),
+  useAsyncData('config-linuxdo', () => api.getConfig('linuxdo_read')),
+  useAsyncData('aux-job-runs', () => api.listJobs({ limit: 30 }))
+])
 const { data: logs, refresh: refreshLogs } = await useAsyncData(
   'aux-job-logs',
   () => selectedRunId.value ? api.getJobLogs(selectedRunId.value) : Promise.resolve([])
@@ -63,6 +70,9 @@ const parseObject = (value: string) => {
 }
 
 const cleanValues = (values: string[]) => values.map((item) => item.trim()).filter(Boolean)
+const cleanOAuthRows = (rows: OAuthRow[]) => rows
+  .map((item) => ({ username: item.username.trim(), password: item.password.trim() }))
+  .filter((item) => item.username && item.password)
 
 const setMessage = (jobType: keyof typeof messages, value: string) => {
   messages[jobType] = value
@@ -101,7 +111,7 @@ const saveLinuxdo = async () => {
   setMessage('linuxdo_read', '')
   try {
     await api.saveConfig('linuxdo_read', {
-      accounts: linuxdoAccounts.value.filter((item) => item.username && item.password),
+      accounts: cleanOAuthRows(linuxdoAccounts.value),
       base_topic_id: linuxdoBaseTopicId.value,
       max_posts: linuxdoMaxPosts.value
     })
@@ -135,84 +145,126 @@ const auxRuns = computed(() => {
   return ((jobs.value as any[]) || []).filter((job) => jobTypes.has(job.job_type))
 })
 const selectedLogs = computed(() => (logs.value as any[]) || [])
+const hub996CountLabel = computed(() => `${t('996 hub 账号')} ${cleanValues(hub996Accounts.value).length}`)
+const qaqCountLabel = computed(() => `${t('qaq.al 账号')} ${cleanValues(qaqAccounts.value).length}`)
+const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanOAuthRows(linuxdoAccounts.value).length}`)
 </script>
 
 <template>
   <AppShell>
-    <div class="panel-grid">
-      <div class="panel-grid panel-grid--two">
-        <StringListCard
-          v-model="hub996Accounts"
-          title="996 hub 账号"
-          label="访问令牌"
-          placeholder="token-1"
-        />
-        <section class="card">
-          <h2 class="card__title">{{ t('996 hub 选项') }}</h2>
-          <div class="field">
-            <label class="field__label">{{ t('代理 JSON') }}</label>
-            <textarea
-              v-model="hub996ProxyJson"
-              class="textarea"
-              placeholder='{"server":"http://proxy.example.com:8080"}'
-            />
+    <PageHeader
+      title="辅助任务"
+      description="分别维护 996 hub、qaq.al 和 Linux.do 阅读任务"
+      eyebrow="工作台"
+    />
+    <div class="button-row page-summary-strip">
+      <StatusBadge :label="hub996CountLabel" :state="cleanValues(hub996Accounts).length ? 'configured' : 'unconfigured'" />
+      <StatusBadge :label="qaqCountLabel" :state="cleanValues(qaqAccounts).length ? 'configured' : 'unconfigured'" />
+      <StatusBadge :label="linuxdoCountLabel" :state="cleanOAuthRows(linuxdoAccounts).length ? 'configured' : 'unconfigured'" />
+    </div>
+    <div class="panel-grid aux-job-layout">
+      <section class="card surface-card aux-job-cluster">
+        <div class="section-head aux-job-cluster__head">
+          <div class="aux-job-cluster__copy">
+            <h2 class="card__title">{{ t('996 hub') }}</h2>
+            <p class="muted">{{ t('维护访问令牌与代理设置') }}</p>
           </div>
-          <div class="button-row">
-            <button class="button button--primary" @click="save996">{{ t('保存配置') }}</button>
-            <button class="button button--secondary" @click="runJob('checkin_996')">{{ t('立即运行') }}</button>
-          </div>
-          <p class="muted">{{ messages.checkin_996 }}</p>
-        </section>
-      </div>
+          <StatusBadge :label="hub996CountLabel" :state="cleanValues(hub996Accounts).length ? 'configured' : 'unconfigured'" />
+        </div>
+        <div class="panel-grid panel-grid--two aux-job-cluster__grid">
+          <StringListCard
+            v-model="hub996Accounts"
+            title="996 hub 账号"
+            label="访问令牌"
+            placeholder="token-1"
+          />
+          <section class="card surface-card">
+            <h3 class="card__title">{{ t('996 hub 选项') }}</h3>
+            <div class="field">
+              <label class="field__label" for="hub996-proxy">{{ t('代理 JSON') }}</label>
+              <textarea
+                id="hub996-proxy"
+                v-model="hub996ProxyJson"
+                class="textarea textarea--code"
+                placeholder='{"server":"http://proxy.example.com:8080"}'
+              />
+            </div>
+            <div class="button-row">
+              <button class="button button--primary" @click="save996">{{ t('保存配置') }}</button>
+              <button class="button button--secondary" @click="runJob('checkin_996')">{{ t('立即运行') }}</button>
+            </div>
+            <p v-if="messages.checkin_996" class="status-note" role="status" aria-live="polite">{{ messages.checkin_996 }}</p>
+          </section>
+        </div>
+      </section>
 
-      <div class="panel-grid panel-grid--two">
-        <StringListCard
-          v-model="qaqAccounts"
-          title="qaq.al 账号"
-          label="SID"
-          placeholder="sid-1"
-        />
-        <section class="card">
-          <h2 class="card__title">{{ t('qaq.al 选项') }}</h2>
-          <div class="field">
-            <label class="field__label">{{ t('套餐等级') }}</label>
-            <input v-model.number="qaqTier" class="input" type="number" min="1" max="4">
+      <section class="card surface-card aux-job-cluster">
+        <div class="section-head aux-job-cluster__head">
+          <div class="aux-job-cluster__copy">
+            <h2 class="card__title">{{ t('qaq.al') }}</h2>
+            <p class="muted">{{ t('维护 SID、套餐等级与代理参数') }}</p>
           </div>
-          <div class="field">
-            <label class="field__label">{{ t('代理 JSON') }}</label>
-            <textarea
-              v-model="qaqProxyJson"
-              class="textarea"
-              placeholder='{"server":"http://proxy.example.com:8080"}'
-            />
-          </div>
-          <div class="button-row">
-            <button class="button button--primary" @click="saveQaq">{{ t('保存配置') }}</button>
-            <button class="button button--secondary" @click="runJob('checkin_qaq_al')">{{ t('立即运行') }}</button>
-          </div>
-          <p class="muted">{{ messages.checkin_qaq_al }}</p>
-        </section>
-      </div>
+          <StatusBadge :label="qaqCountLabel" :state="cleanValues(qaqAccounts).length ? 'configured' : 'unconfigured'" />
+        </div>
+        <div class="panel-grid panel-grid--two aux-job-cluster__grid">
+          <StringListCard
+            v-model="qaqAccounts"
+            title="qaq.al 账号"
+            label="SID"
+            placeholder="sid-1"
+          />
+          <section class="card surface-card">
+            <h3 class="card__title">{{ t('qaq.al 选项') }}</h3>
+            <div class="field">
+              <label class="field__label" for="qaq-tier">{{ t('套餐等级') }}</label>
+              <input id="qaq-tier" v-model.number="qaqTier" class="input" type="number" min="1" max="4">
+            </div>
+            <div class="field">
+              <label class="field__label" for="qaq-proxy">{{ t('代理 JSON') }}</label>
+              <textarea
+                id="qaq-proxy"
+                v-model="qaqProxyJson"
+                class="textarea textarea--code"
+                placeholder='{"server":"http://proxy.example.com:8080"}'
+              />
+            </div>
+            <div class="button-row">
+              <button class="button button--primary" @click="saveQaq">{{ t('保存配置') }}</button>
+              <button class="button button--secondary" @click="runJob('checkin_qaq_al')">{{ t('立即运行') }}</button>
+            </div>
+            <p v-if="messages.checkin_qaq_al" class="status-note" role="status" aria-live="polite">{{ messages.checkin_qaq_al }}</p>
+          </section>
+        </div>
+      </section>
 
-      <div class="panel-grid panel-grid--two">
-        <OAuthAccountsCard v-model="linuxdoAccounts" title="Linux.do 阅读账号" />
-        <section class="card">
-          <h2 class="card__title">{{ t('Linux.do 阅读选项') }}</h2>
-          <div class="field">
-            <label class="field__label">{{ t('基准主题 ID') }}</label>
-            <input v-model.number="linuxdoBaseTopicId" class="input" type="number" min="1">
+      <section class="card surface-card aux-job-cluster">
+        <div class="section-head aux-job-cluster__head">
+          <div class="aux-job-cluster__copy">
+            <h2 class="card__title">{{ t('Linux.do 阅读') }}</h2>
+            <p class="muted">{{ t('维护阅读账号、主题锚点和抓取上限') }}</p>
           </div>
-          <div class="field">
-            <label class="field__label">{{ t('最大帖子数') }}</label>
-            <input v-model.number="linuxdoMaxPosts" class="input" type="number" min="1">
-          </div>
-          <div class="button-row">
-            <button class="button button--primary" @click="saveLinuxdo">{{ t('保存配置') }}</button>
-            <button class="button button--secondary" @click="runJob('linuxdo_read')">{{ t('立即运行') }}</button>
-          </div>
-          <p class="muted">{{ messages.linuxdo_read }}</p>
-        </section>
-      </div>
+          <StatusBadge :label="linuxdoCountLabel" :state="cleanOAuthRows(linuxdoAccounts).length ? 'configured' : 'unconfigured'" />
+        </div>
+        <div class="panel-grid panel-grid--two aux-job-cluster__grid">
+          <OAuthAccountsCard v-model="linuxdoAccounts" title="Linux.do 阅读账号" />
+          <section class="card surface-card">
+            <h3 class="card__title">{{ t('Linux.do 阅读选项') }}</h3>
+            <div class="field">
+              <label class="field__label" for="linuxdo-base-topic-id">{{ t('基准主题 ID') }}</label>
+              <input id="linuxdo-base-topic-id" v-model.number="linuxdoBaseTopicId" class="input" type="number" min="1">
+            </div>
+            <div class="field">
+              <label class="field__label" for="linuxdo-max-posts">{{ t('最大帖子数') }}</label>
+              <input id="linuxdo-max-posts" v-model.number="linuxdoMaxPosts" class="input" type="number" min="1">
+            </div>
+            <div class="button-row">
+              <button class="button button--primary" @click="saveLinuxdo">{{ t('保存配置') }}</button>
+              <button class="button button--secondary" @click="runJob('linuxdo_read')">{{ t('立即运行') }}</button>
+            </div>
+            <p v-if="messages.linuxdo_read" class="status-note" role="status" aria-live="polite">{{ messages.linuxdo_read }}</p>
+          </section>
+        </div>
+      </section>
 
       <JobRunConsole
         :jobs="auxRuns"

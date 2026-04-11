@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import time
 
+import pytest
 from fastapi.testclient import TestClient
 
 from control_plane.api.app import app
-from control_plane.settings import settings
+from control_plane.security import hash_password
+from control_plane.settings import resolve_deploy_mode, settings
 
 
 def test_control_plane_api_roundtrip(tmp_path):
@@ -18,6 +20,12 @@ def test_control_plane_api_roundtrip(tmp_path):
     settings.screenshots_dir = tmp_path / "screenshots"
     settings.internal_token = "test-token"
     settings.bootstrap_admin_password = "bootstrap-pass"
+    settings.password_iterations = 120000
+    settings.deploy_mode = "control_plane"
+    settings.scheduler_enabled = True
+    settings.default_debug = False
+    settings.default_browser_strategy = "legacy"
+    settings.default_browser_enabled = False
 
     with TestClient(app) as client:
         response = client.get("/health")
@@ -27,6 +35,8 @@ def test_control_plane_api_roundtrip(tmp_path):
         status_response = client.get("/api/status", headers=headers)
         assert status_response.status_code == 200
         assert status_response.json()["storage_mode"] == "memory"
+        assert status_response.json()["deploy_mode"] == "control_plane"
+        assert status_response.json()["scheduler_enabled"] is True
         assert status_response.json()["admin_password_configured"] is False
         assert status_response.json()["bootstrap_password_enabled"] is True
 
@@ -97,6 +107,11 @@ def test_control_plane_api_roundtrip(tmp_path):
         assert final_run["status"] == "failed"
         assert final_run["error_message"] == "Linux.do read requires browser support. Enable browser execution first."
 
+        limited_jobs = client.get("/api/jobs?limit=1", headers=headers)
+        assert limited_jobs.status_code == 200
+        assert len(limited_jobs.json()) == 1
+        assert limited_jobs.json()[0]["id"] == run_id
+
         schedules_response = client.get("/api/schedules", headers=headers)
         assert schedules_response.status_code == 200
         assert {item["job_type"] for item in schedules_response.json()} == {
@@ -116,6 +131,18 @@ def test_control_plane_api_roundtrip(tmp_path):
         schedule_update = client.put("/api/schedules/main_checkin", json=schedule_payload, headers=headers)
         assert schedule_update.status_code == 200
         assert schedule_update.json()["cron"] == "*/10 * * * *"
+
+        dashboard_response = client.get("/api/dashboard", headers=headers)
+        assert dashboard_response.status_code == 200
+        dashboard_payload = dashboard_response.json()
+        assert dashboard_payload["status"]["storage_mode"] == "memory"
+        assert dashboard_payload["total_runs"] == 1
+        assert dashboard_payload["recent_runs"][0]["id"] == run_id
+        assert dashboard_payload["metrics"]["enabled_schedule_count"] == 1
+        assert dashboard_payload["metrics"]["last_failure_at"] is not None
+        assert dashboard_payload["metrics"]["last_success_at"] is None
+        assert dashboard_payload["metrics"]["consecutive_failures"] == 1
+        assert dashboard_payload["next_runs"]["main_checkin"] is not None
 
         invalid_cron = client.put(
             "/api/schedules/main_checkin",
@@ -153,3 +180,135 @@ def test_control_plane_api_roundtrip(tmp_path):
         assert updated_status.status_code == 200
         assert updated_status.json()["admin_password_configured"] is True
         assert updated_status.json()["bootstrap_password_enabled"] is False
+
+
+def test_login_rehashes_legacy_password_hash(tmp_path):
+    settings.storage_mode = "memory"
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / "control_plane.db"
+    settings.artifacts_dir = tmp_path / "artifacts"
+    settings.storage_states_dir = tmp_path / "storage-states"
+    settings.logs_dir = tmp_path / "logs"
+    settings.screenshots_dir = tmp_path / "screenshots"
+    settings.internal_token = "test-token"
+    settings.bootstrap_admin_password = ""
+    settings.password_iterations = 120000
+    settings.deploy_mode = "control_plane"
+    settings.scheduler_enabled = True
+    settings.default_debug = False
+    settings.default_browser_strategy = "legacy"
+    settings.default_browser_enabled = False
+
+    with TestClient(app) as client:
+        headers = {"x-internal-token": "test-token"}
+        legacy_hash = hash_password("legacy-password", 390000)
+        config_response = client.put(
+            "/api/config/system",
+            json={
+                "domain": "system",
+                "payload": {
+                    "debug": False,
+                    "browser_strategy": "legacy",
+                    "browser_enabled": False,
+                    "admin_password_hash": legacy_hash,
+                },
+            },
+            headers=headers,
+        )
+        assert config_response.status_code == 200
+
+        login_response = client.post("/api/system/login", json={"password": "legacy-password"})
+        assert login_response.status_code == 200
+        assert login_response.json()["mode"] == "stored"
+
+        system_response = client.get("/api/config/system", headers=headers)
+        assert system_response.status_code == 200
+        stored_hash = system_response.json()["payload"]["admin_password_hash"]
+        assert "$120000$" in stored_hash
+
+
+def test_system_config_bootstrap_defaults_follow_environment(tmp_path):
+    settings.storage_mode = "memory"
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / "control_plane.db"
+    settings.artifacts_dir = tmp_path / "artifacts"
+    settings.storage_states_dir = tmp_path / "storage-states"
+    settings.logs_dir = tmp_path / "logs"
+    settings.screenshots_dir = tmp_path / "screenshots"
+    settings.internal_token = "test-token"
+    settings.bootstrap_admin_password = "bootstrap-pass"
+    settings.password_iterations = 120000
+    settings.deploy_mode = "control_plane"
+    settings.scheduler_enabled = True
+    settings.default_debug = True
+    settings.default_browser_strategy = "http_only"
+    settings.default_browser_enabled = True
+
+    with TestClient(app) as client:
+        headers = {"x-internal-token": "test-token"}
+        response = client.get("/api/config/system", headers=headers)
+        assert response.status_code == 200
+        assert response.json()["payload"] == {
+            "debug": True,
+            "browser_strategy": "http_only",
+            "browser_enabled": True,
+            "admin_password_hash": "",
+        }
+
+
+def test_scheduler_can_be_disabled_from_environment(tmp_path):
+    settings.storage_mode = "memory"
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / "control_plane.db"
+    settings.artifacts_dir = tmp_path / "artifacts"
+    settings.storage_states_dir = tmp_path / "storage-states"
+    settings.logs_dir = tmp_path / "logs"
+    settings.screenshots_dir = tmp_path / "screenshots"
+    settings.internal_token = "test-token"
+    settings.bootstrap_admin_password = "bootstrap-pass"
+    settings.password_iterations = 120000
+    settings.deploy_mode = "github_actions"
+    settings.scheduler_enabled = False
+    settings.default_debug = False
+    settings.default_browser_strategy = "legacy"
+    settings.default_browser_enabled = False
+
+    with TestClient(app) as client:
+        headers = {"x-internal-token": "test-token"}
+        schedule_update = client.put(
+            "/api/schedules/main_checkin",
+            json={
+                "job_type": "main_checkin",
+                "enabled": True,
+                "cron": "*/10 * * * *",
+                "timezone": "Asia/Shanghai",
+                "cooldown_seconds": 0,
+            },
+            headers=headers,
+        )
+        assert schedule_update.status_code == 200
+
+        status_response = client.get("/api/status", headers=headers)
+        assert status_response.status_code == 200
+        assert status_response.json()["deploy_mode"] == "github_actions"
+        assert status_response.json()["scheduler_enabled"] is False
+
+        dashboard_response = client.get("/api/dashboard", headers=headers)
+        assert dashboard_response.status_code == 200
+        assert dashboard_response.json()["status"]["deploy_mode"] == "github_actions"
+        assert dashboard_response.json()["next_runs"]["main_checkin"] is None
+
+
+def test_resolve_deploy_mode_supports_both_modes():
+    assert resolve_deploy_mode(None, None) == ("control_plane", True)
+    assert resolve_deploy_mode("control_plane", None) == ("control_plane", True)
+    assert resolve_deploy_mode("github_actions", None) == ("github_actions", False)
+    assert resolve_deploy_mode(None, "false") == ("github_actions", False)
+
+
+def test_resolve_deploy_mode_rejects_conflicting_values():
+    with pytest.raises(ValueError, match="conflicts"):
+        resolve_deploy_mode("github_actions", "true")
+
+    with pytest.raises(ValueError, match="must be"):
+        resolve_deploy_mode("invalid-mode", None)

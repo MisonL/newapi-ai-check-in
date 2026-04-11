@@ -7,18 +7,16 @@ const localeLabels: Record<AppLocale, string> = {
   'zh-CN': '中文',
   'en-US': '英文',
 }
+const localeOptions = computed(() => locales.map((item) => ({
+  label: localeLabels[item],
+  value: item,
+})))
 </script>
 
 <template>
-  <div class="button-row">
-    <button
-      v-for="item in locales"
-      :key="item"
-      class="button button--secondary"
-      :class="{ 'sidebar-nav__link--active': locale === item }"
-      @click="setLocale(item)"
-    >
-      {{ t(localeLabels[item]) }}
-    </button>
-  </div>
+  <AppSelect :model-value="locale" :options="localeOptions" label="语言切换" size="sm" @update:model-value="setLocale($event as AppLocale)">
+    <template #prefix>
+      <AppIcon name="locale" :size="14" />
+    </template>
+  </AppSelect>
 </template>

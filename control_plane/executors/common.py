@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from control_plane.models import NotificationConfig
 
-
 NOTIFICATION_ENV_MAP = {
     "dingding_webhook": "DINGDING_WEBHOOK",
     "email_user": "EMAIL_USER",

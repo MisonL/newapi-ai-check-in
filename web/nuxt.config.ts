@@ -1,13 +1,22 @@
 export default defineNuxtConfig({
   ssr: true,
   devtools: { enabled: false },
-  css: ['~/assets/css/main.css'],
+  css: [
+    '~/assets/css/main.css',
+    '~/assets/css/control-plane.css',
+    '~/assets/css/control-plane-layout.css',
+    '~/assets/css/control-plane-detail.css',
+    '~/assets/css/control-plane-primitives.css',
+    '~/assets/css/control-plane-refresh.css',
+    '~/assets/css/control-plane-refresh-pages.css',
+    '~/assets/css/control-plane-enhancements.css',
+  ],
   runtimeConfig: {
-    controlPlaneUrl: process.env.CONTROL_PLANE_BASE_URL || 'http://127.0.0.1:18080',
-    controlPlaneToken: process.env.CONTROL_PLANE_INTERNAL_TOKEN || 'change-me',
-    adminPassword: process.env.CONTROL_PLANE_ADMIN_PASSWORD || 'admin123',
-    sessionSecret: process.env.CONTROL_PLANE_SESSION_SECRET || 'replace-this-secret',
-    public: {}
+    controlPlaneUrl: 'http://127.0.0.1:18080',
+    controlPlaneToken: '',
+    sessionSecret: '',
+    sessionMaxAgeSeconds: 60 * 60 * 12,
+    public: {},
   },
   routeRules: {
     '/api/**': { cors: false }

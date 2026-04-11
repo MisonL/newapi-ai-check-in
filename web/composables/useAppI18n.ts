@@ -4,6 +4,9 @@ const serverMessageKeys: Record<string, string> = {
   Unauthorized: '未授权',
   'Invalid password': '密码错误',
   'Admin password is not configured': '管理员密码未配置',
+  'Internal token is not configured': '内部令牌未配置',
+  'Session secret is not configured': '会话密钥未配置',
+  'Control plane URL is not configured': '控制面地址未配置',
   'Domain mismatch': '配置域不匹配',
   'Job run not found': '未找到任务运行记录',
   'Unknown API path': '未知 API 路径',
@@ -58,6 +61,11 @@ const notificationKeys: Record<string, string> = {
   telegram_chat_id: 'Telegram Chat ID',
 }
 
+const deployModeKeys: Record<string, string> = {
+  control_plane: '控制面调度',
+  github_actions: 'GitHub Actions 驱动',
+}
+
 function render(template: string, params?: Record<string, string | number>) {
   if (!params) {
     return template
@@ -68,13 +76,43 @@ function render(template: string, params?: Record<string, string | number>) {
   )
 }
 
+function normalizeLocale(value?: string): AppLocale {
+  return supportedLocales.includes(value as AppLocale) ? (value as AppLocale) : 'zh-CN'
+}
+
 export function useAppI18n() {
-  const localeCookie = useCookie<AppLocale>('app-locale', { default: () => 'zh-CN' })
-  const locale = useState<AppLocale>('app-locale', () => localeCookie.value || 'zh-CN')
+  const localeCookie = useCookie<AppLocale>('app-locale', {
+    default: () => 'zh-CN',
+    sameSite: 'lax',
+    path: '/',
+  })
+  const locale = useState<AppLocale>('app-locale', () => normalizeLocale(localeCookie.value))
+
+  const syncLocale = (value?: string) => {
+    const normalized = normalizeLocale(value)
+    if (locale.value !== normalized) {
+      locale.value = normalized
+    }
+    if (localeCookie.value !== normalized) {
+      localeCookie.value = normalized
+    }
+    if (import.meta.client) {
+      document.documentElement.lang = normalized
+    }
+  }
+
+  syncLocale(localeCookie.value)
+
+  watch(localeCookie, (value) => {
+    syncLocale(value)
+  })
+
+  watch(locale, (value) => {
+    syncLocale(value)
+  })
 
   const setLocale = (value: AppLocale) => {
-    locale.value = value
-    localeCookie.value = value
+    syncLocale(value)
   }
 
   const t = (key: string, params?: Record<string, string | number>) => {
@@ -105,5 +143,6 @@ export function useAppI18n() {
       t(value === 'light' ? '亮色' : value === 'dark' ? '暗色' : '跟随系统'),
     formatNotificationField: (value: string) => t(notificationKeys[value] || value),
     formatBrowserStrategy: (value: string) => t(value === 'http_only' ? '仅 HTTP' : '传统浏览器'),
+    formatDeployMode: (value?: string) => t(deployModeKeys[value || ''] || value || '-'),
   }
 }

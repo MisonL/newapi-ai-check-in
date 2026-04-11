@@ -1,18 +1,24 @@
 <script setup lang="ts">
 const { theme, setTheme } = useThemeMode()
-const { t, formatTheme } = useAppI18n()
+const { t } = useAppI18n()
+
+const themeOptions = [
+  { label: '亮色', value: 'light' },
+  { label: '暗色', value: 'dark' },
+  { label: '跟随系统', value: 'auto' },
+] as const
 </script>
 
 <template>
-  <div class="button-row">
-    <button class="button button--secondary" :class="{ 'sidebar-nav__link--active': theme === 'light' }" @click="setTheme('light')">
-      {{ t('亮色') }}
-    </button>
-    <button class="button button--secondary" :class="{ 'sidebar-nav__link--active': theme === 'dark' }" @click="setTheme('dark')">
-      {{ t('暗色') }}
-    </button>
-    <button class="button button--secondary" :class="{ 'sidebar-nav__link--active': theme === 'auto' }" @click="setTheme('auto')">
-      {{ formatTheme('auto') }}
-    </button>
-  </div>
+  <AppSelect
+    :model-value="theme"
+    :options="themeOptions"
+    label="主题切换"
+    size="sm"
+    @update:model-value="setTheme($event as 'light' | 'dark' | 'auto')"
+  >
+    <template #prefix>
+      <AppIcon :name="theme === 'light' ? 'light' : theme === 'dark' ? 'dark' : 'auto'" :size="14" />
+    </template>
+  </AppSelect>
 </template>

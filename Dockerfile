@@ -22,13 +22,40 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     NITRO_PORT=3000
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 python3-pip python3-venv python3-dev gcc \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        fonts-liberation \
+        gcc \
+        libasound2 \
+        libatk-bridge2.0-0 \
+        libatk1.0-0 \
+        libcairo2 \
+        libdbus-glib-1-2 \
+        libdrm2 \
+        libgbm1 \
+        libgtk-3-0 \
+        libnspr4 \
+        libnss3 \
+        libpango-1.0-0 \
+        libx11-xcb1 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxfixes3 \
+        libxkbcommon0 \
+        libxrandr2 \
+        libxtst6 \
+        python3 \
+        python3-dev \
+        python3-pip \
+        python3-venv \
+        xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml uv.lock ./
 RUN python3 -m venv /tmp/uv-bootstrap \
     && /tmp/uv-bootstrap/bin/pip install --no-cache-dir uv \
     && /tmp/uv-bootstrap/bin/uv sync --frozen --no-dev --python /usr/bin/python3 \
+    && .venv/bin/python -m camoufox fetch \
     && rm -rf /tmp/uv-bootstrap
 
 COPY . .

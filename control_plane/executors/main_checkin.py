@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import json
 from contextlib import redirect_stderr, redirect_stdout
@@ -12,7 +11,6 @@ from control_plane.utils.log_capture import LineCapture
 from utils.balance_hash import load_balance_hash, save_balance_hash
 from utils.config import AppConfig
 from utils.notify import notify
-
 
 BALANCE_HASH_FILE = "balance_hash.txt"
 

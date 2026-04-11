@@ -2,6 +2,7 @@
   --sidebar-width: 180px;
   --sidebar-width-collapsed: 60px;
   --semi-color-primary: #2563eb;
+  --semi-color-primary-contrast: #ffffff;
   --semi-color-primary-hover: #1d4ed8;
   --semi-color-primary-light-default: rgba(37, 99, 235, 0.12);
   --semi-color-primary-light-active: rgba(37, 99, 235, 0.18);
@@ -25,6 +26,7 @@
 
 html.dark {
   --semi-color-primary: #60a5fa;
+  --semi-color-primary-contrast: #08111f;
   --semi-color-primary-hover: #93c5fd;
   --semi-color-primary-light-default: rgba(96, 165, 250, 0.16);
   --semi-color-primary-light-active: rgba(96, 165, 250, 0.24);
@@ -219,7 +221,7 @@ select {
 
 .button--primary {
   background: var(--semi-color-primary);
-  color: #fff;
+  color: var(--semi-color-primary-contrast);
 }
 
 .button--secondary {
@@ -228,8 +230,13 @@ select {
 }
 
 .button--danger {
-  background: rgba(220, 38, 38, 0.12);
-  color: var(--semi-color-danger);
+  background: rgba(220, 38, 38, 0.18);
+  color: #b91c1c;
+}
+
+html.dark .button--danger {
+  background: rgba(248, 113, 113, 0.16);
+  color: #fca5a5;
 }
 
 .status-list,

@@ -1,0 +1,43 @@
+.confirm-button {
+  background: rgba(220, 38, 38, 0.14);
+  color: #b91c1c;
+}
+
+html.dark .confirm-button {
+  background: rgba(248, 113, 113, 0.16);
+  color: #fecaca;
+}
+
+.confirm-button--armed {
+  background: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.22);
+}
+
+@media (max-width: 640px) {
+  .main-checkin-side,
+  .aux-job-layout {
+    gap: 16px;
+  }
+
+  .aux-job-cluster,
+  .section-card {
+    padding: 18px;
+  }
+
+  .account-card__summary {
+    padding: 14px 16px;
+  }
+
+  .account-card__body {
+    padding: 16px 16px 14px;
+  }
+
+  .section-card--editor .textarea {
+    min-height: 150px;
+  }
+
+  .console-empty--output {
+    min-height: 180px;
+  }
+}

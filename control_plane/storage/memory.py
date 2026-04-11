@@ -41,11 +41,12 @@ class MemoryStorage(StorageBackend):
     def get_job_run(self, run_id: str) -> JobRun | None:
         return self._runs.get(run_id)
 
-    def list_job_runs(self, job_type: JobType | None = None) -> list[JobRun]:
+    def list_job_runs(self, job_type: JobType | None = None, limit: int | None = None) -> list[JobRun]:
         runs = list(self._runs.values())
         if job_type is not None:
             runs = [run for run in runs if run.job_type == job_type]
-        return sorted(runs, key=lambda item: item.started_at, reverse=True)
+        ordered = sorted(runs, key=lambda item: item.started_at, reverse=True)
+        return ordered[:limit] if limit is not None else ordered
 
     def append_job_log(self, log_line: JobLogLine) -> None:
         self._logs[log_line.run_id].append(log_line)

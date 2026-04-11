@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
-from control_plane.models import ConfigDomain, JobStatus, JobType, TriggerType
+from control_plane.models import ConfigDomain, JobStatus, JobSummary, JobType, ScheduleSpec, TriggerType
 from control_plane.services.job_service import JobService
 from control_plane.settings import settings
 from control_plane.storage.memory import MemoryStorage
@@ -80,5 +80,114 @@ def test_job_service_failure_paths(tmp_path):
         assert linuxdo_run.status == JobStatus.FAILED
         assert linuxdo_run.error_message == 'Linux.do read requires browser support. Enable browser execution first.'
         assert any('browser support' in item.message for item in linuxdo_logs)
+
+    asyncio.run(scenario())
+
+
+def test_job_service_can_start_scheduled_job_from_worker_thread(tmp_path):
+    async def scenario():
+        settings.storage_states_dir = tmp_path / 'storage-states'
+        settings.storage_states_dir.mkdir(parents=True, exist_ok=True)
+
+        storage = MemoryStorage(tmp_path / 'artifacts')
+        storage.save_config(ConfigDomain.SYSTEM, _system_config(browser_enabled=False))
+        storage.save_config(ConfigDomain.NOTIFICATIONS, {})
+        storage.save_config(ConfigDomain.CHECKIN_996, {})
+        storage.save_schedule(
+            ScheduleSpec(
+                job_type=JobType.CHECKIN_996,
+                enabled=True,
+                cron='*/10 * * * *',
+                timezone='Asia/Shanghai',
+                cooldown_seconds=0,
+            )
+        )
+
+        service = JobService(storage)
+        service.bind_loop(asyncio.get_running_loop())
+
+        run = await asyncio.to_thread(service.start_job, JobType.CHECKIN_996, TriggerType.SCHEDULED)
+        finished = await _wait_for_run(storage, run.id)
+
+        assert finished.status == JobStatus.FAILED
+        assert finished.error_message == 'No 996 accounts configured'
+
+    asyncio.run(scenario())
+
+
+def test_job_service_marks_aux_job_failed_when_summary_contains_failed_accounts(tmp_path, monkeypatch):
+    async def scenario():
+        settings.storage_states_dir = tmp_path / 'storage-states'
+        settings.storage_states_dir.mkdir(parents=True, exist_ok=True)
+
+        storage = MemoryStorage(tmp_path / 'artifacts')
+        storage.save_config(ConfigDomain.SYSTEM, _system_config(browser_enabled=True))
+        storage.save_config(ConfigDomain.NOTIFICATIONS, {})
+        storage.save_config(
+            ConfigDomain.LINUXDO_READ,
+            {'accounts': [{'username': 'alice', 'password': 'secret-pass'}], 'max_posts': 20},
+        )
+
+        async def fake_execute_linuxdo_read(*args, **kwargs):
+            return JobSummary(
+                success_count=0,
+                total_count=1,
+                notification_sent=False,
+                extra={'results': [{'username': 'alice', 'success': False, 'result': {'error': 'Login failed'}}]},
+            )
+
+        monkeypatch.setattr(
+            'control_plane.services.job_service.execute_linuxdo_read',
+            fake_execute_linuxdo_read,
+        )
+
+        service = JobService(storage)
+        run = service.start_job(JobType.LINUXDO_READ, TriggerType.MANUAL)
+        finished = await _wait_for_run(storage, run.id)
+        logs = storage.get_job_logs(run.id)
+
+        assert finished.status == JobStatus.FAILED
+        assert finished.error_code == 'partial_failure'
+        assert finished.error_message == 'linuxdo_read completed with failures: 0/1 succeeded'
+        assert finished.summary is not None
+        assert finished.summary.success_count == 0
+        assert any('0/1 succeeded' in item.message for item in logs)
+
+    asyncio.run(scenario())
+
+
+def test_job_service_marks_main_checkin_failed_when_summary_contains_failed_methods(tmp_path, monkeypatch):
+    async def scenario():
+        settings.storage_states_dir = tmp_path / 'storage-states'
+        settings.storage_states_dir.mkdir(parents=True, exist_ok=True)
+
+        storage = MemoryStorage(tmp_path / 'artifacts')
+        storage.save_config(ConfigDomain.SYSTEM, _system_config(browser_enabled=True))
+        storage.save_config(ConfigDomain.NOTIFICATIONS, {})
+        storage.save_config(ConfigDomain.MAIN_CHECKIN, {'accounts': [{'provider': 'anyrouter'}]})
+
+        async def fake_execute_main_checkin(*args, **kwargs):
+            return JobSummary(
+                success_count=0,
+                total_count=1,
+                notification_sent=False,
+                extra={'balance_hash': ''},
+            )
+
+        monkeypatch.setattr(
+            'control_plane.services.job_service.execute_main_checkin',
+            fake_execute_main_checkin,
+        )
+
+        service = JobService(storage)
+        run = service.start_job(JobType.MAIN_CHECKIN, TriggerType.MANUAL)
+        finished = await _wait_for_run(storage, run.id)
+        logs = storage.get_job_logs(run.id)
+
+        assert finished.status == JobStatus.FAILED
+        assert finished.error_code == 'partial_failure'
+        assert finished.error_message == 'main_checkin completed with failures: 0/1 succeeded'
+        assert finished.summary is not None
+        assert any('0/1 succeeded' in item.message for item in logs)
 
     asyncio.run(scenario())
