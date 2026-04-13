@@ -2,10 +2,18 @@ from __future__ import annotations
 
 from collections import defaultdict
 from copy import deepcopy
+from datetime import date
 from pathlib import Path
 
 from control_plane.models import ArtifactRef, ConfigDomain, JobLogLine, JobRun, JobType, ScheduleSpec
 from control_plane.storage.base import StorageBackend
+from control_plane.task_center_models import (
+    AccountRecord,
+    CheckinResultRecord,
+    DailyTaskRecord,
+    IncidentRecord,
+    SiteRecord,
+)
 
 
 class MemoryStorage(StorageBackend):
@@ -14,6 +22,11 @@ class MemoryStorage(StorageBackend):
         self._schedules: dict[str, ScheduleSpec] = {}
         self._runs: dict[str, JobRun] = {}
         self._logs: dict[str, list[JobLogLine]] = defaultdict(list)
+        self._sites: dict[str, SiteRecord] = {}
+        self._accounts: dict[str, AccountRecord] = {}
+        self._daily_tasks: dict[str, DailyTaskRecord] = {}
+        self._checkin_results: dict[str, CheckinResultRecord] = {}
+        self._incidents: dict[str, IncidentRecord] = {}
         self._artifact_root = artifact_root
         self._artifact_root.mkdir(parents=True, exist_ok=True)
 
@@ -64,3 +77,102 @@ class MemoryStorage(StorageBackend):
         if run is not None:
             run.artifacts.append(saved)
         return saved
+
+    def list_sites(self) -> list[SiteRecord]:
+        return sorted((deepcopy(item) for item in self._sites.values()), key=lambda item: item.updated_at, reverse=True)
+
+    def get_site(self, site_id: str) -> SiteRecord | None:
+        site = self._sites.get(site_id)
+        return deepcopy(site) if site is not None else None
+
+    def save_site(self, site: SiteRecord) -> None:
+        self._sites[site.id] = deepcopy(site)
+
+    def list_accounts(self, site_id: str | None = None) -> list[AccountRecord]:
+        items = [deepcopy(item) for item in self._accounts.values()]
+        if site_id is not None:
+            items = [item for item in items if item.site_id == site_id]
+        return sorted(items, key=lambda item: item.updated_at, reverse=True)
+
+    def get_account(self, account_id: str) -> AccountRecord | None:
+        account = self._accounts.get(account_id)
+        return deepcopy(account) if account is not None else None
+
+    def save_account(self, account: AccountRecord) -> None:
+        self._accounts[account.id] = deepcopy(account)
+
+    def list_daily_tasks(
+        self,
+        task_date: date | None = None,
+        status: str | None = None,
+        site_id: str | None = None,
+        account_id: str | None = None,
+    ) -> list[DailyTaskRecord]:
+        items = [deepcopy(item) for item in self._daily_tasks.values()]
+        if task_date is not None:
+            items = [item for item in items if item.task_date == task_date]
+        if status is not None:
+            items = [item for item in items if item.status == status]
+        if site_id is not None:
+            items = [item for item in items if item.site_id == site_id]
+        if account_id is not None:
+            items = [item for item in items if item.account_id == account_id]
+        return sorted(items, key=lambda item: (item.task_date, item.updated_at), reverse=True)
+
+    def get_daily_task(self, task_id: str) -> DailyTaskRecord | None:
+        task = self._daily_tasks.get(task_id)
+        return deepcopy(task) if task is not None else None
+
+    def save_daily_task(self, task: DailyTaskRecord) -> None:
+        duplicate_ids = [
+            item.id for item in self._daily_tasks.values()
+            if item.account_id == task.account_id and item.task_date == task.task_date and item.id != task.id
+        ]
+        for duplicate_id in duplicate_ids:
+            del self._daily_tasks[duplicate_id]
+        self._daily_tasks[task.id] = deepcopy(task)
+
+    def list_checkin_results(
+        self,
+        task_id: str | None = None,
+        site_id: str | None = None,
+        account_id: str | None = None,
+    ) -> list[CheckinResultRecord]:
+        items = [deepcopy(item) for item in self._checkin_results.values()]
+        if task_id is not None:
+            items = [item for item in items if item.task_id == task_id]
+        if site_id is not None:
+            items = [item for item in items if item.site_id == site_id]
+        if account_id is not None:
+            items = [item for item in items if item.account_id == account_id]
+        return sorted(items, key=lambda item: item.created_at, reverse=True)
+
+    def get_checkin_result(self, task_id: str) -> CheckinResultRecord | None:
+        for item in self._checkin_results.values():
+            if item.task_id == task_id:
+                return deepcopy(item)
+        return None
+
+    def save_checkin_result(self, result: CheckinResultRecord) -> None:
+        duplicate_ids = [item.id for item in self._checkin_results.values() if item.task_id == result.task_id and item.id != result.id]
+        for duplicate_id in duplicate_ids:
+            del self._checkin_results[duplicate_id]
+        self._checkin_results[result.id] = deepcopy(result)
+
+    def list_incidents(
+        self,
+        resolved: bool | None = None,
+        site_id: str | None = None,
+        account_id: str | None = None,
+    ) -> list[IncidentRecord]:
+        items = [deepcopy(item) for item in self._incidents.values()]
+        if resolved is not None:
+            items = [item for item in items if item.resolved == resolved]
+        if site_id is not None:
+            items = [item for item in items if item.site_id == site_id]
+        if account_id is not None:
+            items = [item for item in items if item.account_id == account_id]
+        return sorted(items, key=lambda item: item.last_seen_at, reverse=True)
+
+    def save_incident(self, incident: IncidentRecord) -> None:
+        self._incidents[incident.id] = deepcopy(incident)

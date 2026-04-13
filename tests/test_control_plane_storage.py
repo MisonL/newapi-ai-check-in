@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from control_plane.models import (
     ArtifactRef,
@@ -14,6 +14,13 @@ from control_plane.models import (
 )
 from control_plane.storage.memory import MemoryStorage
 from control_plane.storage.sqlite import SqliteStorage
+from control_plane.task_center_models import (
+    AccountRecord,
+    CheckinResultRecord,
+    DailyTaskRecord,
+    IncidentRecord,
+    SiteRecord,
+)
 
 
 def _exercise_backend(storage) -> None:
@@ -55,6 +62,48 @@ def _exercise_backend(storage) -> None:
     storage.create_job_run(newer_run)
     assert [item.id for item in storage.list_job_runs(limit=1)] == ["run-2"]
     assert [item.id for item in storage.list_job_runs(JobType.MAIN_CHECKIN, limit=1)] == ["run-1"]
+
+    site = SiteRecord(name="Primary Site", base_url="https://example.com")
+    storage.save_site(site)
+    assert storage.get_site(site.id) is not None
+    assert storage.list_sites()[0].name == "Primary Site"
+
+    account = AccountRecord(site_id=site.id, username="alice", password="secret-pass")
+    storage.save_account(account)
+    assert storage.get_account(account.id) is not None
+    assert storage.list_accounts(site.id)[0].username == "alice"
+
+    task = DailyTaskRecord(site_id=site.id, account_id=account.id, task_date=date(2026, 4, 13))
+    storage.save_daily_task(task)
+    assert storage.get_daily_task(task.id) is not None
+    assert storage.list_daily_tasks(task_date=date(2026, 4, 13))[0].account_id == account.id
+
+    result = CheckinResultRecord(
+        task_id=task.id,
+        site_id=site.id,
+        account_id=account.id,
+        checked_in_today_before_run=False,
+        quota_awarded=1234,
+        checkin_date=date(2026, 4, 13),
+        total_checkins=10,
+        total_quota_awarded=23456,
+    )
+    storage.save_checkin_result(result)
+    assert storage.get_checkin_result(task.id) is not None
+    assert storage.list_checkin_results(task_id=task.id)[0].quota_awarded == 1234
+
+    incident = IncidentRecord(
+        task_id=task.id,
+        account_id=account.id,
+        site_id=site.id,
+        display_name="Alice",
+        site_name="Primary Site",
+        status="failed",
+        last_error_message="login failed",
+        type="login_failed",
+    )
+    storage.save_incident(incident)
+    assert storage.list_incidents()[0].type == "login_failed"
 
 
 def test_memory_storage(tmp_path):

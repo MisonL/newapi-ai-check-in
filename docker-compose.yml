@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - "${HOST_PORT:-3000}:3000"
+      - "${HOST_PORT:-39327}:39327"
     environment:
       CONTROL_PLANE_ADMIN_PASSWORD: ${CONTROL_PLANE_ADMIN_PASSWORD}
       CONTROL_PLANE_DEPLOY_MODE: ${CONTROL_PLANE_DEPLOY_MODE:-}
@@ -24,7 +24,7 @@ services:
         - -c
         - |
           from urllib.request import urlopen
-          raise SystemExit(0 if urlopen("http://127.0.0.1:3000/api/auth/session", timeout=3).status == 200 else 1)
+          raise SystemExit(0 if urlopen("http://127.0.0.1:39327/api/auth/session", timeout=3).status == 200 else 1)
       interval: 10s
       timeout: 5s
       retries: 6

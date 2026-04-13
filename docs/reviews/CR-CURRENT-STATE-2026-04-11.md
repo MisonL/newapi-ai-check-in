@@ -39,7 +39,7 @@
   - 结论：19 通过，1 跳过
 - 命令：`env CONTROL_PLANE_ADMIN_PASSWORD=admin123 CONTROL_PLANE_SESSION_SECRET=test-session-secret CONTROL_PLANE_INTERNAL_TOKEN=test-internal-token CONTROL_PLANE_SCHEDULER_ENABLED=false HOST_PORT=3300 sh -c 'docker compose up -d --build && for i in $(seq 1 20); do status=$(docker inspect -f "{{.State.Health.Status}}" newapi-ai-check-in-app-1 2>/dev/null || true); echo "health=$status"; if [ "$status" = healthy ]; then break; fi; sleep 2; done; docker compose ps'`
   - 退出码：0
-  - 结论：镜像重建成功，容器健康检查为 `healthy`，`3300 -> 3000` 端口映射正常
+  - 结论：镜像重建成功，容器健康检查为 `healthy`，`3300 -> 39327` 端口映射正常
 - 命令：`env CONTROL_PLANE_DEPLOY_MODE=control_plane CONTROL_PLANE_ADMIN_PASSWORD=admin123 CONTROL_PLANE_SESSION_SECRET=test-session-secret CONTROL_PLANE_INTERNAL_TOKEN=test-internal-token HOST_PORT=3301 sh -c 'docker compose up -d --build && for i in $(seq 1 20); do status=$(docker inspect -f "{{.State.Health.Status}}" newapi-ai-check-in-app-1 2>/dev/null || true); echo "health=$status"; if [ "$status" = healthy ]; then break; fi; sleep 2; done; curl -sf http://127.0.0.1:3301/api/auth/session && docker compose down'`
   - 退出码：0
   - 结论：`control_plane` 模式可正常启动，健康检查通过

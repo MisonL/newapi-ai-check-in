@@ -8,6 +8,7 @@ from control_plane.executors.checkin_996 import execute_checkin_996
 from control_plane.executors.checkin_qaq_al import execute_checkin_qaq_al
 from control_plane.executors.linuxdo_read import execute_linuxdo_read
 from control_plane.executors.main_checkin import execute_main_checkin
+from control_plane.executors.main_checkin_task_center import execute_main_checkin_task_center
 from control_plane.models import (
     Checkin996Config,
     CheckinQaqAlConfig,
@@ -109,13 +110,16 @@ class JobService:
                 system_config = SystemConfig.model_validate(self._storage.load_config(ConfigDomain.SYSTEM))
                 emit_log = lambda message, stream="system": self._append_log(current.id, message, stream)
                 if current.job_type == JobType.MAIN_CHECKIN:
-                    summary = await execute_main_checkin(
-                        MainCheckinConfig.model_validate(self._storage.load_config(ConfigDomain.MAIN_CHECKIN)),
-                        notifications,
-                        system_config,
-                        str(settings.storage_states_dir),
-                        emit_log,
-                    )
+                    if system_config.main_checkin_engine == 'task_center':
+                        summary = await execute_main_checkin_task_center(self._storage, emit_log)
+                    else:
+                        summary = await execute_main_checkin(
+                            MainCheckinConfig.model_validate(self._storage.load_config(ConfigDomain.MAIN_CHECKIN)),
+                            notifications,
+                            system_config,
+                            str(settings.storage_states_dir),
+                            emit_log,
+                        )
                 elif current.job_type == JobType.CHECKIN_996:
                     summary = await execute_checkin_996(
                         Checkin996Config.model_validate(self._storage.load_config(ConfigDomain.CHECKIN_996)),

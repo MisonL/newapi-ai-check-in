@@ -13,6 +13,7 @@ def _system_config(browser_enabled: bool) -> dict:
         'debug': False,
         'browser_strategy': 'legacy',
         'browser_enabled': browser_enabled,
+        'main_checkin_engine': 'legacy',
         'admin_password_hash': '',
     }
 
@@ -189,5 +190,68 @@ def test_job_service_marks_main_checkin_failed_when_summary_contains_failed_meth
         assert finished.error_message == 'main_checkin completed with failures: 0/1 succeeded'
         assert finished.summary is not None
         assert any('0/1 succeeded' in item.message for item in logs)
+
+    asyncio.run(scenario())
+
+
+def test_job_service_can_run_main_checkin_via_task_center_engine(tmp_path, monkeypatch):
+    async def scenario():
+        settings.storage_states_dir = tmp_path / 'storage-states'
+        settings.storage_states_dir.mkdir(parents=True, exist_ok=True)
+
+        storage = MemoryStorage(tmp_path / 'artifacts')
+        system_config = _system_config(browser_enabled=False)
+        system_config['main_checkin_engine'] = 'task_center'
+        storage.save_config(ConfigDomain.SYSTEM, system_config)
+        storage.save_config(ConfigDomain.NOTIFICATIONS, {})
+        storage.save_config(ConfigDomain.MAIN_CHECKIN, {})
+
+        async def fake_execute_main_checkin_task_center(storage_backend, emit_log):
+            emit_log('task center engine invoked')
+            return JobSummary(
+                success_count=2,
+                total_count=2,
+                notification_sent=False,
+                extra={'engine': 'task_center'},
+            )
+
+        monkeypatch.setattr(
+            'control_plane.services.job_service.execute_main_checkin_task_center',
+            fake_execute_main_checkin_task_center,
+        )
+
+        service = JobService(storage)
+        run = service.start_job(JobType.MAIN_CHECKIN, TriggerType.MANUAL)
+        finished = await _wait_for_run(storage, run.id)
+        logs = storage.get_job_logs(run.id)
+
+        assert finished.status == JobStatus.SUCCESS
+        assert finished.summary is not None
+        assert finished.summary.extra['engine'] == 'task_center'
+        assert any('task center engine invoked' in item.message for item in logs)
+
+    asyncio.run(scenario())
+
+
+def test_job_service_task_center_engine_fails_without_sites(tmp_path):
+    async def scenario():
+        settings.storage_states_dir = tmp_path / 'storage-states'
+        settings.storage_states_dir.mkdir(parents=True, exist_ok=True)
+
+        storage = MemoryStorage(tmp_path / 'artifacts')
+        system_config = _system_config(browser_enabled=False)
+        system_config['main_checkin_engine'] = 'task_center'
+        storage.save_config(ConfigDomain.SYSTEM, system_config)
+        storage.save_config(ConfigDomain.NOTIFICATIONS, {})
+        storage.save_config(ConfigDomain.MAIN_CHECKIN, {})
+
+        service = JobService(storage)
+        run = service.start_job(JobType.MAIN_CHECKIN, TriggerType.MANUAL)
+        finished = await _wait_for_run(storage, run.id)
+        logs = storage.get_job_logs(run.id)
+
+        assert finished.status == JobStatus.FAILED
+        assert finished.error_message == 'Task center engine requires at least one enabled site'
+        assert any('enabled site' in item.message for item in logs)
 
     asyncio.run(scenario())

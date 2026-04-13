@@ -10,6 +10,10 @@ FROM node:20-bookworm-slim
 
 WORKDIR /app
 
+ARG TARGETARCH
+ARG CAMOUFOX_VERSION=135.0.1
+ARG CAMOUFOX_RELEASE=beta.24
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH=/app/.venv/bin:$PATH \
@@ -19,7 +23,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     CONTROL_PLANE_STORAGE_MODE=persistent \
     CONTROL_PLANE_DATA_DIR=/app/runtime_data \
     NITRO_HOST=0.0.0.0 \
-    NITRO_PORT=3000
+    NITRO_PORT=39327
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -55,12 +59,20 @@ COPY pyproject.toml uv.lock ./
 RUN python3 -m venv /tmp/uv-bootstrap \
     && /tmp/uv-bootstrap/bin/pip install --no-cache-dir uv \
     && /tmp/uv-bootstrap/bin/uv sync --frozen --no-dev --python /usr/bin/python3 \
-    && .venv/bin/python -m camoufox fetch \
+    && case "$TARGETARCH" in \
+        amd64) export CAMOUFOX_ARCH=x86_64 ;; \
+        arm64) export CAMOUFOX_ARCH=arm64 ;; \
+        *) echo "Unsupported camoufox arch: $TARGETARCH" >&2; exit 1 ;; \
+       esac \
+    && export CAMOUFOX_VERSTR="${CAMOUFOX_VERSION}-${CAMOUFOX_RELEASE}" \
+    && export CAMOUFOX_URL="https://github.com/daijro/camoufox/releases/download/v${CAMOUFOX_VERSTR}/camoufox-${CAMOUFOX_VERSTR}-lin.${CAMOUFOX_ARCH}.zip" \
+    && .venv/bin/python -c "import os, shutil, tempfile, orjson; from camoufox.pkgman import INSTALL_DIR, unzip, webdl; camoufox_version = os.environ['CAMOUFOX_VERSION']; camoufox_release = os.environ['CAMOUFOX_RELEASE']; camoufox_url = os.environ['CAMOUFOX_URL']; shutil.rmtree(INSTALL_DIR, ignore_errors=True); INSTALL_DIR.mkdir(parents=True, exist_ok=True); archive_file = tempfile.NamedTemporaryFile(); webdl(camoufox_url, buffer=archive_file); unzip(archive_file, str(INSTALL_DIR)); archive_file.close(); (INSTALL_DIR / 'version.json').write_bytes(orjson.dumps({'version': camoufox_version, 'release': camoufox_release}))" \
+    && chmod -R 755 /root/.cache/camoufox \
     && rm -rf /tmp/uv-bootstrap
 
 COPY . .
 COPY --from=web-build /app/web/.output /app/web/.output
 
-EXPOSE 3000
+EXPOSE 39327
 
 CMD ["bash", "scripts/start-stack.sh"]

@@ -17,6 +17,7 @@ from control_plane.models import (
 )
 from control_plane.services.job_service import JobService
 from control_plane.services.scheduler_service import SchedulerService
+from control_plane.services.task_center_service import TaskCenterService
 from control_plane.settings import settings
 from control_plane.storage.base import StorageBackend
 from control_plane.storage.factory import create_storage
@@ -27,6 +28,7 @@ class AppState:
         self.storage = storage
         self.job_service = JobService(storage)
         self.scheduler_service = SchedulerService(storage, self.job_service, enabled=settings.scheduler_enabled)
+        self.task_center_service = TaskCenterService(storage)
         self._ensure_defaults()
 
     def _ensure_defaults(self) -> None:

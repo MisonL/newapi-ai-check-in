@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 from typing import Literal
 
-
 DeployMode = Literal["control_plane", "github_actions"]
 
 
@@ -75,6 +74,7 @@ class Settings:
             "debug": self.default_debug,
             "browser_strategy": self.default_browser_strategy,
             "browser_enabled": self.default_browser_enabled,
+            "main_checkin_engine": "legacy",
             "admin_password_hash": "",
         }
 

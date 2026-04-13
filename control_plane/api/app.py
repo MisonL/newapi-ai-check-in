@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
+from datetime import date
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -24,6 +25,7 @@ from control_plane.models import (
 from control_plane.security import hash_password, password_needs_rehash, verify_password
 from control_plane.services.app_state import AppState, build_app_state
 from control_plane.settings import settings
+from control_plane.task_center_models import AccountRecord, SiteRecord
 
 state_holder: dict[str, AppState] = {}
 CONFIG_MODELS = {
@@ -128,6 +130,99 @@ async def update_admin_password(body: AdminPasswordUpdateRequest, app_state: App
 @app.get("/api/dashboard", dependencies=[Depends(require_internal_token)])
 async def dashboard(app_state: AppStateDep):
     return app_state.dashboard()
+
+
+@app.get("/api/task-center/summary", dependencies=[Depends(require_internal_token)])
+async def task_center_summary(app_state: AppStateDep):
+    return app_state.task_center_service.summary()
+
+
+@app.get("/api/task-center/today", dependencies=[Depends(require_internal_token)])
+async def task_center_today(app_state: AppStateDep, task_date: date | None = None):
+    return app_state.task_center_service.today(task_date)
+
+
+@app.get("/api/task-center/incidents", dependencies=[Depends(require_internal_token)])
+async def task_center_incidents(app_state: AppStateDep, resolved: bool | None = None):
+    return app_state.task_center_service.incidents(resolved)
+
+
+@app.get("/api/task-center/reports", dependencies=[Depends(require_internal_token)])
+async def task_center_reports(app_state: AppStateDep, date_from: date | None = None, date_to: date | None = None):
+    return app_state.task_center_service.reports(date_from, date_to)
+
+
+@app.post("/api/task-center/imports/main-checkin", dependencies=[Depends(require_internal_token)])
+async def import_main_checkin(app_state: AppStateDep):
+    return app_state.task_center_service.import_from_main_checkin_config()
+
+
+@app.post("/api/task-center/tasks/generate-today", dependencies=[Depends(require_internal_token)])
+async def generate_today_tasks(app_state: AppStateDep, task_date: date | None = None):
+    return app_state.task_center_service.generate_today_tasks(task_date)
+
+
+@app.post("/api/task-center/tasks/{task_id}/retry", dependencies=[Depends(require_internal_token)])
+async def retry_task(task_id: str, app_state: AppStateDep):
+    try:
+        return app_state.task_center_service.retry_task(task_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Task not found") from exc
+
+
+@app.post("/api/task-center/tasks/execute-today", dependencies=[Depends(require_internal_token)])
+async def execute_today_tasks(app_state: AppStateDep, task_date: date | None = None):
+    return await app_state.task_center_service.execute_today_tasks(task_date)
+
+
+@app.post("/api/task-center/tasks/{task_id}/execute", dependencies=[Depends(require_internal_token)])
+async def execute_task(task_id: str, app_state: AppStateDep):
+    try:
+        return await app_state.task_center_service.execute_task(task_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Task not found") from exc
+
+
+@app.get("/api/sites", dependencies=[Depends(require_internal_token)])
+async def list_sites(app_state: AppStateDep):
+    return app_state.task_center_service.list_sites()
+
+
+@app.post("/api/sites", dependencies=[Depends(require_internal_token)])
+async def create_site(site: SiteRecord, app_state: AppStateDep):
+    app_state.task_center_service.save_site(site)
+    return site
+
+
+@app.put("/api/sites/{site_id}", dependencies=[Depends(require_internal_token)])
+async def update_site(site_id: str, site: SiteRecord, app_state: AppStateDep):
+    if site.id != site_id:
+        raise HTTPException(status_code=400, detail="Site id mismatch")
+    app_state.task_center_service.save_site(site)
+    return site
+
+
+@app.get("/api/accounts", dependencies=[Depends(require_internal_token)])
+async def list_accounts(app_state: AppStateDep, site_id: str | None = None):
+    return app_state.task_center_service.list_accounts(site_id)
+
+
+@app.post("/api/accounts", dependencies=[Depends(require_internal_token)])
+async def create_account(account: AccountRecord, app_state: AppStateDep):
+    if app_state.storage.get_site(account.site_id) is None:
+        raise HTTPException(status_code=400, detail="Site not found")
+    app_state.task_center_service.save_account(account)
+    return account
+
+
+@app.put("/api/accounts/{account_id}", dependencies=[Depends(require_internal_token)])
+async def update_account(account_id: str, account: AccountRecord, app_state: AppStateDep):
+    if account.id != account_id:
+        raise HTTPException(status_code=400, detail="Account id mismatch")
+    if app_state.storage.get_site(account.site_id) is None:
+        raise HTTPException(status_code=400, detail="Site not found")
+    app_state.task_center_service.save_account(account)
+    return account
 
 
 @app.get("/api/jobs", dependencies=[Depends(require_internal_token)])
