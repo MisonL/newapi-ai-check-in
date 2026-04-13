@@ -153,9 +153,9 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
 <template>
   <AppShell>
     <PageHeader
-      title="辅助任务"
-      description="分别维护 996 hub、qaq.al 和 Linux.do 阅读任务"
-      eyebrow="工作台"
+      :title="t('补充任务')"
+      :description="t('维护不属于 new-api 日常签到主线的附加任务')"
+      :eyebrow="t('运维与高级')"
     />
     <div class="button-row page-summary-strip">
       <StatusBadge :label="hub996CountLabel" :state="cleanValues(hub996Accounts).length ? 'configured' : 'unconfigured'" />
@@ -174,8 +174,8 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
         <div class="panel-grid panel-grid--two aux-job-cluster__grid">
           <StringListCard
             v-model="hub996Accounts"
-            title="996 hub 账号"
-            label="访问令牌"
+            :title="t('996 hub 账号')"
+            :label="t('访问令牌')"
             placeholder="token-1"
           />
           <section class="card surface-card">
@@ -209,8 +209,8 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
         <div class="panel-grid panel-grid--two aux-job-cluster__grid">
           <StringListCard
             v-model="qaqAccounts"
-            title="qaq.al 账号"
-            label="SID"
+            :title="t('qaq.al 账号')"
+            :label="t('SID')"
             placeholder="sid-1"
           />
           <section class="card surface-card">
@@ -246,7 +246,7 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
           <StatusBadge :label="linuxdoCountLabel" :state="cleanOAuthRows(linuxdoAccounts).length ? 'configured' : 'unconfigured'" />
         </div>
         <div class="panel-grid panel-grid--two aux-job-cluster__grid">
-          <OAuthAccountsCard v-model="linuxdoAccounts" title="Linux.do 阅读账号" />
+          <OAuthAccountsCard v-model="linuxdoAccounts" :title="t('Linux.do 阅读账号')" />
           <section class="card surface-card">
             <h3 class="card__title">{{ t('Linux.do 阅读选项') }}</h3>
             <div class="field">

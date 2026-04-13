@@ -2,18 +2,18 @@
 const { theme, setTheme } = useThemeMode()
 const { t } = useAppI18n()
 
-const themeOptions = [
-  { label: '亮色', value: 'light' },
-  { label: '暗色', value: 'dark' },
-  { label: '跟随系统', value: 'auto' },
-] as const
+const themeOptions = computed(() => [
+  { label: t('亮色'), value: 'light' },
+  { label: t('暗色'), value: 'dark' },
+  { label: t('跟随系统'), value: 'auto' },
+])
 </script>
 
 <template>
   <AppSelect
     :model-value="theme"
     :options="themeOptions"
-    label="主题切换"
+    :label="t('主题切换')"
     size="sm"
     @update:model-value="setTheme($event as 'light' | 'dark' | 'auto')"
   >

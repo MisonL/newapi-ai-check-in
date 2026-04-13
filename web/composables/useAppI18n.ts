@@ -45,6 +45,7 @@ const jobStatusKeys: Record<string, string> = {
 const triggerKeys: Record<string, string> = {
   manual: '手动',
   scheduled: '调度',
+  retry: '重试',
 }
 
 const notificationKeys: Record<string, string> = {

@@ -20,6 +20,21 @@ function mapPath(segments: string[]) {
     }
     return '/api/jobs'
   }
+  if (segments[0] === 'task-center' && segments[1] === 'summary') {
+    return '/api/task-center/summary'
+  }
+  if (segments[0] === 'sites') {
+    if (segments[1]) {
+      return `/api/sites/${segments[1]}`
+    }
+    return '/api/sites'
+  }
+  if (segments[0] === 'accounts') {
+    if (segments[1]) {
+      return `/api/accounts/${segments[1]}`
+    }
+    return '/api/accounts'
+  }
   if (segments[0] === 'schedules') {
     if (segments[1]) {
       return `/api/schedules/${segments[1]}`

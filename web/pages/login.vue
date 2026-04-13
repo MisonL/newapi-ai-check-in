@@ -5,8 +5,7 @@ const isSubmitting = ref(false)
 const authState = useAuthState()
 const authExpiresAt = useAuthExpiresAt()
 const { t, translateError } = useAppI18n()
-const highlights = ['仪表盘', '主签到', '调度计划', '系统设置']
-const introNote = '仅管理员可访问，配置变更和任务执行会记录到运行日志'
+const highlights = ['首页', '站点', '账号', '今日任务']
 
 const submit = async () => {
   if (isSubmitting.value) {
@@ -43,13 +42,13 @@ const submit = async () => {
         <div class="brand">
           <div class="brand__mark" />
           <div>
-            <div class="brand__eyebrow">{{ t('控制面') }}</div>
+            <div class="brand__eyebrow">{{ t('任务中心') }}</div>
             <div class="brand__title">newapi.ai check-in</div>
           </div>
         </div>
-        <h1 class="login-shell__title">{{ t('统一管理签到配置、调度计划和运行日志') }}</h1>
-        <p class="login-shell__description">{{ t('单管理员入口') }}</p>
-        <p class="login-shell__meta">{{ t(introNote) }}</p>
+        <h1 class="login-shell__title">{{ t('多站点多账号签到任务中心') }}</h1>
+        <p class="login-shell__description">{{ t('管理多站点、多账号的每日签到任务与收益结果') }}</p>
+        <p class="login-shell__meta">{{ t('仅管理员可访问，系统会统一管理多站点、多账号的签到任务、收益结果与异常处理') }}</p>
         <div class="login-shell__chips">
           <StatusBadge v-for="item in highlights" :key="item" :label="t(item)" state="neutral" :dot="false" />
         </div>

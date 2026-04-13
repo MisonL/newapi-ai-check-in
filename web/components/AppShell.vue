@@ -5,16 +5,28 @@ const authExpiresAt = useAuthExpiresAt()
 const { t } = useAppI18n()
 
 const items = [
-  { to: '/dashboard', label: '仪表盘', icon: 'dashboard' },
-  { to: '/main-checkin', label: '主签到', icon: 'checkin' },
-  { to: '/aux-jobs', label: '辅助任务', icon: 'jobs' },
-  { to: '/schedules', label: '调度计划', icon: 'schedules' },
+  { to: '/dashboard', label: '首页', icon: 'dashboard' },
+  { to: '/sites', label: '站点', icon: 'sites' },
+  { to: '/accounts', label: '账号', icon: 'accounts' },
+  { to: '/today', label: '今日任务', icon: 'jobs' },
+  { to: '/reports', label: '历史与报表', icon: 'reports' },
+  { to: '/incidents', label: '异常处理', icon: 'incidents' },
   { to: '/settings', label: '系统设置', icon: 'settings' },
 ]
 
-const currentItem = computed(() => items.find((item) => item.to === route.path))
-const currentLabel = computed(() => t(currentItem.value?.label || '控制台'))
-const navigationOptions = computed(() => items.map((item) => ({ label: item.label, value: item.to })))
+const advancedItems = [
+  { to: '/main-checkin', label: '主链路配置' },
+  { to: '/schedules', label: '执行计划' },
+  { to: '/aux-jobs', label: '补充任务' },
+]
+
+const currentItem = computed(() => {
+  return items.find((item) => item.to === route.path) || advancedItems.find((item) => item.to === route.path)
+})
+const currentLabel = computed(() => t(currentItem.value?.label || '任务中心'))
+const navigationOptions = computed(() => {
+  return [...items, ...advancedItems].map((item) => ({ label: t(item.label), value: item.to }))
+})
 
 const navigate = async (value: string | number | boolean | null) => {
   if (typeof value !== 'string' || value === route.path) {
@@ -38,9 +50,9 @@ const logout = async () => {
       <div class="brand brand--panel">
         <div class="brand__mark" />
         <div class="brand__copy">
-          <div class="brand__eyebrow">{{ t('控制面') }}</div>
+          <div class="brand__eyebrow">{{ t('任务中心') }}</div>
           <div class="brand__title">newapi.ai check-in</div>
-          <div class="brand__subtitle">{{ t('运维控制台') }}</div>
+          <div class="brand__subtitle">{{ t('多站点签到系统') }}</div>
         </div>
       </div>
       <nav class="sidebar-nav" :aria-label="t('主导航')">
@@ -60,25 +72,39 @@ const logout = async () => {
         </NuxtLink>
       </nav>
       <section class="sidebar-summary surface-card">
+        <p class="sidebar-summary__label">{{ t('运维与高级') }}</p>
+        <div class="legacy-link-list">
+          <NuxtLink
+            v-for="item in advancedItems"
+            :key="item.to"
+            :to="item.to"
+            class="legacy-link"
+            :class="{ 'legacy-link--active': route.path === item.to }"
+          >
+            {{ t(item.label) }}
+          </NuxtLink>
+        </div>
+      </section>
+      <section class="sidebar-summary surface-card">
         <p class="sidebar-summary__label">{{ t('当前页面') }}</p>
         <strong class="sidebar-summary__title">{{ currentLabel }}</strong>
-        <p class="sidebar-summary__caption">newapi.ai check-in</p>
+        <p class="sidebar-summary__caption">{{ t('任务中心') }}</p>
       </section>
     </aside>
     <div class="page-shell__content">
       <header class="topbar">
         <div class="topbar__context">
-          <span class="topbar__badge">{{ t('控制面') }}</span>
+          <span class="topbar__badge">{{ t('任务中心') }}</span>
           <div class="topbar__title-group">
             <strong>{{ currentLabel }}</strong>
-            <span class="topbar__caption">newapi.ai check-in</span>
+            <span class="topbar__caption">{{ t('多站点多账号签到任务中心') }}</span>
           </div>
         </div>
         <div class="page-shell__mobile-nav">
           <AppSelect
             :model-value="route.path"
             :options="navigationOptions"
-            label="页面导航"
+            :label="t('页面导航')"
             @update:model-value="navigate"
           />
         </div>

@@ -13,10 +13,10 @@ type ScheduleForm = {
 const scheduleOrder = ['main_checkin', 'checkin_996', 'checkin_qaq_al', 'linuxdo_read']
 const scheduleForms = reactive<Record<string, ScheduleForm>>({})
 const messages = reactive<Record<string, string>>({})
-const enabledOptions = [
-  { label: '已启用', value: true },
-  { label: '已禁用', value: false },
-]
+const enabledOptions = computed(() => [
+  { label: t('已启用'), value: true },
+  { label: t('已禁用'), value: false },
+])
 const formatEnabledState = (enabled: boolean) => t(enabled ? '已启用' : '已禁用')
 
 const { data: scheduleResponse, refresh } = await useAsyncData('all-schedules', () => api.listSchedules())
@@ -63,9 +63,9 @@ const schedulerStateLabel = computed(() => `${t('本地调度')} ${t(statusRespo
 <template>
   <AppShell>
     <PageHeader
-      title="调度计划"
-      description="按任务维护 Cron、时区和冷却时间"
-      eyebrow="工作台"
+      :title="t('执行计划')"
+      :description="t('配置自动执行的时间窗口、冷却策略与部署边界')"
+      :eyebrow="t('运维与高级')"
     />
     <div class="button-row page-summary-strip">
       <StatusBadge :label="scheduleCountLabel" state="neutral" />
@@ -97,8 +97,8 @@ const schedulerStateLabel = computed(() => `${t('本地调度')} ${t(statusRespo
         <div v-if="scheduleForms[jobType]" class="stack-list">
           <FieldBlock
             :for-id="`schedule-${jobType}-enabled`"
-            label="启用"
-            description="关闭后保留当前配置，但不会进入自动调度"
+            :label="t('启用')"
+            :description="t('关闭后保留当前配置，但不会进入自动调度')"
           >
             <AppSelect
               :id="`schedule-${jobType}-enabled`"
@@ -109,22 +109,22 @@ const schedulerStateLabel = computed(() => `${t('本地调度')} ${t(statusRespo
           </FieldBlock>
           <FieldBlock
             :for-id="`schedule-${jobType}-cron`"
-            label="Cron 表达式"
-            description="使用五段 Cron：分 时 日 月 周"
+            :label="t('Cron 表达式')"
+            :description="t('使用五段 Cron：分 时 日 月 周')"
           >
             <input :id="`schedule-${jobType}-cron`" v-model="scheduleForms[jobType].cron" class="input input--code">
           </FieldBlock>
           <FieldBlock
             :for-id="`schedule-${jobType}-timezone`"
-            label="时区"
-            description="推荐与部署环境保持一致，例如 Asia/Shanghai"
+            :label="t('时区')"
+            :description="t('推荐与部署环境保持一致，例如 Asia/Shanghai')"
           >
             <input :id="`schedule-${jobType}-timezone`" v-model="scheduleForms[jobType].timezone" class="input input--code">
           </FieldBlock>
           <FieldBlock
             :for-id="`schedule-${jobType}-cooldown`"
-            label="冷却秒数"
-            description="限制同一任务两次自动触发之间的最小间隔"
+            :label="t('冷却秒数')"
+            :description="t('限制同一任务两次自动触发之间的最小间隔')"
           >
             <input
               :id="`schedule-${jobType}-cooldown`"

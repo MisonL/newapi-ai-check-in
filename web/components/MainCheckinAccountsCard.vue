@@ -17,11 +17,11 @@ type AccountRow = {
 
 const accounts = defineModel<AccountRow[]>({ required: true })
 const { t } = useAppI18n()
-const modeOptions = [
-  { label: '不使用', value: 'none' },
-  { label: '全局账号', value: 'global' },
-  { label: '单账号', value: 'single' },
-] as const
+const modeOptions = computed(() => [
+  { label: t('不使用'), value: 'none' },
+  { label: t('全局账号'), value: 'global' },
+  { label: t('单账号'), value: 'single' },
+])
 
 const createAccount = (): AccountRow => ({
   name: '',

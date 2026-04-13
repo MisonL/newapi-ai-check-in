@@ -3,12 +3,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nuxt dev",
-    "build": "nuxt build",
-    "start": "nuxt start"
+    "dev": "env -u NO_COLOR -u FORCE_COLOR nuxt dev --host 0.0.0.0 --port ${NUXT_PORT:-39327}",
+    "build": "env -u NO_COLOR -u FORCE_COLOR nuxt build",
+    "start": "env -u NO_COLOR -u FORCE_COLOR HOST=0.0.0.0 PORT=${NUXT_PORT:-39327} node .output/server/index.mjs",
+    "test:e2e": "env -u NO_COLOR -u FORCE_COLOR playwright test"
   },
   "dependencies": {
     "nuxt": "^3.17.6",
     "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
   }
 }

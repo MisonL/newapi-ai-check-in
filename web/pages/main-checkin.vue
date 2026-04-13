@@ -230,9 +230,9 @@ const mainRuns = computed(() => (jobs.value as any[]) || [])
 <template>
   <AppShell>
     <PageHeader
-      title="主签到"
-      description="集中维护主签到账号、共享凭据和手动运行入口"
-      eyebrow="工作台"
+      :title="t('主链路配置')"
+      :description="t('维护旧版主签到链路的账号、共享凭据和手动执行入口')"
+      :eyebrow="t('运维与高级')"
     >
       <template #actions>
         <div class="button-row">
@@ -250,8 +250,8 @@ const mainRuns = computed(() => (jobs.value as any[]) || [])
     <div class="panel-grid main-checkin-layout">
       <MainCheckinAccountsCard v-model="accounts" />
       <div class="panel-grid main-checkin-side">
-        <OAuthAccountsCard v-model="linuxDoAccounts" title="全局 Linux.do 账号" />
-        <OAuthAccountsCard v-model="githubAccounts" title="全局 GitHub 账号" />
+        <OAuthAccountsCard v-model="linuxDoAccounts" :title="t('全局 Linux.do 账号')" />
+        <OAuthAccountsCard v-model="githubAccounts" :title="t('全局 GitHub 账号')" />
         <section class="card surface-card section-card section-card--editor">
           <div class="section-head">
             <h2 class="card__title">{{ t('自定义提供商') }}</h2>

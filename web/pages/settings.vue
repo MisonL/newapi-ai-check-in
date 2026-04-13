@@ -27,14 +27,14 @@ const passwordForm = reactive({
 })
 const message = ref('')
 const passwordMessage = ref('')
-const booleanOptions = [
-  { label: '已启用', value: true },
-  { label: '已禁用', value: false },
-]
-const browserStrategyOptions = [
+const booleanOptions = computed(() => [
+  { label: t('已启用'), value: true },
+  { label: t('已禁用'), value: false },
+])
+const browserStrategyOptions = computed(() => [
   { label: formatBrowserStrategy('legacy'), value: 'legacy' },
   { label: formatBrowserStrategy('http_only'), value: 'http_only' },
-]
+])
 const notificationEntries = computed(() => Object.entries(notifications))
 const notificationCount = computed(() => notificationEntries.value.filter(([, value]) => String(value).trim()).length)
 const adminStatusLabel = computed(() => `${t('管理员')} ${formatConfigured(Boolean(appStatus.value?.admin_password_configured))}`)
@@ -108,9 +108,9 @@ const isSecretNotificationField = (key: string) => secretNotificationKeys.has(ke
 <template>
   <AppShell>
     <PageHeader
-      title="系统设置"
-      description="统一管理管理员访问、浏览器策略和通知通道"
-      eyebrow="工作台"
+      :title="t('系统设置')"
+      :description="t('统一管理管理员访问、浏览器策略和通知通道')"
+      :eyebrow="t('工作台')"
     />
     <div class="button-row page-summary-strip">
       <StatusBadge :label="adminStatusLabel" :state="appStatus?.admin_password_configured ? 'configured' : 'unconfigured'" />
@@ -141,8 +141,8 @@ const isSecretNotificationField = (key: string) => secretNotificationKeys.has(ke
         </div>
         <FieldBlock
           for-id="settings-admin-password"
-          label="新管理员密码"
-          description="写入后 bootstrap 管理员密码立即失效"
+          :label="t('新管理员密码')"
+          :description="t('写入后 bootstrap 管理员密码立即失效')"
           style="margin-top: 16px;"
         >
           <PasswordField
@@ -153,8 +153,8 @@ const isSecretNotificationField = (key: string) => secretNotificationKeys.has(ke
         </FieldBlock>
         <FieldBlock
           for-id="settings-admin-password-confirm"
-          label="确认密码"
-          description="再次输入相同密码，避免误修改"
+          :label="t('确认密码')"
+          :description="t('再次输入相同密码，避免误修改')"
         >
           <PasswordField
             id="settings-admin-password-confirm"
@@ -174,8 +174,8 @@ const isSecretNotificationField = (key: string) => secretNotificationKeys.has(ke
         </div>
         <FieldBlock
           for-id="settings-debug"
-          label="调试模式"
-          description="仅在排障时开启，用于保留更多运行细节"
+          :label="t('调试模式')"
+          :description="t('仅在排障时开启，用于保留更多运行细节')"
         >
           <AppSelect
             id="settings-debug"
@@ -186,8 +186,8 @@ const isSecretNotificationField = (key: string) => secretNotificationKeys.has(ke
         </FieldBlock>
         <FieldBlock
           for-id="settings-browser-strategy"
-          label="浏览器策略"
-          description="默认优先 HTTP-only，需要真实浏览器能力时再切回传统浏览器"
+          :label="t('浏览器策略')"
+          :description="t('默认优先 HTTP-only，需要真实浏览器能力时再切回传统浏览器')"
         >
           <AppSelect
             id="settings-browser-strategy"
@@ -198,8 +198,8 @@ const isSecretNotificationField = (key: string) => secretNotificationKeys.has(ke
         </FieldBlock>
         <FieldBlock
           for-id="settings-browser-enabled"
-          label="启用浏览器"
-          description="关闭后仅执行无需浏览器上下文的任务"
+          :label="t('启用浏览器')"
+          :description="t('关闭后仅执行无需浏览器上下文的任务')"
         >
           <AppSelect
             id="settings-browser-enabled"

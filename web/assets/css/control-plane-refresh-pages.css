@@ -7,6 +7,41 @@
   margin-bottom: 22px;
 }
 
+.legacy-link-list {
+  display: grid;
+  gap: 10px;
+}
+
+.legacy-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--shell-outline);
+  border-radius: 12px;
+  color: var(--semi-color-text-0);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.6);
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.legacy-link:hover,
+.legacy-link:focus-visible {
+  border-color: rgba(37, 99, 235, 0.4);
+  background: rgba(37, 99, 235, 0.08);
+  transform: translateY(-1px);
+}
+
+.legacy-link--active {
+  border-color: rgba(37, 99, 235, 0.45);
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--shell-accent);
+}
+
+html.dark .legacy-link {
+  background: rgba(15, 23, 42, 0.52);
+}
+
 .stat-card {
   padding: 20px;
 }
