@@ -30,12 +30,12 @@ Affs:
 ```bash
 cp .env.example .env
 $EDITOR .env
-HOST_PORT=3300 docker compose up -d
+docker compose up -d
 docker compose ps
 ```
 
 说明：
-- `HOST_PORT` 可选，默认是 `3000`；如果本机端口冲突，改成别的端口即可。
+- `HOST_PORT` 可选，默认是 `39327`；如果本机端口冲突，改成别的端口即可。
 - `.env` 中至少需要配置 `CONTROL_PLANE_SESSION_SECRET` 和 `CONTROL_PLANE_INTERNAL_TOKEN`；首次部署通常也应设置 `CONTROL_PLANE_ADMIN_PASSWORD`。
 - `.env` 中通过 `CONTROL_PLANE_DEPLOY_MODE` 明确部署模式，避免本地调度和 GitHub Actions 双开。
 - 数据持久化在 compose 命名卷 `runtime_data` 中，不依赖宿主机目录共享。
@@ -56,7 +56,7 @@ docker compose ps
 ```bash
 cp .env.control-plane.example .env
 $EDITOR .env
-HOST_PORT=3300 docker compose up -d
+docker compose up -d
 ```
 
 关键配置：
@@ -75,7 +75,7 @@ HOST_PORT=3300 docker compose up -d
 ```bash
 cp .env.github-actions.example .env
 $EDITOR .env
-HOST_PORT=3300 docker compose up -d
+docker compose up -d
 ```
 
 关键配置：
@@ -89,8 +89,13 @@ HOST_PORT=3300 docker compose up -d
 
 ### WebUI 地址
 
-- 默认地址：`http://127.0.0.1:3000`
-- 若设置了 `HOST_PORT=3300`，则访问：`http://127.0.0.1:3300`
+- 默认地址：`http://127.0.0.1:39327`
+- 若修改了 `HOST_PORT`，则按你设置的端口访问，例如：`http://127.0.0.1:39331`
+
+### 前端本地开发端口
+
+- `web` 目录下执行 `npm run dev` 或 `npm run start` 时，默认端口固定为 `39327`
+- 如需改端口，显式设置 `NUXT_PORT`，例如：`NUXT_PORT=39331 npm run dev`
 
 ### 本地登录口径
 
@@ -105,10 +110,25 @@ HOST_PORT=3300 docker compose up -d
 
 ### WebUI 已支持的管理范围
 
-- `Main Check-in`：主签到账号、Provider、全局 OAuth 账号、代理配置
-- `Aux Jobs`：`checkin_996`、`checkin_qaq_al`、`linuxdo_read`
-- `Schedules`：四类任务的 cron、时区、冷却时间
-- `Settings`：系统开关、通知配置、管理员密码
+- `首页`：今日任务、异常和累计收益总览
+- `站点`：维护 new-api 站点资产、兼容等级和探测结果
+- `账号`：维护站点账号、认证方式、签到状态与累计额度
+- `今日任务`：导入旧配置、生成今日任务、批量执行与单账号重试
+- `历史与报表`：按日期范围查看趋势、完成率和站点汇总
+- `异常处理`：聚合失败或阻塞账号，便于人工复核
+- `Main Check-in / Aux Jobs / Schedules / Settings`：保留为高级配置与兼容链路入口
+
+### 前端验证命令
+
+```bash
+cd web
+npm run build
+npm run test:e2e
+```
+
+说明：
+- `npm run test:e2e` 默认会自动拉起后端测试服务和前端构建产物。
+- 若你已经在本机手动启动了 `18081` 和 `39329` 对应服务，可用 `PLAYWRIGHT_EXTERNAL_SERVER=1 npm run test:e2e` 复用现有服务。
 
 ## 使用方法
 
