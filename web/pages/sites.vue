@@ -92,10 +92,15 @@ const editSite = (site: SiteRecordView) => {
 const saveSite = async () => {
   saveMessage.value = ''
   try {
-    const payload = {
-      ...draft,
+    const payload: Record<string, unknown> = {
       name: draft.name.trim(),
       base_url: draft.base_url.trim(),
+      enabled: draft.enabled,
+      compatibility_level: draft.compatibility_level,
+      last_probe_status: draft.last_probe_status,
+      checkin_enabled_detected: draft.checkin_enabled_detected,
+      checkin_min_quota_detected: draft.checkin_min_quota_detected,
+      checkin_max_quota_detected: draft.checkin_max_quota_detected,
       notes: draft.notes.trim(),
     }
     if (!payload.name || !payload.base_url) {
@@ -103,6 +108,13 @@ const saveSite = async () => {
       return
     }
     if (editingId.value) {
+      payload.id = draft.id
+      if (draft.created_at) {
+        payload.created_at = draft.created_at
+      }
+      if (draft.updated_at) {
+        payload.updated_at = draft.updated_at
+      }
       await api.updateSite(editingId.value, payload)
     } else {
       await api.createSite(payload)

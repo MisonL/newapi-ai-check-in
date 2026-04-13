@@ -1,18 +1,7 @@
 <script setup lang="ts">
 const api = useControlPlane()
-const { locale, t, formatDeployMode } = useAppI18n()
-
-const formatDateTime = (value: string | null | undefined) => {
-  if (!value) {
-    return t('未安排')
-  }
-  return new Intl.DateTimeFormat(locale.value, {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
+const { t, translateError, formatDeployMode } = useAppI18n()
+const { formatDateTime } = useUiDateTime()
 
 const [
   { data: dashboardResponse, refresh: refreshDashboard },
@@ -176,7 +165,7 @@ const homeSummary = computed(() => [
               <StatusBadge :label="t(incident.status)" :state="incident.status === 'failed' || incident.status === 'blocked' ? 'failed' : 'neutral'" />
             </div>
             <p class="muted">{{ incident.site_name }}</p>
-            <p style="margin: 0;">{{ incident.last_error_message }}</p>
+            <p style="margin: 0;">{{ translateError(incident.last_error_message, '任务执行失败') }}</p>
             <p class="muted">{{ formatDateTime(incident.last_checkin_at || incident.last_seen_at) }}</p>
           </article>
         </div>

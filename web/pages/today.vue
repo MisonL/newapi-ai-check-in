@@ -2,7 +2,8 @@
 import type { TaskCenterTodayTaskView } from '../types/controlPlane'
 
 const api = useControlPlane()
-const { locale, t, translateError, formatTrigger } = useAppI18n()
+const { t, translateError, formatTrigger } = useAppI18n()
+const { formatDateTime } = useUiDateTime()
 
 const actionMessage = ref('')
 const actionBusy = ref<'import' | 'generate' | 'execute' | ''>('')
@@ -46,18 +47,6 @@ const executorOptions = computed(() => [
   { label: t('浏览器回退'), value: 'browser_fallback' },
   { label: t('旧兼容链'), value: 'legacy_plugin' },
 ])
-
-const formatDateTime = (value: string | null) => {
-  if (!value) {
-    return t('未安排')
-  }
-  return new Intl.DateTimeFormat(locale.value, {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
 
 const taskState = (status: TaskCenterTodayTaskView['status']) => {
   if (status === 'success') {
@@ -259,7 +248,7 @@ const visibleTasks = computed(() => {
             {{ t('开始 {value}', { value: formatDateTime(task.started_at) }) }} /
             {{ t('结束 {value}', { value: formatDateTime(task.finished_at) }) }}
           </p>
-          <p v-if="task.error_message" style="margin: 0;">{{ task.error_message }}</p>
+          <p v-if="task.error_message" style="margin: 0;">{{ translateError(task.error_message, '任务执行失败') }}</p>
           <div class="button-row">
             <button
               v-if="task.status === 'pending'"

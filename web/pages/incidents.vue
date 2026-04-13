@@ -2,7 +2,8 @@
 import type { IncidentRecordView } from '../types/controlPlane'
 
 const api = useControlPlane()
-const { locale, t } = useAppI18n()
+const { t, translateError } = useAppI18n()
+const { formatDateTime } = useUiDateTime()
 
 const showResolved = ref(false)
 const siteFilter = ref('all')
@@ -28,18 +29,6 @@ const severityOptions = computed(() => [
   { label: t('medium'), value: 'medium' },
   { label: t('low'), value: 'low' },
 ])
-
-const formatDateTime = (value: string | null | undefined) => {
-  if (!value) {
-    return t('未安排')
-  }
-  return new Intl.DateTimeFormat(locale.value, {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
 
 const statusState = (status: IncidentRecordView['status']) => {
   if (status === 'failed' || status === 'blocked') {
@@ -128,7 +117,7 @@ const visibleIncidents = computed(() => {
             <StatusBadge :label="`${t('最近发生')} ${formatDateTime(incident.last_seen_at || incident.last_checkin_at)}`" state="neutral" />
             <StatusBadge :label="incident.resolved ? t('已解决') : t('待处理')" :state="incident.resolved ? 'configured' : 'failed'" />
           </div>
-          <p style="margin: 0;">{{ incident.last_error_message }}</p>
+          <p style="margin: 0;">{{ translateError(incident.last_error_message, '任务执行失败') }}</p>
           <p v-if="incident.detail" class="muted">{{ incident.detail }}</p>
         </article>
       </div>

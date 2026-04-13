@@ -81,6 +81,19 @@ function normalizeLocale(value?: string): AppLocale {
   return supportedLocales.includes(value as AppLocale) ? (value as AppLocale) : 'zh-CN'
 }
 
+function normalizeServerMessage(message: string) {
+  if (serverMessageKeys[message]) {
+    return serverMessageKeys[message]
+  }
+  if (message.startsWith('Invalid JSON response:')) {
+    return '站点返回的不是有效的 new-api 响应，请检查站点地址、反向代理或登录态'
+  }
+  if (message === 'Unexpected response payload') {
+    return '站点响应结构异常，请确认目标站点兼容 new-api 接口'
+  }
+  return message
+}
+
 export function useAppI18n() {
   const localeCookie = useCookie<AppLocale>('app-locale', {
     default: () => 'zh-CN',
@@ -125,7 +138,7 @@ export function useAppI18n() {
     if (!message) {
       return t(fallbackKey)
     }
-    const key = serverMessageKeys[message] || message
+    const key = normalizeServerMessage(message)
     return messages['zh-CN'][key] ? t(key) : message
   }
 

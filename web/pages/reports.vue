@@ -2,14 +2,8 @@
 import type { TaskCenterReportSiteView } from '../types/controlPlane'
 
 const api = useControlPlane()
-const { locale, t } = useAppI18n()
-
-const formatDateInput = (value: Date) => {
-  const year = value.getFullYear()
-  const month = String(value.getMonth() + 1).padStart(2, '0')
-  const day = String(value.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+const { t } = useAppI18n()
+const { formatDate, formatDateInput } = useUiDateTime()
 
 const today = new Date()
 const defaultDateTo = formatDateInput(today)
@@ -18,6 +12,7 @@ const defaultDateFrom = formatDateInput(new Date(today.getTime() - (29 * 24 * 60
 const dateFrom = ref(defaultDateFrom)
 const dateTo = ref(defaultDateTo)
 const siteFilter = ref('all')
+const showEmptyDays = ref(false)
 const reportBusy = ref(false)
 const reportMessage = ref('')
 
@@ -34,6 +29,11 @@ const siteOptions = computed(() => [
 ])
 const visibleSiteSummaries = computed(() => {
   return siteSummaries.value.filter((item) => (siteFilter.value === 'all' ? true : item.site_id === siteFilter.value))
+})
+const visibleDays = computed(() => {
+  return [...days.value]
+    .reverse()
+    .filter((day) => (showEmptyDays.value ? true : day.total_tasks > 0))
 })
 
 const totals = computed(() => {
@@ -64,11 +64,6 @@ const successRate = computed(() => {
   }
   return `${Math.round(((totals.value.successTasks + totals.value.skippedTasks) / totals.value.totalTasks) * 100)}%`
 })
-
-const formatDate = (value: string) => new Intl.DateTimeFormat(locale.value, {
-  month: '2-digit',
-  day: '2-digit',
-}).format(new Date(value))
 
 const applyFilters = async () => {
   if (dateFrom.value > dateTo.value) {
@@ -123,6 +118,17 @@ const applyFilters = async () => {
           :value="`${reportsResponse?.date_from || dateFrom} ~ ${reportsResponse?.date_to || dateTo}`"
           readonly
         >
+      </FieldBlock>
+      <FieldBlock for-id="reports-show-empty-days" :label="t('趋势展示')" :description="t('筛选后只展示存在任务的日期，减少报表噪音')">
+        <AppSelect
+          id="reports-show-empty-days"
+          :model-value="showEmptyDays ? 'all' : 'active'"
+          :options="[
+            { label: t('仅看有任务的日期'), value: 'active' },
+            { label: t('显示空白日期'), value: 'all' },
+          ]"
+          @update:model-value="showEmptyDays = $event === 'all'"
+        />
       </FieldBlock>
     </div>
     <p v-if="reportMessage" class="status-note" aria-live="polite">{{ reportMessage }}</p>
@@ -188,10 +194,10 @@ const applyFilters = async () => {
       <section class="card surface-card" style="grid-column: 1 / -1;">
         <div class="section-head">
           <h2 class="card__title">{{ t('每日趋势') }}</h2>
-          <StatusBadge :label="t('真实任务汇总')" state="info" :dot="false" />
+          <StatusBadge :label="t('趋势日期 {count}', { count: visibleDays.length })" state="info" :dot="false" />
         </div>
-        <div v-if="days.length" class="stack-list">
-          <article v-for="day in [...days].reverse()" :key="day.task_date" class="subcard">
+        <div v-if="visibleDays.length" class="stack-list">
+          <article v-for="day in visibleDays" :key="day.task_date" class="subcard">
             <div class="section-head">
               <strong>{{ formatDate(day.task_date) }}</strong>
               <StatusBadge :label="t('任务 {count}', { count: day.total_tasks })" :state="day.total_tasks ? 'configured' : 'neutral'" />
@@ -208,8 +214,8 @@ const applyFilters = async () => {
         <div v-else class="dashboard-empty">
           <span class="dashboard-empty__icon"><AppIcon name="dashboard" :size="18" /></span>
           <div class="dashboard-empty__copy">
-            <strong>{{ t('暂无历史任务报表') }}</strong>
-            <p class="muted">{{ t('生成并执行今日任务后，这里会开始累计每日趋势。') }}</p>
+            <strong>{{ t(showEmptyDays ? '暂无历史任务报表' : '当前筛选下没有趋势数据') }}</strong>
+            <p class="muted">{{ t(showEmptyDays ? '生成并执行今日任务后，这里会开始累计每日趋势。' : '切换为显示空白日期，或执行今日任务后再查看趋势。') }}</p>
           </div>
           <div class="button-row dashboard-empty__actions">
             <NuxtLink class="button button--secondary" to="/today">{{ t('前往今日任务') }}</NuxtLink>

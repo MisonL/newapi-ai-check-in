@@ -16,7 +16,9 @@ export default defineNuxtConfig({
     controlPlaneToken: '',
     sessionSecret: '',
     sessionMaxAgeSeconds: 60 * 60 * 12,
-    public: {},
+    public: {
+      appTimezone: 'Asia/Shanghai',
+    },
   },
   routeRules: {
     '/api/**': { cors: false }

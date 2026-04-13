@@ -1,6 +1,61 @@
 import { controlPlaneHeaders, controlPlaneUrl } from '../../utils/controlPlane'
 import { assertAuthenticated } from '../../utils/auth'
 
+function taskCenterPath(segments: string[]) {
+  if (segments[1] === 'summary') {
+    return '/api/task-center/summary'
+  }
+  if (segments[1] === 'today') {
+    return '/api/task-center/today'
+  }
+  if (segments[1] === 'incidents') {
+    return '/api/task-center/incidents'
+  }
+  if (segments[1] === 'reports') {
+    return '/api/task-center/reports'
+  }
+  if (segments[1] === 'imports' && segments[2] === 'main-checkin') {
+    return '/api/task-center/imports/main-checkin'
+  }
+  if (segments[1] === 'tasks' && segments[2] === 'generate-today') {
+    return '/api/task-center/tasks/generate-today'
+  }
+  if (segments[1] === 'tasks' && segments[2] === 'execute-today') {
+    return '/api/task-center/tasks/execute-today'
+  }
+  if (segments[1] === 'tasks' && segments[2] && segments[3] === 'retry') {
+    return `/api/task-center/tasks/${segments[2]}/retry`
+  }
+  if (segments[1] === 'tasks' && segments[2] && segments[3] === 'execute') {
+    return `/api/task-center/tasks/${segments[2]}/execute`
+  }
+  return ''
+}
+
+function errorMessageFrom(error: any) {
+  const detail = error?.response?._data?.detail
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail
+  }
+  if (Array.isArray(detail) && detail.length) {
+    return detail
+      .map((item) => {
+        if (typeof item?.msg === 'string' && item.msg.trim()) {
+          return item.msg
+        }
+        return JSON.stringify(item)
+      })
+      .join('; ')
+  }
+  if (detail && typeof detail === 'object') {
+    return JSON.stringify(detail)
+  }
+  if (typeof error?.message === 'string' && error.message.trim()) {
+    return error.message
+  }
+  return 'Control plane request failed'
+}
+
 function mapPath(segments: string[]) {
   if (segments.length === 1 && segments[0] === 'status') {
     return '/api/status'
@@ -20,8 +75,11 @@ function mapPath(segments: string[]) {
     }
     return '/api/jobs'
   }
-  if (segments[0] === 'task-center' && segments[1] === 'summary') {
-    return '/api/task-center/summary'
+  if (segments[0] === 'task-center') {
+    const mapped = taskCenterPath(segments)
+    if (mapped) {
+      return mapped
+    }
   }
   if (segments[0] === 'sites') {
     if (segments[1]) {
@@ -66,7 +124,7 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     throw createError({
       statusCode: error?.response?.status || 500,
-      statusMessage: error?.response?._data?.detail || error?.message || 'Control plane request failed',
+      statusMessage: errorMessageFrom(error),
       data: error?.response?._data
     })
   }

@@ -11,14 +11,9 @@ const emit = defineEmits<{
   select: [runId: string]
 }>()
 
-const { locale, t, formatJobStatus, formatJobType, formatTrigger } = useAppI18n()
+const { t, formatJobStatus, formatJobType, formatTrigger } = useAppI18n()
+const { formatDateTime } = useUiDateTime()
 const logText = computed(() => props.logs.map((item) => `[${item.stream}] ${item.message}`).join('\n'))
-const formatDateTime = (value: string) => new Intl.DateTimeFormat(locale.value, {
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-}).format(new Date(value))
 </script>
 
 <template>

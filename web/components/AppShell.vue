@@ -72,7 +72,8 @@ const logout = async () => {
         </NuxtLink>
       </nav>
       <section class="sidebar-summary surface-card">
-        <p class="sidebar-summary__label">{{ t('运维与高级') }}</p>
+        <p class="sidebar-summary__label">{{ t('高级配置') }}</p>
+        <p class="sidebar-summary__caption">{{ t('仅首次接入、调度调优或排障时使用') }}</p>
         <div class="legacy-link-list">
           <NuxtLink
             v-for="item in advancedItems"
