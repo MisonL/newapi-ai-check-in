@@ -4,22 +4,24 @@ CheckIn 类
 """
 
 import asyncio
-import json
-import inspect
 import hashlib
+import inspect
+import json
 import os
 import tempfile
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlencode, urlparse
 
-from curl_cffi import requests as curl_requests
 from camoufox.async_api import AsyncCamoufox
+from curl_cffi import requests as curl_requests
+
+from utils.browser_utils import aliyun_captcha_check, get_random_user_agent, parse_cookies, take_screenshot
 from utils.config import AccountConfig, ProviderConfig
-from utils.browser_utils import parse_cookies, get_random_user_agent, take_screenshot, aliyun_captcha_check
 from utils.get_cf_clearance import get_cf_clearance
-from utils.http_utils import proxy_resolve, response_resolve
-from utils.topup import topup
 from utils.get_headers import get_curl_cffi_impersonate
+from utils.http_utils import proxy_resolve, response_resolve
 from utils.mask_utils import mask_username
+from utils.topup import topup
+
 
 class CheckIn:
     """newapi.ai 签到管理类"""

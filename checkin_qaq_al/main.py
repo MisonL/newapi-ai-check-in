@@ -12,12 +12,13 @@ from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
+
 from checkin import CheckIn
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils.notify import notify
 from utils.balance_hash import load_balance_hash, save_balance_hash
+from utils.notify import notify
 
 load_dotenv(override=True)
 

@@ -7,14 +7,16 @@ import asyncio
 import hashlib
 import json
 import os
-import sys
 import random
+import sys
 from datetime import datetime
-from dotenv import load_dotenv
+
 from camoufox.async_api import AsyncCamoufox
-from utils.browser_utils import take_screenshot, save_page_content_to_file
-from utils.notify import notify
+from dotenv import load_dotenv
+
+from utils.browser_utils import save_page_content_to_file, take_screenshot
 from utils.mask_utils import mask_username
+from utils.notify import notify
 
 # 默认缓存目录，与 checkin.py 保持一致
 DEFAULT_STORAGE_STATE_DIR = "storage-states"

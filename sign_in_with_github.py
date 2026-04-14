@@ -5,14 +5,16 @@
 
 import json
 import os
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
+
 from camoufox.async_api import AsyncCamoufox
 from playwright_captcha import CaptchaType, ClickSolver, FrameworkType
-from utils.browser_utils import filter_cookies, take_screenshot, save_page_content_to_file
+
+from utils.browser_utils import filter_cookies, save_page_content_to_file, take_screenshot
 from utils.config import ProviderConfig
-from utils.wait_for_secrets import WaitForSecrets
 from utils.get_headers import get_browser_headers, print_browser_headers
 from utils.storage_state import ensure_storage_state_from_env
+from utils.wait_for_secrets import WaitForSecrets
 
 STORAGE_STATE_ENV_NAME = "STORATE_STATES_GITHUB"
 

@@ -15,16 +15,16 @@ import hashlib
 import json
 import os
 import time
-from typing import TYPE_CHECKING, Generator, AsyncGenerator
-from urllib.parse import urlparse, parse_qs
+from typing import TYPE_CHECKING, AsyncGenerator, Generator
+from urllib.parse import parse_qs, urlparse
 
 from camoufox.async_api import AsyncCamoufox
 from curl_cffi import requests as curl_requests
 
-from utils.browser_utils import take_screenshot, save_page_content_to_file
-from utils.http_utils import proxy_resolve, response_resolve
-from utils.get_headers import get_curl_cffi_impersonate
+from utils.browser_utils import save_page_content_to_file, take_screenshot
 from utils.get_cf_clearance import get_cf_clearance
+from utils.get_headers import get_curl_cffi_impersonate
+from utils.http_utils import proxy_resolve, response_resolve
 
 if TYPE_CHECKING:
     from utils.config import AccountConfig

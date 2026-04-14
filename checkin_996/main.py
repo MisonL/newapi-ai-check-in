@@ -12,13 +12,14 @@ from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
+
 from checkin import CheckIn
 
 # Add parent directory to Python path to find utils module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils.notify import notify
 from utils.balance_hash import load_balance_hash, save_balance_hash
+from utils.notify import notify
 
 load_dotenv(override=True)
 

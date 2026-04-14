@@ -36,7 +36,7 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="login-page">
+  <main class="login-page">
     <div class="login-shell surface-card">
       <section class="login-shell__intro">
         <div class="brand">
@@ -90,5 +90,5 @@ const submit = async () => {
         </div>
       </form>
     </div>
-  </div>
+  </main>
 </template>
