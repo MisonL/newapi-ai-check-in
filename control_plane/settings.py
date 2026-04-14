@@ -60,7 +60,7 @@ class Settings:
             os.getenv("CONTROL_PLANE_SCHEDULER_ENABLED"),
         )
         self.default_debug = _parse_bool(os.getenv("CONTROL_PLANE_DEBUG"), False)
-        self.default_browser_strategy = os.getenv("CONTROL_PLANE_BROWSER_STRATEGY", "legacy")
+        self.default_browser_strategy = os.getenv("CONTROL_PLANE_BROWSER_STRATEGY", "http_only")
         self.default_browser_enabled = _parse_bool(os.getenv("CONTROL_PLANE_BROWSER_ENABLED"), False)
         self.base_dir = base_dir
         self.db_path = base_dir / "control_plane.db"
@@ -74,7 +74,7 @@ class Settings:
             "debug": self.default_debug,
             "browser_strategy": self.default_browser_strategy,
             "browser_enabled": self.default_browser_enabled,
-            "main_checkin_engine": "legacy",
+            "main_checkin_engine": "task_center",
             "admin_password_hash": "",
         }
 

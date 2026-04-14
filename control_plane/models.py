@@ -40,9 +40,9 @@ class TriggerType(str, Enum):
 
 class SystemConfig(BaseModel):
     debug: bool = False
-    browser_strategy: Literal["legacy", "http_only"] = "legacy"
+    browser_strategy: Literal["legacy", "http_only"] = "http_only"
     browser_enabled: bool = False
-    main_checkin_engine: Literal["legacy", "task_center"] = "legacy"
+    main_checkin_engine: Literal["legacy", "task_center"] = "task_center"
     admin_password_hash: str = ""
 
 

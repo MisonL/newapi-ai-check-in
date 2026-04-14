@@ -170,7 +170,7 @@ const visibleTasks = computed(() => {
       <template #actions>
         <div class="button-row">
           <button class="button button--secondary" :disabled="actionBusy !== ''" @click="importConfig">
-            {{ actionBusy === 'import' ? t('导入中') : t('导入旧配置') }}
+            {{ actionBusy === 'import' ? t('导入中') : t('导入主签到配置') }}
           </button>
           <button class="button button--secondary" :disabled="actionBusy !== ''" @click="generateTasks">
             {{ actionBusy === 'generate' ? t('生成中') : t('生成今日任务') }}
@@ -278,7 +278,7 @@ const visibleTasks = computed(() => {
         <span class="dashboard-empty__icon"><AppIcon name="jobs" :size="18" /></span>
         <div class="dashboard-empty__copy">
           <strong>{{ t('今日还没有生成账号任务') }}</strong>
-          <p class="muted">{{ t('先导入旧配置，再生成今日任务，最后批量执行待处理账号。') }}</p>
+          <p class="muted">{{ t('先导入主签到配置，再生成今日任务，最后批量执行待处理账号。') }}</p>
         </div>
       </div>
     </section>

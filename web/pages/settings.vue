@@ -1,11 +1,12 @@
 <script setup lang="ts">
 const api = useControlPlane()
-const { formatBoolean, formatBrowserStrategy, formatConfigured, formatNotificationField, t, translateError } = useAppI18n()
+const { formatBoolean, formatBrowserStrategy, formatConfigured, formatMainCheckinEngine, formatNotificationField, t, translateError } = useAppI18n()
 
 const system = reactive({
   debug: false,
-  browser_strategy: 'legacy',
-  browser_enabled: false
+  browser_strategy: 'http_only',
+  browser_enabled: false,
+  main_checkin_engine: 'task_center'
 })
 const notifications = reactive({
   dingding_webhook: '',
@@ -35,9 +36,14 @@ const browserStrategyOptions = computed(() => [
   { label: formatBrowserStrategy('legacy'), value: 'legacy' },
   { label: formatBrowserStrategy('http_only'), value: 'http_only' },
 ])
+const mainEngineOptions = computed(() => [
+  { label: formatMainCheckinEngine('task_center'), value: 'task_center' },
+  { label: formatMainCheckinEngine('legacy'), value: 'legacy' },
+])
 const notificationEntries = computed(() => Object.entries(notifications))
 const notificationCount = computed(() => notificationEntries.value.filter(([, value]) => String(value).trim()).length)
 const adminStatusLabel = computed(() => `${t('管理员')} ${formatConfigured(Boolean(appStatus.value?.admin_password_configured))}`)
+const engineStatusLabel = computed(() => `${t('主签到引擎')} ${formatMainCheckinEngine(system.main_checkin_engine)}`)
 const browserStatusLabel = computed(() => `${t('浏览器')} ${formatBrowserStrategy(system.browser_strategy)}`)
 const notificationStatusLabel = computed(() => `${t('通知项')} ${notificationCount.value}`)
 const secretNotificationKeys = new Set([
@@ -114,6 +120,7 @@ const isSecretNotificationField = (key: string) => secretNotificationKeys.has(ke
     />
     <div class="button-row page-summary-strip">
       <StatusBadge :label="adminStatusLabel" :state="appStatus?.admin_password_configured ? 'configured' : 'unconfigured'" />
+      <StatusBadge :label="engineStatusLabel" state="configured" />
       <StatusBadge :label="browserStatusLabel" state="info" />
       <StatusBadge :label="notificationStatusLabel" state="neutral" />
     </div>
@@ -170,7 +177,7 @@ const isSecretNotificationField = (key: string) => secretNotificationKeys.has(ke
       <section class="card surface-card settings-card settings-card--system">
         <div class="section-head">
           <h2 class="card__title">{{ t('系统') }}</h2>
-          <StatusBadge :label="formatBrowserStrategy(system.browser_strategy)" state="info" />
+          <StatusBadge :label="formatMainCheckinEngine(system.main_checkin_engine)" state="configured" />
         </div>
         <FieldBlock
           for-id="settings-debug"
@@ -182,6 +189,18 @@ const isSecretNotificationField = (key: string) => secretNotificationKeys.has(ke
             :model-value="system.debug"
             :options="booleanOptions"
             @update:model-value="system.debug = $event as boolean"
+          />
+        </FieldBlock>
+        <FieldBlock
+          for-id="settings-main-engine"
+          :label="t('主签到引擎')"
+          :description="t('默认使用任务中心引擎，只有历史站点仍依赖旧脚本时才切回旧链路')"
+        >
+          <AppSelect
+            id="settings-main-engine"
+            :model-value="system.main_checkin_engine"
+            :options="mainEngineOptions"
+            @update:model-value="system.main_checkin_engine = $event as string"
           />
         </FieldBlock>
         <FieldBlock

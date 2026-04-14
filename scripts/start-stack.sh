@@ -22,14 +22,36 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
+start_xvfb() {
+  local base_display="${XVFB_DISPLAY:-:99}"
+  local base_number="${base_display#:}"
+  local offset=0
+
+  while [[ "${offset}" -lt 5 ]]; do
+    local display=":$((base_number + offset))"
+    local lock_file="/tmp/.X$((base_number + offset))-lock"
+    local socket_file="/tmp/.X11-unix/X$((base_number + offset))"
+
+    rm -f "${lock_file}" "${socket_file}"
+    Xvfb "${display}" -screen 0 1280x1024x24 -ac +extension GLX -nolisten tcp >/tmp/xvfb.log 2>&1 &
+    XVFB_PID=$!
+    sleep 1
+
+    if kill -0 "${XVFB_PID}" 2>/dev/null; then
+      export DISPLAY="${display}"
+      return 0
+    fi
+
+    offset=$((offset + 1))
+  done
+
+  return 1
+}
+
 python_command=(.venv/bin/python control_plane_main.py)
 if [[ -z "${DISPLAY:-}" ]]; then
   if command -v Xvfb >/dev/null 2>&1; then
-    export DISPLAY="${XVFB_DISPLAY:-:99}"
-    Xvfb "${DISPLAY}" -screen 0 1280x1024x24 -ac +extension GLX -nolisten tcp >/tmp/xvfb.log 2>&1 &
-    XVFB_PID=$!
-    sleep 1
-    if ! kill -0 "${XVFB_PID}" 2>/dev/null; then
+    if ! start_xvfb; then
       echo "Xvfb failed to start." >&2
       exit 1
     fi

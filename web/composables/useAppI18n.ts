@@ -178,6 +178,7 @@ export function useAppI18n() {
       t(value === 'light' ? '亮色' : value === 'dark' ? '暗色' : '跟随系统'),
     formatNotificationField: (value: string) => t(notificationKeys[value] || value),
     formatBrowserStrategy: (value: string) => t(value === 'http_only' ? '仅 HTTP' : '传统浏览器'),
+    formatMainCheckinEngine: (value: string) => t(value === 'task_center' ? '任务中心引擎' : '旧脚本主链'),
     formatDeployMode: (value?: string) => t(deployModeKeys[value || ''] || value || '-'),
   }
 }

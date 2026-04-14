@@ -245,6 +245,7 @@ export interface SystemConfigView {
   debug: boolean
   browser_strategy: 'legacy' | 'http_only'
   browser_enabled: boolean
+  main_checkin_engine: 'legacy' | 'task_center'
   admin_password_hash?: string
 }
 

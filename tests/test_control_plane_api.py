@@ -26,7 +26,7 @@ def test_control_plane_api_roundtrip(tmp_path):
     settings.deploy_mode = "control_plane"
     settings.scheduler_enabled = True
     settings.default_debug = False
-    settings.default_browser_strategy = "legacy"
+    settings.default_browser_strategy = "http_only"
     settings.default_browser_enabled = False
 
     with TestClient(app) as client:
@@ -41,6 +41,11 @@ def test_control_plane_api_roundtrip(tmp_path):
         assert status_response.json()["scheduler_enabled"] is True
         assert status_response.json()["admin_password_configured"] is False
         assert status_response.json()["bootstrap_password_enabled"] is True
+
+        system_config_response = client.get("/api/config/system", headers=headers)
+        assert system_config_response.status_code == 200
+        assert system_config_response.json()["payload"]["browser_strategy"] == "http_only"
+        assert system_config_response.json()["payload"]["main_checkin_engine"] == "task_center"
 
         bootstrap_login = client.post("/api/system/login", json={"password": "bootstrap-pass"})
         assert bootstrap_login.status_code == 200
@@ -359,7 +364,7 @@ def test_system_config_bootstrap_defaults_follow_environment(tmp_path):
             "debug": True,
             "browser_strategy": "http_only",
             "browser_enabled": True,
-            "main_checkin_engine": "legacy",
+            "main_checkin_engine": "task_center",
             "admin_password_hash": "",
         }
 

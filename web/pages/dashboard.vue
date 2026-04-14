@@ -128,7 +128,7 @@ const homeSummary = computed(() => [
           <span class="dashboard-empty__icon"><AppIcon name="jobs" :size="18" /></span>
           <div class="dashboard-empty__copy">
             <strong>{{ t('今日还没有生成账号任务') }}</strong>
-            <p class="muted">{{ t('请前往今日任务页导入配置并生成当天任务。') }}</p>
+            <p class="muted">{{ t('请前往今日任务页导入主签到配置并生成当天任务。') }}</p>
           </div>
         </div>
       </section>
