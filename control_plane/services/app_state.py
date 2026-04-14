@@ -22,6 +22,8 @@ from control_plane.settings import settings
 from control_plane.storage.base import StorageBackend
 from control_plane.storage.factory import create_storage
 
+SYSTEM_DEFAULTS_VERSION = 2
+
 
 class AppState:
     def __init__(self, storage: StorageBackend) -> None:
@@ -53,7 +55,10 @@ class AppState:
             if not current_payload:
                 self.storage.save_config(domain, default_payload)
                 continue
-            merged_payload = config_models[domain].model_validate({**default_payload, **current_payload}).model_dump()
+            if domain == ConfigDomain.SYSTEM:
+                merged_payload = self._merge_system_payload(default_payload, current_payload)
+            else:
+                merged_payload = config_models[domain].model_validate({**default_payload, **current_payload}).model_dump()
             if merged_payload != current_payload:
                 self.storage.save_config(domain, merged_payload)
         existing_schedule_ids = {item.job_type.value for item in self.storage.list_schedules()}
@@ -62,6 +67,19 @@ class AppState:
             if schedule.job_type == job_type and schedule.job_type.value not in existing_schedule_ids:
                 self.storage.save_schedule(schedule)
                 existing_schedule_ids.add(schedule.job_type.value)
+
+    def _merge_system_payload(self, default_payload: dict, current_payload: dict) -> dict:
+        merged_payload = SystemConfig.model_validate({**default_payload, **current_payload}).model_dump()
+        current_version = int(current_payload.get("defaults_version", 1))
+
+        if current_version < SYSTEM_DEFAULTS_VERSION:
+            if merged_payload["browser_strategy"] == "legacy":
+                merged_payload["browser_strategy"] = default_payload["browser_strategy"]
+            if merged_payload["main_checkin_engine"] == "legacy":
+                merged_payload["main_checkin_engine"] = default_payload["main_checkin_engine"]
+
+        merged_payload["defaults_version"] = SYSTEM_DEFAULTS_VERSION
+        return merged_payload
 
     def status(self) -> AppStatus:
         system_config = SystemConfig.model_validate(self.storage.load_config(ConfigDomain.SYSTEM))

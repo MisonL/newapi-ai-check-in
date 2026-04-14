@@ -43,6 +43,7 @@ class SystemConfig(BaseModel):
     browser_strategy: Literal["legacy", "http_only"] = "http_only"
     browser_enabled: bool = False
     main_checkin_engine: Literal["legacy", "task_center"] = "task_center"
+    defaults_version: int = 2
     admin_password_hash: str = ""
 
 

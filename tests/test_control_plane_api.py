@@ -7,8 +7,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from control_plane.api.app import app, state_holder
+from control_plane.models import ConfigDomain
 from control_plane.security import hash_password
+from control_plane.services.app_state import AppState
 from control_plane.settings import resolve_deploy_mode, settings
+from control_plane.storage.memory import MemoryStorage
 from control_plane.task_center_models import CheckinResultRecord, IncidentRecord
 
 
@@ -46,6 +49,7 @@ def test_control_plane_api_roundtrip(tmp_path):
         assert system_config_response.status_code == 200
         assert system_config_response.json()["payload"]["browser_strategy"] == "http_only"
         assert system_config_response.json()["payload"]["main_checkin_engine"] == "task_center"
+        assert system_config_response.json()["payload"]["defaults_version"] == 2
 
         bootstrap_login = client.post("/api/system/login", json={"password": "bootstrap-pass"})
         assert bootstrap_login.status_code == 200
@@ -365,8 +369,45 @@ def test_system_config_bootstrap_defaults_follow_environment(tmp_path):
             "browser_strategy": "http_only",
             "browser_enabled": True,
             "main_checkin_engine": "task_center",
+            "defaults_version": 2,
             "admin_password_hash": "",
         }
+
+
+def test_system_config_legacy_defaults_are_migrated_once(tmp_path):
+    settings.storage_mode = "memory"
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / "control_plane.db"
+    settings.artifacts_dir = tmp_path / "artifacts"
+    settings.storage_states_dir = tmp_path / "storage-states"
+    settings.logs_dir = tmp_path / "logs"
+    settings.screenshots_dir = tmp_path / "screenshots"
+    settings.internal_token = "test-token"
+    settings.bootstrap_admin_password = "bootstrap-pass"
+    settings.password_iterations = 120000
+    settings.deploy_mode = "control_plane"
+    settings.scheduler_enabled = True
+    settings.default_debug = False
+    settings.default_browser_strategy = "http_only"
+    settings.default_browser_enabled = True
+
+    storage = MemoryStorage(tmp_path / "artifacts")
+    storage.save_config(
+        ConfigDomain.SYSTEM,
+        {
+            "debug": False,
+            "browser_strategy": "legacy",
+            "browser_enabled": True,
+            "main_checkin_engine": "legacy",
+            "admin_password_hash": "",
+        },
+    )
+
+    app_state = AppState(storage)
+    payload = app_state.storage.load_config(ConfigDomain.SYSTEM)
+    assert payload["browser_strategy"] == "http_only"
+    assert payload["main_checkin_engine"] == "task_center"
+    assert payload["defaults_version"] == 2
 
 
 def test_scheduler_can_be_disabled_from_environment(tmp_path):
