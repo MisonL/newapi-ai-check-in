@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const api = useControlPlane()
-const { formatDeployMode, formatJobType, t, translateError } = useAppI18n()
+const { formatDeployMode, formatJobType, t, translateRequestError } = useAppI18n()
 
 type ScheduleForm = {
   job_type: string
@@ -46,7 +46,7 @@ const save = async (jobType: string) => {
     await refreshStatus()
     messages[jobType] = t('调度已保存')
   } catch (error: any) {
-    messages[jobType] = translateError(error?.data?.message || error?.message, '调度保存失败')
+    messages[jobType] = translateRequestError(error, '调度保存失败')
   }
 }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const api = useControlPlane()
-const { formatJobStatus, t, translateError } = useAppI18n()
+const { formatJobStatus, t, translateRequestError } = useAppI18n()
 
 type AccountMode = 'none' | 'global' | 'single'
 type AccountRow = {
@@ -192,7 +192,7 @@ const saveConfig = async () => {
     await refreshConfig()
     saveMessage.value = t('配置已保存')
   } catch (error: any) {
-    saveMessage.value = translateError(error?.data?.message || error?.message, '配置保存失败')
+    saveMessage.value = translateRequestError(error, '配置保存失败')
   }
 }
 
@@ -208,7 +208,7 @@ const runJob = async () => {
     await refreshJobs()
     await refreshLogs()
   } catch (error: any) {
-    runMessage.value = translateError(error?.data?.message || error?.message, '任务执行失败')
+    runMessage.value = translateRequestError(error, '任务执行失败')
   }
 }
 

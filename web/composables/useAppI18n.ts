@@ -11,6 +11,7 @@ const serverMessageKeys: Record<string, string> = {
   'Job run not found': '未找到任务运行记录',
   'Unknown API path': '未知 API 路径',
   'Control plane request failed': '控制面请求失败',
+  'Field required': '必填项',
   'Password is required': '密码不能为空',
   'Login failed': '登录失败',
   'Config save failed': '配置保存失败',
@@ -25,6 +26,10 @@ const serverMessageKeys: Record<string, string> = {
   'Linux.do read requires browser support. Enable browser execution first.': 'Linux.do 阅读依赖浏览器支持，请先启用浏览器执行',
   'Provider anyrouter requires browser support. Enable browser execution or switch to cookie-only accounts.':
     '提供商 anyrouter 依赖浏览器支持，请启用浏览器执行或改用仅 cookies 账号',
+  'Site URL must start with http:// or https://': '站点地址必须以 http:// 或 https:// 开头',
+  'Site URL must include a valid host': '站点地址必须包含有效域名',
+  'Site base URL already exists': '该站点地址已存在，请直接编辑已有站点',
+  'Account already exists for this site and auth mode': '同一站点下已存在相同认证方式和用户名的账号',
 }
 
 const jobTypeKeys: Record<string, string> = {
@@ -67,6 +72,16 @@ const deployModeKeys: Record<string, string> = {
   github_actions: 'GitHub Actions 驱动',
 }
 
+const fieldLabelKeys: Record<string, string> = {
+  name: '站点名称',
+  base_url: '站点地址',
+  site_id: '站点',
+  username: '用户名',
+  password: '密码',
+  api_user: 'API User',
+  session_cookies: 'Cookies',
+}
+
 function render(template: string, params?: Record<string, string | number>) {
   if (!params) {
     return template
@@ -84,6 +99,9 @@ function normalizeLocale(value?: string): AppLocale {
 function normalizeServerMessage(message: string) {
   if (serverMessageKeys[message]) {
     return { key: serverMessageKeys[message] }
+  }
+  if (message.startsWith('Value error, ')) {
+    return normalizeServerMessage(message.slice('Value error, '.length))
   }
   if (message.startsWith('Invalid JSON response:')) {
     return { key: '站点返回的不是有效的 new-api 响应，请检查站点地址、反向代理或登录态' }
@@ -163,12 +181,34 @@ export function useAppI18n() {
       : message
   }
 
+  const translateRequestError = (error: any, fallbackKey = '任务执行失败') => {
+    const directMessage = error?.data?.message || error?.data?.detail || error?.data?.statusMessage || error?.statusMessage
+    if (typeof directMessage === 'string' && directMessage.trim()) {
+      return translateError(directMessage, fallbackKey)
+    }
+    if (Array.isArray(error?.data?.detail) && error.data.detail.length) {
+      const lines = error.data.detail
+        .map((item: any) => {
+          const field = Array.isArray(item?.loc) ? String(item.loc[item.loc.length - 1] || '').trim() : ''
+          const label = fieldLabelKeys[field] ? t(fieldLabelKeys[field]) : field
+          const message = typeof item?.msg === 'string' ? translateError(item.msg, fallbackKey) : t(fallbackKey)
+          return label ? `${label}: ${message}` : message
+        })
+        .filter(Boolean)
+      if (lines.length) {
+        return lines.join('；')
+      }
+    }
+    return translateError(error?.message, fallbackKey)
+  }
+
   return {
     locale,
     locales: supportedLocales,
     setLocale,
     t,
     translateError,
+    translateRequestError,
     formatJobType: (value: string) => t(jobTypeKeys[value] || value),
     formatJobStatus: (value: string) => t(jobStatusKeys[value] || value),
     formatTrigger: (value: string) => t(triggerKeys[value] || value),

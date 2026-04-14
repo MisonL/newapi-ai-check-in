@@ -190,16 +190,20 @@ async def list_sites(app_state: AppStateDep):
 
 @app.post("/api/sites", dependencies=[Depends(require_internal_token)])
 async def create_site(site: SiteRecord, app_state: AppStateDep):
-    app_state.task_center_service.save_site(site)
-    return site
+    try:
+        return app_state.task_center_service.save_site(site)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @app.put("/api/sites/{site_id}", dependencies=[Depends(require_internal_token)])
 async def update_site(site_id: str, site: SiteRecord, app_state: AppStateDep):
     if site.id != site_id:
         raise HTTPException(status_code=400, detail="Site id mismatch")
-    app_state.task_center_service.save_site(site)
-    return site
+    try:
+        return app_state.task_center_service.save_site(site)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @app.get("/api/accounts", dependencies=[Depends(require_internal_token)])
@@ -211,8 +215,10 @@ async def list_accounts(app_state: AppStateDep, site_id: str | None = None):
 async def create_account(account: AccountRecord, app_state: AppStateDep):
     if app_state.storage.get_site(account.site_id) is None:
         raise HTTPException(status_code=400, detail="Site not found")
-    app_state.task_center_service.save_account(account)
-    return account
+    try:
+        return app_state.task_center_service.save_account(account)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @app.put("/api/accounts/{account_id}", dependencies=[Depends(require_internal_token)])
@@ -221,8 +227,10 @@ async def update_account(account_id: str, account: AccountRecord, app_state: App
         raise HTTPException(status_code=400, detail="Account id mismatch")
     if app_state.storage.get_site(account.site_id) is None:
         raise HTTPException(status_code=400, detail="Site not found")
-    app_state.task_center_service.save_account(account)
-    return account
+    try:
+        return app_state.task_center_service.save_account(account)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @app.get("/api/jobs", dependencies=[Depends(require_internal_token)])

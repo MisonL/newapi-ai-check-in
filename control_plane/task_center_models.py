@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from typing import Literal
+from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -42,8 +43,18 @@ class SiteRecord(BaseModel):
 
 	@field_validator("base_url")
 	@classmethod
-	def trim_trailing_slash(cls, value: str) -> str:
-		return value.rstrip("/")
+	def normalize_base_url(cls, value: str) -> str:
+		parsed = urlsplit(value)
+		if parsed.scheme not in {"http", "https"}:
+			raise ValueError("Site URL must start with http:// or https://")
+		if not parsed.netloc:
+			raise ValueError("Site URL must include a valid host")
+		path = parsed.path.rstrip("/")
+		if path.lower().endswith("/api"):
+			path = path[:-4]
+		elif "/api/" in path.lower():
+			path = path[:path.lower().index("/api/")]
+		return urlunsplit((parsed.scheme, parsed.netloc, path.rstrip("/"), "", ""))
 
 
 class AccountRecord(BaseModel):

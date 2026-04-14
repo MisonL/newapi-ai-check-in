@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const api = useControlPlane()
-const { formatBoolean, formatBrowserStrategy, formatConfigured, formatMainCheckinEngine, formatNotificationField, t, translateError } = useAppI18n()
+const { formatBoolean, formatBrowserStrategy, formatConfigured, formatMainCheckinEngine, formatNotificationField, t, translateRequestError } = useAppI18n()
 
 const system = reactive({
   debug: false,
@@ -82,7 +82,7 @@ const save = async () => {
     await refreshStatus()
     message.value = t('设置已保存')
   } catch (error: any) {
-    message.value = translateError(error?.data?.message || error?.message, '设置保存失败')
+    message.value = translateRequestError(error, '设置保存失败')
   }
 }
 
@@ -104,7 +104,7 @@ const savePassword = async () => {
     await refreshStatus()
     passwordMessage.value = t('管理员密码已更新')
   } catch (error: any) {
-    passwordMessage.value = translateError(error?.data?.message || error?.message, '管理员密码更新失败')
+    passwordMessage.value = translateRequestError(error, '管理员密码更新失败')
   }
 }
 

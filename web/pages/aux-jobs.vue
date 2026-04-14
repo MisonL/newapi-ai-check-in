@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const api = useControlPlane()
-const { formatJobStatus, t, translateError } = useAppI18n()
+const { formatJobStatus, t, translateRequestError } = useAppI18n()
 
 type OAuthRow = { username: string; password: string }
 
@@ -88,7 +88,7 @@ const save996 = async () => {
     await refresh996()
     setMessage('checkin_996', t('配置已保存'))
   } catch (error: any) {
-    setMessage('checkin_996', translateError(error?.data?.message || error?.message, '配置保存失败'))
+    setMessage('checkin_996', translateRequestError(error, '配置保存失败'))
   }
 }
 
@@ -103,7 +103,7 @@ const saveQaq = async () => {
     await refreshQaq()
     setMessage('checkin_qaq_al', t('配置已保存'))
   } catch (error: any) {
-    setMessage('checkin_qaq_al', translateError(error?.data?.message || error?.message, '配置保存失败'))
+    setMessage('checkin_qaq_al', translateRequestError(error, '配置保存失败'))
   }
 }
 
@@ -118,7 +118,7 @@ const saveLinuxdo = async () => {
     await refreshLinuxdo()
     setMessage('linuxdo_read', t('配置已保存'))
   } catch (error: any) {
-    setMessage('linuxdo_read', translateError(error?.data?.message || error?.message, '配置保存失败'))
+    setMessage('linuxdo_read', translateRequestError(error, '配置保存失败'))
   }
 }
 
@@ -131,7 +131,7 @@ const runJob = async (jobType: keyof typeof messages) => {
     await refreshLogs()
     setMessage(jobType, t('已创建运行：{id}（{status}）', { id: result.id, status: formatJobStatus(result.status) }))
   } catch (error: any) {
-    setMessage(jobType, translateError(error?.data?.message || error?.message, '任务执行失败'))
+    setMessage(jobType, translateRequestError(error, '任务执行失败'))
   }
 }
 

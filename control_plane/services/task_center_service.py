@@ -29,6 +29,11 @@ class TaskCenterService:
 	def __init__(self, storage: StorageBackend) -> None:
 		self._storage = storage
 
+	def _account_identity(self, account: AccountRecord) -> tuple[str, str, str]:
+		if account.auth_mode == "cookies":
+			return (account.site_id, account.auth_mode, account.api_user)
+		return (account.site_id, account.auth_mode, account.username)
+
 	def _timezone(self) -> ZoneInfo:
 		return ZoneInfo(settings.timezone)
 
@@ -42,6 +47,9 @@ class TaskCenterService:
 		return self._storage.list_sites()
 
 	def save_site(self, site: SiteRecord) -> SiteRecord:
+		for existing in self._storage.list_sites():
+			if existing.id != site.id and existing.base_url == site.base_url:
+				raise ValueError("Site base URL already exists")
 		site.updated_at = datetime.now(timezone.utc)
 		self._storage.save_site(site)
 		return site
@@ -50,6 +58,10 @@ class TaskCenterService:
 		return self._storage.list_accounts(site_id)
 
 	def save_account(self, account: AccountRecord) -> AccountRecord:
+		target_identity = self._account_identity(account)
+		for existing in self._storage.list_accounts():
+			if existing.id != account.id and self._account_identity(existing) == target_identity:
+				raise ValueError("Account already exists for this site and auth mode")
 		account.updated_at = datetime.now(timezone.utc)
 		self._storage.save_account(account)
 		return account

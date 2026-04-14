@@ -2,7 +2,7 @@
 import type { TaskCenterTodayTaskView } from '../types/controlPlane'
 
 const api = useControlPlane()
-const { t, translateError, formatTrigger } = useAppI18n()
+const { t, translateError, translateRequestError, formatTrigger } = useAppI18n()
 const { formatDateTime } = useUiDateTime()
 
 const actionMessage = ref('')
@@ -106,7 +106,7 @@ const executeAction = async (
     }
     await refreshToday()
   } catch (error: any) {
-    actionMessage.value = translateError(error?.data?.message || error?.message, '任务执行失败')
+    actionMessage.value = translateRequestError(error, '任务执行失败')
   } finally {
     actionBusy.value = ''
   }
@@ -131,7 +131,7 @@ const retryTask = async (taskId: string) => {
     actionMessage.value = t('任务已重置为待执行')
     await refreshToday()
   } catch (error: any) {
-    actionMessage.value = translateError(error?.data?.message || error?.message, '任务重试失败')
+    actionMessage.value = translateRequestError(error, '任务重试失败')
   }
 }
 
@@ -142,7 +142,7 @@ const runTask = async (taskId: string) => {
     actionMessage.value = t('账号任务已执行')
     await refreshToday()
   } catch (error: any) {
-    actionMessage.value = translateError(error?.data?.message || error?.message, '任务执行失败')
+    actionMessage.value = translateRequestError(error, '任务执行失败')
   }
 }
 

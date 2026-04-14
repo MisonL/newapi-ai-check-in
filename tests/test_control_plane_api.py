@@ -607,6 +607,150 @@ def test_account_api_supports_cookie_and_oauth_auth_modes(tmp_path):
         assert accounts["GitHub OAuth"]["username"] == "oauth-user"
 
 
+def test_site_api_normalizes_pasted_api_url_to_root(tmp_path):
+    settings.storage_mode = "memory"
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / "control_plane.db"
+    settings.artifacts_dir = tmp_path / "artifacts"
+    settings.storage_states_dir = tmp_path / "storage-states"
+    settings.logs_dir = tmp_path / "logs"
+    settings.screenshots_dir = tmp_path / "screenshots"
+    settings.internal_token = "test-token"
+    settings.bootstrap_admin_password = "bootstrap-pass"
+    settings.password_iterations = 120000
+    settings.deploy_mode = "control_plane"
+    settings.scheduler_enabled = True
+    settings.default_debug = False
+    settings.default_browser_strategy = "legacy"
+    settings.default_browser_enabled = False
+
+    with TestClient(app) as client:
+        headers = {"x-internal-token": "test-token"}
+        response = client.post(
+            "/api/sites",
+            json={"name": "Primary Site", "base_url": "https://example.com/api/user/checkin?month=2026-04", "enabled": True},
+            headers=headers,
+        )
+        assert response.status_code == 200
+        assert response.json()["base_url"] == "https://example.com"
+
+
+def test_site_api_rejects_duplicate_normalized_base_url(tmp_path):
+    settings.storage_mode = "memory"
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / "control_plane.db"
+    settings.artifacts_dir = tmp_path / "artifacts"
+    settings.storage_states_dir = tmp_path / "storage-states"
+    settings.logs_dir = tmp_path / "logs"
+    settings.screenshots_dir = tmp_path / "screenshots"
+    settings.internal_token = "test-token"
+    settings.bootstrap_admin_password = "bootstrap-pass"
+    settings.password_iterations = 120000
+    settings.deploy_mode = "control_plane"
+    settings.scheduler_enabled = True
+    settings.default_debug = False
+    settings.default_browser_strategy = "legacy"
+    settings.default_browser_enabled = False
+
+    with TestClient(app) as client:
+        headers = {"x-internal-token": "test-token"}
+        first = client.post(
+            "/api/sites",
+            json={"name": "Primary Site", "base_url": "https://example.com/api/user/login", "enabled": True},
+            headers=headers,
+        )
+        assert first.status_code == 200
+
+        duplicate = client.post(
+            "/api/sites",
+            json={"name": "Duplicate Site", "base_url": "https://example.com/", "enabled": True},
+            headers=headers,
+        )
+        assert duplicate.status_code == 409
+        assert duplicate.json()["detail"] == "Site base URL already exists"
+
+
+def test_site_api_rejects_invalid_scheme(tmp_path):
+    settings.storage_mode = "memory"
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / "control_plane.db"
+    settings.artifacts_dir = tmp_path / "artifacts"
+    settings.storage_states_dir = tmp_path / "storage-states"
+    settings.logs_dir = tmp_path / "logs"
+    settings.screenshots_dir = tmp_path / "screenshots"
+    settings.internal_token = "test-token"
+    settings.bootstrap_admin_password = "bootstrap-pass"
+    settings.password_iterations = 120000
+    settings.deploy_mode = "control_plane"
+    settings.scheduler_enabled = True
+    settings.default_debug = False
+    settings.default_browser_strategy = "legacy"
+    settings.default_browser_enabled = False
+
+    with TestClient(app) as client:
+        headers = {"x-internal-token": "test-token"}
+        response = client.post(
+            "/api/sites",
+            json={"name": "Primary Site", "base_url": "ftp://example.com", "enabled": True},
+            headers=headers,
+        )
+        assert response.status_code == 422
+        assert response.json()["detail"][0]["msg"] == "Value error, Site URL must start with http:// or https://"
+
+
+def test_account_api_rejects_duplicate_identity_per_site_and_auth_mode(tmp_path):
+    settings.storage_mode = "memory"
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / "control_plane.db"
+    settings.artifacts_dir = tmp_path / "artifacts"
+    settings.storage_states_dir = tmp_path / "storage-states"
+    settings.logs_dir = tmp_path / "logs"
+    settings.screenshots_dir = tmp_path / "screenshots"
+    settings.internal_token = "test-token"
+    settings.bootstrap_admin_password = "bootstrap-pass"
+    settings.password_iterations = 120000
+    settings.deploy_mode = "control_plane"
+    settings.scheduler_enabled = True
+    settings.default_debug = False
+    settings.default_browser_strategy = "legacy"
+    settings.default_browser_enabled = False
+
+    with TestClient(app) as client:
+        headers = {"x-internal-token": "test-token"}
+        site_id = client.post(
+            "/api/sites",
+            json={"name": "Primary Site", "base_url": "https://example.com", "enabled": True},
+            headers=headers,
+        ).json()["id"]
+
+        first = client.post(
+            "/api/accounts",
+            json={
+                "site_id": site_id,
+                "display_name": "Alice",
+                "username": "alice",
+                "password": "secret-pass",
+                "enabled": True,
+            },
+            headers=headers,
+        )
+        assert first.status_code == 200
+
+        duplicate = client.post(
+            "/api/accounts",
+            json={
+                "site_id": site_id,
+                "display_name": "Alice Again",
+                "username": "alice",
+                "password": "secret-pass-2",
+                "enabled": True,
+            },
+            headers=headers,
+        )
+        assert duplicate.status_code == 409
+        assert duplicate.json()["detail"] == "Account already exists for this site and auth mode"
+
+
 def test_task_execute_endpoint_runs_task(monkeypatch, tmp_path):
     settings.storage_mode = "memory"
     settings.base_dir = tmp_path

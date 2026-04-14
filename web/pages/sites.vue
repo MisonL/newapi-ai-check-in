@@ -2,7 +2,7 @@
 import type { AccountRecordView, SiteRecordView } from '../types/controlPlane'
 
 const api = useControlPlane()
-const { t, translateError } = useAppI18n()
+const { t, translateRequestError } = useAppI18n()
 
 const saveMessage = ref('')
 const editingId = ref('')
@@ -92,9 +92,10 @@ const editSite = (site: SiteRecordView) => {
 const saveSite = async () => {
   saveMessage.value = ''
   try {
+    const originalBaseUrl = draft.base_url.trim()
     const payload: Record<string, unknown> = {
       name: draft.name.trim(),
-      base_url: draft.base_url.trim(),
+      base_url: originalBaseUrl,
       enabled: draft.enabled,
       compatibility_level: draft.compatibility_level,
       last_probe_status: draft.last_probe_status,
@@ -115,15 +116,20 @@ const saveSite = async () => {
       if (draft.updated_at) {
         payload.updated_at = draft.updated_at
       }
-      await api.updateSite(editingId.value, payload)
+      const site = await api.updateSite(editingId.value, payload)
+      saveMessage.value = site.base_url === originalBaseUrl
+        ? t('站点已更新')
+        : t('站点已更新，站点地址已归一化为 {value}', { value: site.base_url })
     } else {
-      await api.createSite(payload)
+      const site = await api.createSite(payload)
+      saveMessage.value = site.base_url === originalBaseUrl
+        ? t('站点已创建')
+        : t('站点已创建，站点地址已归一化为 {value}', { value: site.base_url })
     }
     await refreshSites()
-    saveMessage.value = t(editingId.value ? '站点已更新' : '站点已创建')
     resetDraft()
   } catch (error: any) {
-    saveMessage.value = translateError(error?.data?.message || error?.message, '站点保存失败')
+    saveMessage.value = translateRequestError(error, '站点保存失败')
   }
 }
 </script>
@@ -155,7 +161,7 @@ const saveSite = async () => {
           <FieldBlock for-id="site-name" :label="t('站点名称')" :description="t('用于任务中心和报表展示')">
             <input id="site-name" v-model="draft.name" class="input">
           </FieldBlock>
-          <FieldBlock for-id="site-url" :label="t('站点地址')" :description="t('填写 new-api 根地址，例如 https://example.com')">
+          <FieldBlock for-id="site-url" :label="t('站点地址')" :description="t('填写 new-api 根地址，例如 https://example.com；也可以直接粘贴 /api/user/checkin 或 /api/user/login 链接')">
             <input id="site-url" v-model="draft.base_url" class="input input--code">
           </FieldBlock>
           <FieldBlock for-id="site-compatibility" :label="t('兼容等级')" :description="t('用于区分标准接口、浏览器兼容和旧链路兼容站点')">

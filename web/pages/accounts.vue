@@ -2,7 +2,7 @@
 import type { AccountRecordView, SiteRecordView } from '../types/controlPlane'
 
 const api = useControlPlane()
-const { t, translateError } = useAppI18n()
+const { t, translateRequestError } = useAppI18n()
 
 type AccountAuthMode = AccountRecordView['auth_mode']
 
@@ -199,7 +199,7 @@ const saveAccount = async () => {
     saveMessage.value = t(editingId.value ? '账号已更新' : '账号已创建')
     resetDraft()
   } catch (error: any) {
-    saveMessage.value = translateError(error?.data?.message || error?.message, '账号保存失败')
+    saveMessage.value = translateRequestError(error, '账号保存失败')
   }
 }
 

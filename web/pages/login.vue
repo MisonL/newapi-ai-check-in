@@ -4,7 +4,7 @@ const errorMessage = ref('')
 const isSubmitting = ref(false)
 const authState = useAuthState()
 const authExpiresAt = useAuthExpiresAt()
-const { t, translateError } = useAppI18n()
+const { t, translateRequestError } = useAppI18n()
 const highlights = ['首页', '站点', '账号', '今日任务']
 
 const submit = async () => {
@@ -28,7 +28,7 @@ const submit = async () => {
   } catch (error: any) {
     authState.value = false
     authExpiresAt.value = null
-    errorMessage.value = translateError(error?.data?.statusMessage || error?.statusMessage, '登录失败')
+    errorMessage.value = translateRequestError(error, '登录失败')
   } finally {
     isSubmitting.value = false
   }
