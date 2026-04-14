@@ -231,8 +231,8 @@ const mainRuns = computed(() => (jobs.value as any[]) || [])
   <AppShell>
     <PageHeader
       :title="t('主链路配置')"
-      :description="t('维护旧版主签到链路的账号、共享凭据和手动执行入口')"
-      :eyebrow="t('运维与高级')"
+      :description="t('仅在旧配置迁移、兼容站点排障或手动补录时使用')"
+      :eyebrow="t('高级配置')"
     >
       <template #actions>
         <div class="button-row">

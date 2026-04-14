@@ -64,8 +64,8 @@ const schedulerStateLabel = computed(() => `${t('本地调度')} ${t(statusRespo
   <AppShell>
     <PageHeader
       :title="t('执行计划')"
-      :description="t('配置自动执行的时间窗口、冷却策略与部署边界')"
-      :eyebrow="t('运维与高级')"
+      :description="t('只在需要调整自动执行时间、冷却规则或部署边界时修改')"
+      :eyebrow="t('高级配置')"
     />
     <div class="button-row page-summary-strip">
       <StatusBadge :label="scheduleCountLabel" state="neutral" />

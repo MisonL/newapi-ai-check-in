@@ -27,7 +27,24 @@ test('移动端账号页认证方式切换后表单字段同步更新', async ({
 test('移动端账号空态显式禁用无站点创建路径', async ({ page }) => {
   await login(page)
 
-  await page.goto('/accounts')
+  await page.route('**/api/ui/sites**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: '[]',
+    })
+  })
+  await page.route('**/api/ui/accounts**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: '[]',
+    })
+  })
+
+  await page.getByRole('button', { name: /页面导航 首页|Page Navigation Home/ }).click()
+  await page.getByRole('option', { name: /^账号$|^Accounts$/ }).click()
+  await expect(page).toHaveURL(/\/accounts$/)
   await waitForUiReady(page)
   await expect(page.locator('#account-site')).toBeDisabled()
   await expect(page.getByRole('button', { name: /Create Account|创建账号/ })).toBeDisabled()

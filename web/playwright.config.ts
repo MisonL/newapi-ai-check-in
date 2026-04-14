@@ -4,7 +4,8 @@ const useExternalServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER === '1'
 
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: true,
+  fullyParallel: false,
+  workers: 1,
   retries: 0,
   reporter: 'list',
   use: {
@@ -33,7 +34,7 @@ export default defineConfig({
   webServer: useExternalServer ? undefined : [
     {
       cwd: '..',
-      command: 'env CONTROL_PLANE_PORT=18081 CONTROL_PLANE_BROWSER_ENABLED=false CONTROL_PLANE_SESSION_SECRET=test-session-secret CONTROL_PLANE_INTERNAL_TOKEN=test-internal-token CONTROL_PLANE_ADMIN_PASSWORD=test-admin-password .venv/bin/python control_plane_main.py',
+      command: 'env CONTROL_PLANE_PORT=18081 CONTROL_PLANE_STORAGE_MODE=memory CONTROL_PLANE_BROWSER_ENABLED=false CONTROL_PLANE_SESSION_SECRET=test-session-secret CONTROL_PLANE_INTERNAL_TOKEN=test-internal-token CONTROL_PLANE_ADMIN_PASSWORD=test-admin-password .venv/bin/python control_plane_main.py',
       url: 'http://127.0.0.1:18081/health',
       reuseExistingServer: false,
       timeout: 60000,

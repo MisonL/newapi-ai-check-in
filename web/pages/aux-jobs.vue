@@ -154,8 +154,8 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
   <AppShell>
     <PageHeader
       :title="t('补充任务')"
-      :description="t('维护不属于 new-api 日常签到主线的附加任务')"
-      :eyebrow="t('运维与高级')"
+      :description="t('管理 996 hub、qaq.al、Linux.do 等不属于主签到链路的附加任务')"
+      :eyebrow="t('高级配置')"
     />
     <div class="button-row page-summary-strip">
       <StatusBadge :label="hub996CountLabel" :state="cleanValues(hub996Accounts).length ? 'configured' : 'unconfigured'" />

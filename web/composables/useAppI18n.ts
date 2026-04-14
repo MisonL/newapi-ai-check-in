@@ -83,15 +83,34 @@ function normalizeLocale(value?: string): AppLocale {
 
 function normalizeServerMessage(message: string) {
   if (serverMessageKeys[message]) {
-    return serverMessageKeys[message]
+    return { key: serverMessageKeys[message] }
   }
   if (message.startsWith('Invalid JSON response:')) {
-    return '站点返回的不是有效的 new-api 响应，请检查站点地址、反向代理或登录态'
+    return { key: '站点返回的不是有效的 new-api 响应，请检查站点地址、反向代理或登录态' }
   }
   if (message === 'Unexpected response payload') {
-    return '站点响应结构异常，请确认目标站点兼容 new-api 接口'
+    return { key: '站点响应结构异常，请确认目标站点兼容 new-api 接口' }
   }
-  return message
+  if (message === 'Task center engine requires at least one enabled site') {
+    return { key: '任务中心至少需要一个已启用站点' }
+  }
+  if (message === 'Legacy OAuth executor returned no result') {
+    return { key: '兼容登录链未返回有效结果，请检查站点登录流程或浏览器策略' }
+  }
+  if (message === 'Task requires review') {
+    return { key: '任务结果需要人工复核' }
+  }
+  const failuresMatch = message.match(/^(.+?) completed with failures: (\d+)\/(\d+) succeeded$/)
+  if (failuresMatch) {
+    return {
+      key: '任务执行完成，但有账号失败：成功 {success} / 总数 {total}',
+      params: {
+        success: Number(failuresMatch[2]),
+        total: Number(failuresMatch[3]),
+      },
+    }
+  }
+  return { key: message }
 }
 
 export function useAppI18n() {
@@ -138,8 +157,10 @@ export function useAppI18n() {
     if (!message) {
       return t(fallbackKey)
     }
-    const key = normalizeServerMessage(message)
-    return messages['zh-CN'][key] ? t(key) : message
+    const normalized = normalizeServerMessage(message)
+    return messages['zh-CN'][normalized.key]
+      ? t(normalized.key, normalized.params)
+      : message
   }
 
   return {

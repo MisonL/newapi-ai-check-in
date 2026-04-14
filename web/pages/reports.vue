@@ -65,6 +65,76 @@ const successRate = computed(() => {
   return `${Math.round(((totals.value.successTasks + totals.value.skippedTasks) / totals.value.totalTasks) * 100)}%`
 })
 
+const exportRows = computed(() => {
+  const siteRows = visibleSiteSummaries.value.map((site) => ({
+    section: 'site_summary',
+    date: '',
+    site_name: site.site_name,
+    total_tasks: site.total_tasks,
+    success_tasks: site.success_tasks,
+    skipped_tasks: site.skipped_tasks,
+    blocked_tasks: site.blocked_tasks,
+    failed_tasks: site.failed_tasks,
+    total_quota_awarded: site.total_quota_awarded,
+  }))
+  const dayRows = visibleDays.value.map((day) => ({
+    section: 'daily_trend',
+    date: day.task_date,
+    site_name: '',
+    total_tasks: day.total_tasks,
+    success_tasks: day.success_tasks,
+    skipped_tasks: day.skipped_tasks,
+    blocked_tasks: day.blocked_tasks,
+    failed_tasks: day.failed_tasks,
+    total_quota_awarded: day.total_quota_awarded,
+  }))
+  return [...siteRows, ...dayRows]
+})
+
+const escapeCsv = (value: string | number) => {
+  const text = String(value ?? '')
+  if (text.includes('"') || text.includes(',') || text.includes('\n')) {
+    return `"${text.replaceAll('"', '""')}"`
+  }
+  return text
+}
+
+const exportReport = () => {
+  reportMessage.value = ''
+  if (!exportRows.value.length) {
+    reportMessage.value = t('当前没有可导出的报表数据')
+    return
+  }
+  if (!import.meta.client) {
+    return
+  }
+  const headers = [
+    'section',
+    'date',
+    'site_name',
+    'total_tasks',
+    'success_tasks',
+    'skipped_tasks',
+    'blocked_tasks',
+    'failed_tasks',
+    'total_quota_awarded',
+  ]
+  const csv = [
+    headers.join(','),
+    ...exportRows.value.map((row) => headers.map((header) => escapeCsv((row as Record<string, string | number>)[header] ?? '')).join(',')),
+  ].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `task-center-report-${dateFrom.value}-${dateTo.value}.csv`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+  reportMessage.value = t('已导出当前报表 CSV')
+}
+
 const applyFilters = async () => {
   if (dateFrom.value > dateTo.value) {
     reportMessage.value = t('开始日期不能晚于结束日期')
@@ -92,6 +162,7 @@ const applyFilters = async () => {
           <button class="button button--secondary" :disabled="reportBusy" @click="applyFilters">
             {{ reportBusy ? t('筛选中') : t('应用筛选') }}
           </button>
+          <button class="button button--secondary" :disabled="reportBusy" @click="exportReport">{{ t('导出报表 CSV') }}</button>
           <button class="button button--secondary" :disabled="reportBusy" @click="applyFilters">{{ t('刷新报表') }}</button>
         </div>
       </template>
