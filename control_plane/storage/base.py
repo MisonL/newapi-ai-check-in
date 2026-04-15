@@ -75,6 +75,10 @@ class StorageBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def delete_site(self, site_id: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_accounts(self, site_id: str | None = None) -> list[AccountRecord]:
         raise NotImplementedError
 
@@ -84,6 +88,10 @@ class StorageBackend(ABC):
 
     @abstractmethod
     def save_account(self, account: AccountRecord) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_account(self, account_id: str) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -105,6 +113,10 @@ class StorageBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def delete_daily_task(self, task_id: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_checkin_results(
         self,
         task_id: str | None = None,
@@ -122,6 +134,10 @@ class StorageBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def delete_checkin_result(self, result_id: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_incidents(
         self,
         resolved: bool | None = None,
@@ -132,4 +148,8 @@ class StorageBackend(ABC):
 
     @abstractmethod
     def save_incident(self, incident: IncidentRecord) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_incident(self, incident_id: str) -> None:
         raise NotImplementedError

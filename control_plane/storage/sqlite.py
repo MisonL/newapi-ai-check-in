@@ -190,6 +190,10 @@ class SqliteStorage(StorageBackend):
                 (site.id, site.model_dump_json()),
             )
 
+    def delete_site(self, site_id: str) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM sites WHERE id = ?", (site_id,))
+
     def list_accounts(self, site_id: str | None = None) -> list[AccountRecord]:
         with self._connect() as conn:
             if site_id is None:
@@ -211,6 +215,10 @@ class SqliteStorage(StorageBackend):
                 "ON CONFLICT(id) DO UPDATE SET site_id = excluded.site_id, payload = excluded.payload",
                 (account.id, account.site_id, account.model_dump_json()),
             )
+
+    def delete_account(self, account_id: str) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM accounts WHERE id = ?", (account_id,))
 
     def list_daily_tasks(
         self,
@@ -267,6 +275,10 @@ class SqliteStorage(StorageBackend):
                 ),
             )
 
+    def delete_daily_task(self, task_id: str) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM daily_tasks WHERE id = ?", (task_id,))
+
     def list_checkin_results(
         self,
         task_id: str | None = None,
@@ -318,6 +330,10 @@ class SqliteStorage(StorageBackend):
                 ),
             )
 
+    def delete_checkin_result(self, result_id: str) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM checkin_results WHERE id = ?", (result_id,))
+
     def list_incidents(
         self,
         resolved: bool | None = None,
@@ -359,3 +375,7 @@ class SqliteStorage(StorageBackend):
                     incident.model_dump_json(),
                 ),
             )
+
+    def delete_incident(self, incident_id: str) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM incidents WHERE id = ?", (incident_id,))

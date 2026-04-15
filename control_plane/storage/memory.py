@@ -88,6 +88,9 @@ class MemoryStorage(StorageBackend):
     def save_site(self, site: SiteRecord) -> None:
         self._sites[site.id] = deepcopy(site)
 
+    def delete_site(self, site_id: str) -> None:
+        self._sites.pop(site_id, None)
+
     def list_accounts(self, site_id: str | None = None) -> list[AccountRecord]:
         items = [deepcopy(item) for item in self._accounts.values()]
         if site_id is not None:
@@ -100,6 +103,9 @@ class MemoryStorage(StorageBackend):
 
     def save_account(self, account: AccountRecord) -> None:
         self._accounts[account.id] = deepcopy(account)
+
+    def delete_account(self, account_id: str) -> None:
+        self._accounts.pop(account_id, None)
 
     def list_daily_tasks(
         self,
@@ -132,6 +138,9 @@ class MemoryStorage(StorageBackend):
             del self._daily_tasks[duplicate_id]
         self._daily_tasks[task.id] = deepcopy(task)
 
+    def delete_daily_task(self, task_id: str) -> None:
+        self._daily_tasks.pop(task_id, None)
+
     def list_checkin_results(
         self,
         task_id: str | None = None,
@@ -159,6 +168,9 @@ class MemoryStorage(StorageBackend):
             del self._checkin_results[duplicate_id]
         self._checkin_results[result.id] = deepcopy(result)
 
+    def delete_checkin_result(self, result_id: str) -> None:
+        self._checkin_results.pop(result_id, None)
+
     def list_incidents(
         self,
         resolved: bool | None = None,
@@ -176,3 +188,6 @@ class MemoryStorage(StorageBackend):
 
     def save_incident(self, incident: IncidentRecord) -> None:
         self._incidents[incident.id] = deepcopy(incident)
+
+    def delete_incident(self, incident_id: str) -> None:
+        self._incidents.pop(incident_id, None)

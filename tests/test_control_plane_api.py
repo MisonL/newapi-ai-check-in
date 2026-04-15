@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,7 +12,13 @@ from control_plane.security import hash_password
 from control_plane.services.app_state import AppState
 from control_plane.settings import resolve_deploy_mode, settings
 from control_plane.storage.memory import MemoryStorage
-from control_plane.task_center_models import CheckinResultRecord, IncidentRecord
+from control_plane.task_center_models import (
+    AccountRecord,
+    CheckinResultRecord,
+    DailyTaskRecord,
+    IncidentRecord,
+    SiteRecord,
+)
 
 
 def test_control_plane_api_roundtrip(tmp_path):
@@ -408,6 +414,132 @@ def test_system_config_legacy_defaults_are_migrated_once(tmp_path):
     assert payload["browser_strategy"] == "http_only"
     assert payload["main_checkin_engine"] == "task_center"
     assert payload["defaults_version"] == 2
+
+
+def test_app_state_repairs_duplicate_task_center_records(tmp_path):
+    settings.storage_mode = "memory"
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / "control_plane.db"
+    settings.artifacts_dir = tmp_path / "artifacts"
+    settings.storage_states_dir = tmp_path / "storage-states"
+    settings.logs_dir = tmp_path / "logs"
+    settings.screenshots_dir = tmp_path / "screenshots"
+    settings.internal_token = "test-token"
+    settings.bootstrap_admin_password = "bootstrap-pass"
+    settings.password_iterations = 120000
+    settings.deploy_mode = "control_plane"
+    settings.scheduler_enabled = True
+    settings.default_debug = False
+    settings.default_browser_strategy = "http_only"
+    settings.default_browser_enabled = True
+
+    now = datetime.now(timezone.utc)
+    storage = MemoryStorage(tmp_path / "artifacts")
+
+    primary_site = SiteRecord(name="Primary", base_url="https://example.com/api/user/checkin").model_copy(
+        update={"updated_at": now}
+    )
+    duplicate_site = SiteRecord(name="Duplicate", base_url="https://example.com/").model_copy(
+        update={"updated_at": now - timedelta(minutes=10)}
+    )
+    storage.save_site(primary_site)
+    storage.save_site(duplicate_site)
+
+    primary_account = AccountRecord(
+        site_id=primary_site.id,
+        display_name="Alice",
+        username="alice",
+        password="secret-pass",
+        total_checkins=1,
+        total_quota_awarded=10,
+    ).model_copy(update={"updated_at": now})
+    duplicate_account = AccountRecord(
+        site_id=duplicate_site.id,
+        display_name="",
+        username="alice",
+        password="older-pass",
+        total_checkins=5,
+        total_quota_awarded=88,
+    ).model_copy(update={"updated_at": now - timedelta(minutes=5)})
+    storage.save_account(primary_account)
+    storage.save_account(duplicate_account)
+
+    pending_task = DailyTaskRecord(
+        site_id=primary_site.id,
+        account_id=primary_account.id,
+        task_date=date.today(),
+        status="pending",
+    ).model_copy(update={"updated_at": now - timedelta(minutes=2)})
+    success_task = DailyTaskRecord(
+        site_id=duplicate_site.id,
+        account_id=duplicate_account.id,
+        task_date=date.today(),
+        status="success",
+        started_at=now - timedelta(minutes=3),
+        finished_at=now - timedelta(minutes=1),
+    ).model_copy(update={"updated_at": now - timedelta(minutes=1)})
+    storage.save_daily_task(pending_task)
+    storage.save_daily_task(success_task)
+
+    storage.save_checkin_result(
+        CheckinResultRecord(
+            task_id=pending_task.id,
+            site_id=primary_site.id,
+            account_id=primary_account.id,
+            quota_awarded=8,
+            checkin_date=date.today(),
+            total_checkins=2,
+            total_quota_awarded=18,
+        )
+    )
+    storage.save_incident(
+        IncidentRecord(
+            task_id=success_task.id,
+            account_id=duplicate_account.id,
+            site_id=duplicate_site.id,
+            display_name="Alice duplicate",
+            site_name="Duplicate",
+            status="failed",
+            last_error_message="Need review",
+            type="login_failed",
+        )
+    )
+
+    AppState(storage)
+
+    repaired_sites = storage.list_sites()
+    assert len(repaired_sites) == 1
+    assert repaired_sites[0].id == primary_site.id
+    assert repaired_sites[0].base_url == "https://example.com"
+    assert storage.get_site(duplicate_site.id) is None
+
+    repaired_accounts = storage.list_accounts()
+    assert len(repaired_accounts) == 1
+    assert repaired_accounts[0].id == primary_account.id
+    assert repaired_accounts[0].site_id == primary_site.id
+    assert repaired_accounts[0].total_checkins == 5
+    assert repaired_accounts[0].total_quota_awarded == 88
+    assert storage.get_account(duplicate_account.id) is None
+
+    repaired_tasks = storage.list_daily_tasks(task_date=date.today())
+    assert len(repaired_tasks) == 1
+    assert repaired_tasks[0].id == success_task.id
+    assert repaired_tasks[0].account_id == primary_account.id
+    assert repaired_tasks[0].site_id == primary_site.id
+    assert repaired_tasks[0].status == "success"
+    assert storage.get_daily_task(pending_task.id) is None
+
+    repaired_results = storage.list_checkin_results()
+    assert len(repaired_results) == 1
+    assert repaired_results[0].task_id == success_task.id
+    assert repaired_results[0].account_id == primary_account.id
+    assert repaired_results[0].site_id == primary_site.id
+
+    repaired_incidents = storage.list_incidents()
+    assert len(repaired_incidents) == 1
+    assert repaired_incidents[0].task_id == success_task.id
+    assert repaired_incidents[0].account_id == primary_account.id
+    assert repaired_incidents[0].site_id == primary_site.id
 
 
 def test_scheduler_can_be_disabled_from_environment(tmp_path):
