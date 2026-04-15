@@ -883,6 +883,196 @@ def test_account_api_rejects_duplicate_identity_per_site_and_auth_mode(tmp_path)
         assert duplicate.json()["detail"] == "Account already exists for this site and auth mode"
 
 
+def test_account_delete_endpoint_cascades_related_records(tmp_path):
+    settings.storage_mode = 'memory'
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / 'control_plane.db'
+    settings.artifacts_dir = tmp_path / 'artifacts'
+    settings.storage_states_dir = tmp_path / 'storage-states'
+    settings.logs_dir = tmp_path / 'logs'
+    settings.screenshots_dir = tmp_path / 'screenshots'
+    settings.internal_token = 'test-token'
+    settings.bootstrap_admin_password = 'bootstrap-pass'
+    settings.password_iterations = 120000
+    settings.deploy_mode = 'control_plane'
+    settings.scheduler_enabled = True
+    settings.default_debug = False
+    settings.default_browser_strategy = 'legacy'
+    settings.default_browser_enabled = False
+
+    with TestClient(app) as client:
+        headers = {'x-internal-token': 'test-token'}
+        site_id = client.post(
+            '/api/sites',
+            json={'name': 'Primary Site', 'base_url': 'https://example.com', 'enabled': True},
+            headers=headers,
+        ).json()['id']
+        account_id = client.post(
+            '/api/accounts',
+            json={
+                'site_id': site_id,
+                'display_name': 'Alice',
+                'username': 'alice',
+                'password': 'secret-pass',
+                'enabled': True,
+            },
+            headers=headers,
+        ).json()['id']
+
+        app_state = state_holder['app_state']
+        task = DailyTaskRecord(
+            site_id=site_id,
+            account_id=account_id,
+            task_date=date.today(),
+            status='failed',
+            trigger_type='manual',
+            attempt_count=1,
+        )
+        app_state.storage.save_daily_task(task)
+        app_state.storage.save_checkin_result(
+            CheckinResultRecord(
+                task_id=task.id,
+                site_id=site_id,
+                account_id=account_id,
+                checked_in_today_before_run=False,
+                quota_awarded=100,
+                checkin_date=date.today(),
+                total_checkins=1,
+                total_quota_awarded=100,
+            )
+        )
+        app_state.storage.save_incident(
+            IncidentRecord(
+                site_id=site_id,
+                account_id=account_id,
+                display_name='Alice',
+                site_name='Primary Site',
+                status='failed',
+                last_error_message='Invalid password',
+                task_id=task.id,
+                type='login_failed',
+                severity='high',
+                detail='Invalid password',
+                last_seen_at=datetime.now(timezone.utc),
+                first_seen_at=datetime.now(timezone.utc),
+                resolved=False,
+            )
+        )
+
+        response = client.delete(f'/api/accounts/{account_id}', headers=headers)
+        assert response.status_code == 200
+        assert response.json()['deleted'] is True
+        assert response.json()['daily_tasks_deleted'] == 1
+        assert response.json()['checkin_results_deleted'] == 1
+        assert response.json()['incidents_deleted'] == 1
+        assert app_state.storage.get_account(account_id) is None
+        assert app_state.storage.list_daily_tasks(account_id=account_id) == []
+        assert app_state.storage.list_checkin_results(account_id=account_id) == []
+        assert app_state.storage.list_incidents(account_id=account_id) == []
+
+
+def test_site_delete_endpoint_cascades_all_related_records(tmp_path):
+    settings.storage_mode = 'memory'
+    settings.base_dir = tmp_path
+    settings.db_path = tmp_path / 'control_plane.db'
+    settings.artifacts_dir = tmp_path / 'artifacts'
+    settings.storage_states_dir = tmp_path / 'storage-states'
+    settings.logs_dir = tmp_path / 'logs'
+    settings.screenshots_dir = tmp_path / 'screenshots'
+    settings.internal_token = 'test-token'
+    settings.bootstrap_admin_password = 'bootstrap-pass'
+    settings.password_iterations = 120000
+    settings.deploy_mode = 'control_plane'
+    settings.scheduler_enabled = True
+    settings.default_debug = False
+    settings.default_browser_strategy = 'legacy'
+    settings.default_browser_enabled = False
+
+    with TestClient(app) as client:
+        headers = {'x-internal-token': 'test-token'}
+        site_id = client.post(
+            '/api/sites',
+            json={'name': 'Primary Site', 'base_url': 'https://example.com', 'enabled': True},
+            headers=headers,
+        ).json()['id']
+        first_account_id = client.post(
+            '/api/accounts',
+            json={
+                'site_id': site_id,
+                'display_name': 'Alice',
+                'username': 'alice',
+                'password': 'secret-pass',
+                'enabled': True,
+            },
+            headers=headers,
+        ).json()['id']
+        second_account_id = client.post(
+            '/api/accounts',
+            json={
+                'site_id': site_id,
+                'display_name': 'Bob',
+                'username': 'bob',
+                'password': 'secret-pass',
+                'enabled': True,
+            },
+            headers=headers,
+        ).json()['id']
+
+        app_state = state_holder['app_state']
+        for account_id, title in ((first_account_id, 'Login failed'), (second_account_id, 'Quota blocked')):
+            task = DailyTaskRecord(
+                site_id=site_id,
+                account_id=account_id,
+                task_date=date.today(),
+                status='failed',
+                trigger_type='manual',
+                attempt_count=1,
+            )
+            app_state.storage.save_daily_task(task)
+            app_state.storage.save_checkin_result(
+                CheckinResultRecord(
+                    task_id=task.id,
+                    site_id=site_id,
+                    account_id=account_id,
+                    checked_in_today_before_run=False,
+                    quota_awarded=100,
+                    checkin_date=date.today(),
+                    total_checkins=1,
+                    total_quota_awarded=100,
+                )
+            )
+            app_state.storage.save_incident(
+                IncidentRecord(
+                    site_id=site_id,
+                    account_id=account_id,
+                    display_name='Alice' if account_id == first_account_id else 'Bob',
+                    site_name='Primary Site',
+                    status='failed',
+                    last_error_message=title,
+                    task_id=task.id,
+                    type='task_failed',
+                    severity='high',
+                    detail='Task failed',
+                    last_seen_at=datetime.now(timezone.utc),
+                    first_seen_at=datetime.now(timezone.utc),
+                    resolved=False,
+                )
+            )
+
+        response = client.delete(f'/api/sites/{site_id}', headers=headers)
+        assert response.status_code == 200
+        assert response.json()['deleted'] is True
+        assert response.json()['accounts_deleted'] == 2
+        assert response.json()['daily_tasks_deleted'] == 2
+        assert response.json()['checkin_results_deleted'] == 2
+        assert response.json()['incidents_deleted'] == 2
+        assert app_state.storage.get_site(site_id) is None
+        assert app_state.storage.list_accounts(site_id=site_id) == []
+        assert app_state.storage.list_daily_tasks(site_id=site_id) == []
+        assert app_state.storage.list_checkin_results(site_id=site_id) == []
+        assert app_state.storage.list_incidents(site_id=site_id) == []
+
+
 def test_task_execute_endpoint_runs_task(monkeypatch, tmp_path):
     settings.storage_mode = "memory"
     settings.base_dir = tmp_path

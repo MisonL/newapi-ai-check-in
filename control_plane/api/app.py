@@ -206,6 +206,14 @@ async def update_site(site_id: str, site: SiteRecord, app_state: AppStateDep):
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
+@app.delete("/api/sites/{site_id}", dependencies=[Depends(require_internal_token)])
+async def delete_site(site_id: str, app_state: AppStateDep):
+    try:
+        return app_state.task_center_service.delete_site(site_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail='Site not found') from exc
+
+
 @app.get("/api/accounts", dependencies=[Depends(require_internal_token)])
 async def list_accounts(app_state: AppStateDep, site_id: str | None = None):
     return app_state.task_center_service.list_accounts(site_id)
@@ -231,6 +239,14 @@ async def update_account(account_id: str, account: AccountRecord, app_state: App
         return app_state.task_center_service.save_account(account)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.delete("/api/accounts/{account_id}", dependencies=[Depends(require_internal_token)])
+async def delete_account(account_id: str, app_state: AppStateDep):
+    try:
+        return app_state.task_center_service.delete_account(account_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail='Account not found') from exc
 
 
 @app.get("/api/jobs", dependencies=[Depends(require_internal_token)])

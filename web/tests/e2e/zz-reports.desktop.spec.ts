@@ -4,6 +4,7 @@ import { login, waitForUiReady } from './helpers'
 
 test('报表页默认隐藏空白日期并支持导出 CSV', async ({ page }) => {
   await login(page)
+  let siteId = ''
 
   const setupResult = await page.evaluate(async () => {
     const siteResponse = await fetch('/api/ui/sites', {
@@ -42,27 +43,43 @@ test('报表页默认隐藏空白日期并支持导出 CSV', async ({ page }) =>
       siteStatus: siteResponse.status,
       accountStatus: accountResponse.status,
       taskStatus: taskResponse.status,
+      siteId: site.id,
     }
   })
   expect(setupResult.siteStatus).toBe(200)
   expect(setupResult.accountStatus).toBe(200)
   expect(setupResult.taskStatus).toBe(200)
+  siteId = setupResult.siteId
 
-  await page.goto('/reports')
-  await waitForUiReady(page)
+  try {
+    await page.goto('/reports')
+    await waitForUiReady(page)
 
-  const trendBadge = page.getByText(/趋势日期 \d+|Trend days \d+/)
-  await expect(trendBadge).toContainText('1')
+    const trendBadge = page.getByText(/趋势日期 \d+|Trend days \d+/)
+    await expect(trendBadge).toContainText('1')
 
-  await page.locator('#reports-show-empty-days').click()
-  await page.getByRole('option', { name: /显示空白日期|Show empty days/ }).click()
-  await waitForUiReady(page)
+    await page.locator('#reports-show-empty-days').click()
+    await page.getByRole('option', { name: /显示空白日期|Show empty days/ }).click()
+    await waitForUiReady(page)
 
-  await expect(trendBadge).not.toContainText('1')
+    await expect(trendBadge).not.toContainText('1')
 
-  const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('button', { name: /导出报表 CSV|Export Report CSV/ }).click()
-  const download = await downloadPromise
-  expect(download.suggestedFilename()).toContain('task-center-report-')
-  expect(download.suggestedFilename()).toMatch(/\.csv$/)
+    const downloadPromise = page.waitForEvent('download')
+    await page.getByRole('button', { name: /导出报表 CSV|Export Report CSV/ }).click()
+    const download = await downloadPromise
+    expect(download.suggestedFilename()).toContain('task-center-report-')
+    expect(download.suggestedFilename()).toMatch(/\.csv$/)
+  } finally {
+    if (siteId) {
+      const cleanupResult = await page.evaluate(async (targetSiteId) => {
+        const response = await fetch(`/api/ui/sites/${targetSiteId}`, {
+          method: 'DELETE',
+        })
+        return {
+          status: response.status,
+        }
+      }, siteId)
+      expect(cleanupResult.status).toBe(200)
+    }
+  }
 })

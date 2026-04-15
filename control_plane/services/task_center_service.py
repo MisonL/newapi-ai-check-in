@@ -66,6 +66,64 @@ class TaskCenterService:
 		self._storage.save_account(account)
 		return account
 
+	def delete_account(self, account_id: str) -> dict[str, int | str | bool]:
+		account = self._storage.get_account(account_id)
+		if account is None:
+			raise KeyError(account_id)
+		task_count = 0
+		for task in self._storage.list_daily_tasks(account_id=account_id):
+			self._storage.delete_daily_task(task.id)
+			task_count += 1
+		result_count = 0
+		for result in self._storage.list_checkin_results(account_id=account_id):
+			self._storage.delete_checkin_result(result.id)
+			result_count += 1
+		incident_count = 0
+		for incident in self._storage.list_incidents(account_id=account_id):
+			self._storage.delete_incident(incident.id)
+			incident_count += 1
+		self._storage.delete_account(account_id)
+		return {
+			'deleted': True,
+			'account_id': account_id,
+			'daily_tasks_deleted': task_count,
+			'checkin_results_deleted': result_count,
+			'incidents_deleted': incident_count,
+		}
+
+	def delete_site(self, site_id: str) -> dict[str, int | str | bool]:
+		site = self._storage.get_site(site_id)
+		if site is None:
+			raise KeyError(site_id)
+		account_count = 0
+		task_count = 0
+		result_count = 0
+		incident_count = 0
+		for account in self._storage.list_accounts(site_id=site_id):
+			account_result = self.delete_account(account.id)
+			account_count += 1
+			task_count += int(account_result['daily_tasks_deleted'])
+			result_count += int(account_result['checkin_results_deleted'])
+			incident_count += int(account_result['incidents_deleted'])
+		for task in self._storage.list_daily_tasks(site_id=site_id):
+			self._storage.delete_daily_task(task.id)
+			task_count += 1
+		for result in self._storage.list_checkin_results(site_id=site_id):
+			self._storage.delete_checkin_result(result.id)
+			result_count += 1
+		for incident in self._storage.list_incidents(site_id=site_id):
+			self._storage.delete_incident(incident.id)
+			incident_count += 1
+		self._storage.delete_site(site_id)
+		return {
+			'deleted': True,
+			'site_id': site_id,
+			'accounts_deleted': account_count,
+			'daily_tasks_deleted': task_count,
+			'checkin_results_deleted': result_count,
+			'incidents_deleted': incident_count,
+		}
+
 	def import_from_main_checkin_config(self) -> TaskCenterImportResult:
 		return TaskCenterMainCheckinImporter(self._storage).run()
 
