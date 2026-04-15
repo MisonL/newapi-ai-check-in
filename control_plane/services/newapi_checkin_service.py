@@ -52,6 +52,8 @@ class NewApiCheckinService:
                 auth_result = await client.login(account.username, account.password)
                 if auth_result.phase == 'two_factor_required':
                     return self._blocked('two_factor_required', auth_result.message)
+                if auth_result.error_code == 'turnstile_required':
+                    return self._blocked('turnstile_required', auth_result.message)
                 if not auth_result.success:
                     return self._failed(auth_result.error_code or 'login_failed', auth_result.message)
 
@@ -107,6 +109,9 @@ class NewApiCheckinService:
                     raw_status_payload=status_result.raw_payload,
                     raw_checkin_payload=checkin_result.raw_payload,
                 )
+            reconciled = await self._reconcile_failed_checkin(client, status_result, checkin_result)
+            if reconciled is not None:
+                return reconciled
             return NewApiTaskExecutionResult(
                 task_status='failed',
                 account_status='failed',
@@ -120,6 +125,27 @@ class NewApiCheckinService:
             )
         finally:
             await client.aclose()
+
+    async def _reconcile_failed_checkin(
+        self,
+        client: NewApiClientProtocol,
+        status_result,
+        checkin_result,
+    ) -> NewApiTaskExecutionResult | None:
+        refreshed_status = await client.get_checkin_status()
+        if not refreshed_status.success or not refreshed_status.checked_in_today:
+            return None
+        return NewApiTaskExecutionResult(
+            task_status='skipped',
+            account_status='skipped',
+            error_code='already_checked',
+            error_message=checkin_result.message,
+            checked_in_today_before_run=False,
+            total_checkins=refreshed_status.total_checkins,
+            total_quota_awarded=refreshed_status.total_quota,
+            raw_status_payload=refreshed_status.raw_payload,
+            raw_checkin_payload=checkin_result.raw_payload,
+        )
 
     def _from_status_error(self, error_code: str, message: str, raw_payload: dict[str, Any]) -> NewApiTaskExecutionResult:
         if error_code in {'turnstile_required', 'site_checkin_disabled', 'two_factor_required'}:

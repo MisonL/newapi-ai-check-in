@@ -9,6 +9,7 @@ export default defineNuxtConfig({
     '~/assets/css/control-plane-primitives.css',
     '~/assets/css/control-plane-refresh.css',
     '~/assets/css/control-plane-refresh-pages.css',
+    '~/assets/css/control-plane-polish.css',
     '~/assets/css/control-plane-enhancements.css',
   ],
   runtimeConfig: {

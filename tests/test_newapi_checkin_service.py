@@ -31,10 +31,14 @@ class FakeClient:
 
     async def get_checkin_status(self, month: str = ''):
         self.calls.append(('get_checkin_status', (month,)))
+        if isinstance(self.status_result, list):
+            return self.status_result.pop(0)
         return self.status_result
 
     async def do_checkin(self, turnstile_token: str = ''):
         self.calls.append(('do_checkin', (turnstile_token,)))
+        if isinstance(self.checkin_result, list):
+            return self.checkin_result.pop(0)
         return self.checkin_result
 
     async def aclose(self) -> None:
@@ -113,6 +117,121 @@ def test_newapi_checkin_service_blocks_when_two_factor_required():
     assert result.task_status == 'blocked'
     assert result.error_code == 'two_factor_required'
     assert fake_client.closed is True
+
+
+def test_newapi_checkin_service_blocks_when_login_needs_turnstile():
+    site, account = _site_and_account()
+    fake_client = FakeClient(
+        auth_result=NewApiAuthResult(
+            phase='login_failed',
+            success=False,
+            error_code='turnstile_required',
+            message='Turnstile token 为空',
+        ),
+    )
+    service = NewApiCheckinService(lambda _: fake_client)
+
+    result = asyncio.run(service.run_account(site, account))
+    assert result.task_status == 'blocked'
+    assert result.account_status == 'blocked'
+    assert result.error_code == 'turnstile_required'
+    assert fake_client.closed is True
+
+
+def test_newapi_checkin_service_reconciles_duplicate_checkin_as_skipped():
+    site, account = _site_and_account()
+    fake_client = FakeClient(
+        auth_result=NewApiAuthResult(phase='login_success', success=True, user_id='1'),
+        status_result=[
+            NewApiCheckinStatusResult(
+                success=True,
+                enabled=True,
+                checked_in_today=False,
+                total_checkins=0,
+                total_quota=0,
+                raw_payload={'stats': {'checked_in_today': False}},
+            ),
+            NewApiCheckinStatusResult(
+                success=True,
+                enabled=True,
+                checked_in_today=True,
+                total_checkins=1,
+                total_quota=5724,
+                raw_payload={
+                    'data': {
+                        'stats': {
+                            'checked_in_today': True,
+                            'total_checkins': 1,
+                            'total_quota': 5724,
+                        }
+                    }
+                },
+            ),
+        ],
+        checkin_result=NewApiCheckinActionResult(
+            phase='failed',
+            success=False,
+            error_code='unexpected_response',
+            message='签到失败，请稍后重试',
+            raw_payload={'message': '签到失败，请稍后重试', 'success': False},
+        ),
+    )
+    service = NewApiCheckinService(lambda _: fake_client)
+
+    result = asyncio.run(service.run_account(site, account))
+    assert result.task_status == 'skipped'
+    assert result.account_status == 'skipped'
+    assert result.error_code == 'already_checked'
+    assert result.total_checkins == 1
+    assert result.total_quota_awarded == 5724
+    assert [item[0] for item in fake_client.calls] == ['login', 'get_checkin_status', 'do_checkin', 'get_checkin_status']
+
+
+def test_newapi_checkin_service_blocks_when_site_checkin_disabled():
+    site, account = _site_and_account()
+    fake_client = FakeClient(
+        auth_result=NewApiAuthResult(phase='login_success', success=True, user_id='1'),
+        status_result=NewApiCheckinStatusResult(
+            success=False,
+            error_code='site_checkin_disabled',
+            message='签到功能未启用',
+            raw_payload={'message': '签到功能未启用', 'success': False},
+        ),
+    )
+    service = NewApiCheckinService(lambda _: fake_client)
+
+    result = asyncio.run(service.run_account(site, account))
+    assert result.task_status == 'blocked'
+    assert result.account_status == 'blocked'
+    assert result.error_code == 'site_checkin_disabled'
+
+
+def test_newapi_checkin_service_blocks_when_turnstile_required():
+    site, account = _site_and_account()
+    fake_client = FakeClient(
+        auth_result=NewApiAuthResult(phase='login_success', success=True, user_id='1'),
+        status_result=NewApiCheckinStatusResult(
+            success=True,
+            enabled=True,
+            checked_in_today=False,
+            total_checkins=0,
+            total_quota=0,
+            raw_payload={'stats': {'checked_in_today': False}},
+        ),
+        checkin_result=NewApiCheckinActionResult(
+            phase='turnstile_required',
+            success=False,
+            error_code='turnstile_required',
+            message='Turnstile token 为空',
+            raw_payload={'message': 'Turnstile token 为空', 'success': False},
+        ),
+    )
+    service = NewApiCheckinService(lambda _: fake_client)
+
+    result = asyncio.run(service.run_account(site, account))
+    assert result.task_status == 'blocked'
+    assert result.account_status == 'blocked'
+    assert result.error_code == 'turnstile_required'
 
 
 def test_newapi_checkin_service_fails_on_auth_contract_mismatch():

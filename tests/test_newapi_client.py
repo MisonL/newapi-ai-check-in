@@ -142,6 +142,19 @@ def test_newapi_client_checkin_maps_already_checked_and_turnstile():
     assert 'turnstile=token-1' in session.calls[1][1]
 
 
+def test_newapi_client_checkin_maps_site_disabled():
+    session = FakeSession([FakeResponse({'success': False, 'message': '签到功能未启用'})])
+
+    async def run():
+        client = NewApiClient('https://example.com', session=session)
+        client._user_id = '99'
+        return await client.do_checkin()
+
+    result = asyncio.run(run())
+    assert result.phase == 'site_checkin_disabled'
+    assert result.error_code == 'site_checkin_disabled'
+
+
 def test_newapi_client_rejects_missing_new_api_user_context():
     session = FakeSession([])
 

@@ -6,6 +6,20 @@ const authState = useAuthState()
 const authExpiresAt = useAuthExpiresAt()
 const { t, translateRequestError } = useAppI18n()
 const highlights = ['首页', '站点', '账号', '今日任务']
+const features = [
+  {
+    title: '统一工作台',
+    description: '把站点、账号、任务、异常放到同一个操作面板里统一管理',
+  },
+  {
+    title: '状态可追踪',
+    description: '成功、跳过、阻塞与失败会在当天任务和历史结果中持续收敛',
+  },
+  {
+    title: '接入更稳',
+    description: '先识别站点能力，再选择密码、Cookie 或 OAuth 的适配方式',
+  },
+]
 
 const submit = async () => {
   if (isSubmitting.value) {
@@ -51,6 +65,12 @@ const submit = async () => {
         <p class="login-shell__meta">{{ t('仅管理员可访问，系统会统一管理多站点、多账号的签到任务、收益结果与异常处理') }}</p>
         <div class="login-shell__chips">
           <StatusBadge v-for="item in highlights" :key="item" :label="t(item)" state="neutral" :dot="false" />
+        </div>
+        <div class="login-shell__feature-grid">
+          <article v-for="item in features" :key="item.title" class="login-shell__feature">
+            <strong>{{ t(item.title) }}</strong>
+            <p>{{ t(item.description) }}</p>
+          </article>
         </div>
       </section>
       <form class="card surface-card login-card" @submit.prevent="submit">

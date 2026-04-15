@@ -15,9 +15,9 @@ const items = [
 ]
 
 const advancedItems = [
-  { to: '/main-checkin', label: '主链路配置' },
-  { to: '/schedules', label: '执行计划' },
-  { to: '/aux-jobs', label: '补充任务' },
+  { to: '/main-checkin', label: '主链路配置', icon: 'checkin' },
+  { to: '/schedules', label: '执行计划', icon: 'schedules' },
+  { to: '/aux-jobs', label: '补充任务', icon: 'jobs' },
 ]
 
 const currentItem = computed(() => {
@@ -26,6 +26,23 @@ const currentItem = computed(() => {
 const currentLabel = computed(() => t(currentItem.value?.label || '任务中心'))
 const navigationOptions = computed(() => {
   return [...items, ...advancedItems].map((item) => ({ label: t(item.label), value: item.to }))
+})
+const brandHighlights = computed(() => items.slice(0, 4).map((item) => t(item.label)))
+
+const sessionSummary = computed(() => {
+  if (!authState.value) {
+    return t('未登录')
+  }
+  if (!authExpiresAt.value) {
+    return t('会话有效')
+  }
+  const formatted = new Intl.DateTimeFormat('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(authExpiresAt.value))
+  return t('至 {value}', { value: formatted })
 })
 
 const navigate = async (value: string | number | boolean | null) => {
@@ -53,8 +70,12 @@ const logout = async () => {
           <div class="brand__eyebrow">{{ t('任务中心') }}</div>
           <div class="brand__title">newapi.ai check-in</div>
           <div class="brand__subtitle">{{ t('多站点签到系统') }}</div>
+          <div class="brand__chips">
+            <span v-for="item in brandHighlights" :key="item" class="brand__chip">{{ item }}</span>
+          </div>
         </div>
       </div>
+      <p class="sidebar-nav__section">{{ t('主导航') }}</p>
       <nav class="sidebar-nav" :aria-label="t('主导航')">
         <NuxtLink
           v-for="item in items"
@@ -82,14 +103,25 @@ const logout = async () => {
             class="legacy-link"
             :class="{ 'legacy-link--active': route.path === item.to }"
           >
+            <span class="legacy-link__icon"><AppIcon :name="item.icon" :size="14" /></span>
             {{ t(item.label) }}
           </NuxtLink>
         </div>
       </section>
-      <section class="sidebar-summary surface-card">
+      <section class="sidebar-summary surface-card sidebar-summary--current">
         <p class="sidebar-summary__label">{{ t('当前页面') }}</p>
         <strong class="sidebar-summary__title">{{ currentLabel }}</strong>
         <p class="sidebar-summary__caption">{{ t('任务中心') }}</p>
+        <div class="sidebar-summary__metrics">
+          <div class="sidebar-summary__metric">
+            <span>{{ t('会话') }}</span>
+            <strong>{{ sessionSummary }}</strong>
+          </div>
+          <div class="sidebar-summary__metric">
+            <span>{{ t('访问') }}</span>
+            <strong>{{ t('管理员工作台') }}</strong>
+          </div>
+        </div>
       </section>
     </aside>
     <div class="page-shell__content">
@@ -110,6 +142,10 @@ const logout = async () => {
           />
         </div>
         <div class="topbar__actions">
+          <span class="topbar__status">
+            <span class="topbar__status-dot" />
+            {{ t('管理员会话') }}
+          </span>
           <div class="topbar__utility surface-card">
             <LocaleToggle />
             <ThemeToggle />
