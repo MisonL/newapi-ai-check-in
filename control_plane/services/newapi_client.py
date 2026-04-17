@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Literal
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlencode, urlparse, urlsplit, urlunsplit
 
 from curl_cffi import requests
 
@@ -53,6 +53,7 @@ class NewApiClient:
         self._session = session or requests.AsyncSession()
         self._owns_session = session is None
         self._user_id = ''
+        self._resolved_base_url = ''
 
     @property
     def user_id(self) -> str:
@@ -67,11 +68,12 @@ class NewApiClient:
         cookie_jar = getattr(self._session, 'cookies', None)
         if cookie_jar is None:
             return
-        parsed = urlparse(self._base_url)
-        domain = parsed.hostname or ''
-        for key, value in cookies.items():
-            if hasattr(cookie_jar, 'set'):
-                cookie_jar.set(key, value, domain=domain, path='/')
+        for base_url in self._candidate_base_urls():
+            parsed = urlparse(base_url)
+            domain = parsed.hostname or ''
+            for key, value in cookies.items():
+                if hasattr(cookie_jar, 'set'):
+                    cookie_jar.set(key, value, domain=domain, path='/')
 
     async def login(self, username: str, password: str, turnstile_token: str = '') -> NewApiAuthResult:
         payload = await self._request(
@@ -218,10 +220,25 @@ class NewApiClient:
         query = dict(params or {})
         if turnstile_token:
             query['turnstile'] = turnstile_token
-        url = f'{self._base_url}{path}'
-        if query:
-            url = f'{url}?{urlencode(query)}'
-        response = await self._dispatch(method, url, json, headers)
+        last_exception: Exception | None = None
+        response = None
+        for base_url in self._candidate_base_urls():
+            url = f'{base_url}{path}'
+            if query:
+                url = f'{url}?{urlencode(query)}'
+            try:
+                response = await self._dispatch(method, url, json, headers)
+            except requests.exceptions.RequestException as exc:
+                last_exception = exc
+                continue
+            self._resolved_base_url = base_url
+            break
+        if response is None:
+            return {
+                'success': False,
+                'message': self._connection_error_message(last_exception),
+                'error_code': 'site_unreachable',
+            }
         try:
             payload = response.json()
         except Exception as exc:
@@ -229,6 +246,34 @@ class NewApiClient:
         if isinstance(payload, dict):
             return payload
         return {'success': False, 'message': 'Unexpected response payload', 'error_code': 'unexpected_response'}
+
+    def _candidate_base_urls(self) -> list[str]:
+        if self._resolved_base_url:
+            return [self._resolved_base_url]
+        candidates = [self._base_url]
+        parsed = urlsplit(self._base_url)
+        hostname = (parsed.hostname or '').strip().lower()
+        if hostname not in {'127.0.0.1', 'localhost', '::1'}:
+            return candidates
+        alternate_netloc = 'host.docker.internal'
+        if parsed.port is not None:
+            alternate_netloc = f'{alternate_netloc}:{parsed.port}'
+        alternate = urlunsplit((parsed.scheme, alternate_netloc, parsed.path, '', ''))
+        if alternate.rstrip('/') not in candidates:
+            candidates.append(alternate.rstrip('/'))
+        return candidates
+
+    def _connection_error_message(self, exc: Exception | None) -> str:
+        parsed = urlsplit(self._base_url)
+        hostname = (parsed.hostname or '').strip().lower()
+        if hostname in {'127.0.0.1', 'localhost', '::1'}:
+            return (
+                f'无法连接站点 {self._base_url}。当前控制面运行在 Docker 容器内，'
+                '127.0.0.1/localhost 指向容器本身；请改用 host.docker.internal 或宿主机实际地址。'
+            )
+        if exc is None:
+            return f'无法连接站点 {self._base_url}'
+        return f'无法连接站点 {self._base_url}: {exc}'
 
     async def _dispatch(
         self,

@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 
+from curl_cffi import requests
+
 from control_plane.services.newapi_client import NewApiClient
 
 
@@ -38,6 +40,21 @@ class FakeSession:
 
     async def close(self):
         return None
+
+
+class FallbackSession(FakeSession):
+    def __init__(self, responses: list[FakeResponse]) -> None:
+        super().__init__(responses)
+        self.failed_once = False
+
+    async def post(self, url: str, json: dict | None = None, headers: dict[str, str] | None = None):
+        self.calls.append(('POST', url, json, headers or {}))
+        if not self.failed_once and '127.0.0.1' in url:
+            self.failed_once = True
+            raise requests.exceptions.ConnectionError('connect failed')
+        if not self._responses:
+            raise requests.exceptions.ConnectionError('connect failed')
+        return self._responses.pop(0)
 
 
 def test_newapi_client_login_and_status_attach_new_api_user_header():
@@ -175,3 +192,62 @@ def test_newapi_client_can_bootstrap_cookie_session():
 
     assert client.user_id == '42'
     assert session.cookies.items == [('session', 'abc', 'example.com', '/')]
+
+
+def test_newapi_client_retries_loopback_host_with_host_docker_internal():
+    session = FallbackSession(
+        [
+            FakeResponse(
+                {
+                    'success': True,
+                    'message': '',
+                    'data': {'id': 42, 'username': 'alice', 'display_name': 'Alice'},
+                }
+            ),
+            FakeResponse(
+                {
+                    'success': True,
+                    'message': '',
+                    'data': {
+                        'enabled': True,
+                        'min_quota': 10,
+                        'max_quota': 20,
+                        'stats': {
+                            'total_quota': 1234,
+                            'total_checkins': 5,
+                            'checkin_count': 0,
+                            'checked_in_today': False,
+                            'records': [],
+                        },
+                    },
+                }
+            ),
+        ]
+    )
+
+    async def run():
+        client = NewApiClient('http://127.0.0.1:3001', session=session)
+        auth = await client.login('alice', 'secret-pass')
+        status = await client.get_checkin_status()
+        await client.aclose()
+        return auth, status
+
+    auth, status = asyncio.run(run())
+    assert auth.success is True
+    assert status.success is True
+    assert session.calls[0][1] == 'http://127.0.0.1:3001/api/user/login'
+    assert session.calls[1][1] == 'http://host.docker.internal:3001/api/user/login'
+    assert session.calls[2][1] == 'http://host.docker.internal:3001/api/user/checkin'
+
+
+def test_newapi_client_returns_site_unreachable_when_loopback_remains_unreachable():
+    session = FallbackSession([])
+
+    async def run():
+        client = NewApiClient('http://127.0.0.1:3001', session=session)
+        return await client.login('alice', 'secret-pass')
+
+    auth = asyncio.run(run())
+    assert auth.success is False
+    assert auth.error_code == 'site_unreachable'
+    assert 'Docker 容器内' in auth.message
