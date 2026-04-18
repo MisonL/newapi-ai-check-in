@@ -196,19 +196,19 @@ const saveSite = async () => {
           </div>
         </div>
       </section>
-      <section class="card surface-card">
+      <section class="card surface-card asset-list-card">
         <div class="section-head">
           <h2 class="card__title">{{ t('站点清单') }}</h2>
           <StatusBadge :label="t('真实站点资产')" state="info" :dot="false" />
         </div>
-        <div v-if="sites.length" class="stack-list">
-          <article v-for="site in sites" :key="site.id" class="subcard">
-            <div class="section-head">
+        <div v-if="sites.length" class="asset-list">
+          <article v-for="site in sites" :key="site.id" class="asset-row">
+            <div class="asset-row__title">
               <strong>{{ site.name }}</strong>
-              <StatusBadge :label="site.enabled ? t('已启用') : t('已禁用')" :state="site.enabled ? 'configured' : 'disabled'" />
+              <p class="muted">{{ site.base_url }}</p>
             </div>
-            <p class="muted">{{ site.base_url }}</p>
-            <div class="status-list">
+            <div class="asset-row__stats">
+              <StatusBadge :label="site.enabled ? t('已启用') : t('已禁用')" :state="site.enabled ? 'configured' : 'disabled'" />
               <StatusBadge :label="`${t('兼容等级')} ${t(site.compatibility_level)}`" state="info" />
               <StatusBadge :label="`${t('探测状态')} ${t(site.last_probe_status)}`" state="neutral" />
               <StatusBadge :label="t('账号 {count}', { count: siteMetrics[site.id]?.accountCount || 0 })" :state="(siteMetrics[site.id]?.accountCount || 0) > 0 ? 'configured' : 'neutral'" />
@@ -220,7 +220,7 @@ const saveSite = async () => {
                 :state="site.checkin_enabled_detected ? 'success' : 'neutral'"
               />
             </div>
-            <div class="button-row">
+            <div class="asset-row__actions">
               <button class="button button--secondary" @click="editSite(site)">{{ t('编辑') }}</button>
             </div>
           </article>

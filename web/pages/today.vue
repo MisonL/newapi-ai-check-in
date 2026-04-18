@@ -2,7 +2,7 @@
 import type { TaskCenterTodayTaskView } from '../types/controlPlane'
 
 const api = useControlPlane()
-const { t, translateError, translateRequestError, formatTrigger } = useAppI18n()
+const { t, translateError, translateRequestError } = useAppI18n()
 const { formatDateTime } = useUiDateTime()
 
 const actionMessage = ref('')
@@ -73,19 +73,6 @@ const executorLabel = (executorType: TaskCenterTodayTaskView['executor_type']) =
   }
   return t('标准接口')
 }
-const authModeLabel = (authMode: TaskCenterTodayTaskView['auth_mode']) => {
-  if (authMode === 'cookies') {
-    return t('Cookie 会话')
-  }
-  if (authMode === 'github_oauth') {
-    return t('GitHub OAuth')
-  }
-  if (authMode === 'linuxdo_oauth') {
-    return t('Linux.do OAuth')
-  }
-  return t('密码登录')
-}
-
 const executeAction = async (
   action: 'import' | 'generate' | 'execute',
   runner: () => Promise<{ task_ids?: string[]; created_count?: number; created_accounts?: number }>
@@ -230,26 +217,22 @@ const visibleTasks = computed(() => {
           />
         </FieldBlock>
       </div>
-      <div v-if="visibleTasks.length" class="stack-list">
-        <article v-for="task in visibleTasks" :key="task.id" class="subcard">
-          <div class="section-head">
+      <div v-if="visibleTasks.length" class="task-table">
+        <article v-for="task in visibleTasks" :key="task.id" class="task-row">
+          <div class="task-row__main">
             <strong>{{ task.account_display_name }}</strong>
-            <StatusBadge :label="t(task.status)" :state="taskState(task.status)" />
+            <p class="muted">{{ task.site_name }} / {{ task.username }}</p>
           </div>
-          <p class="muted">{{ task.site_name }} / {{ task.username }}</p>
-          <div class="status-list">
-            <StatusBadge :label="`${t('认证方式')} ${authModeLabel(task.auth_mode)}`" state="neutral" />
-            <StatusBadge :label="`${t('触发方式')} ${formatTrigger(task.trigger_type)}`" state="neutral" />
+          <div class="task-row__meta">
+            <StatusBadge :label="t(task.status)" :state="taskState(task.status)" />
             <StatusBadge :label="`${t('执行链')} ${executorLabel(task.executor_type)}`" state="info" />
-            <StatusBadge :label="t('尝试次数 {count}', { count: task.attempt_count })" state="neutral" />
             <StatusBadge :label="t('奖励额度 {count}', { count: task.quota_awarded })" :state="task.quota_awarded > 0 ? 'configured' : 'neutral'" />
           </div>
-          <p class="muted">
+          <div class="task-row__time muted">
             {{ t('开始 {value}', { value: formatDateTime(task.started_at) }) }} /
             {{ t('结束 {value}', { value: formatDateTime(task.finished_at) }) }}
-          </p>
-          <p v-if="task.error_message" style="margin: 0;">{{ translateError(task.error_message, '任务执行失败') }}</p>
-          <div class="button-row">
+          </div>
+          <div class="task-row__actions">
             <button
               v-if="task.status === 'pending'"
               class="button button--primary"
@@ -265,6 +248,7 @@ const visibleTasks = computed(() => {
               {{ t('重置后重试') }}
             </button>
           </div>
+          <p v-if="task.error_message" class="task-row__error">{{ translateError(task.error_message, '任务执行失败') }}</p>
         </article>
       </div>
       <div v-else-if="tasks.length" class="dashboard-empty">

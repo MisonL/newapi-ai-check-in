@@ -82,12 +82,12 @@ const visibleIncidents = computed(() => {
       <StatusBadge :label="t('未解决 {count}', { count: unresolvedCount })" :state="unresolvedCount ? 'failed' : 'neutral'" />
       <StatusBadge :label="t(showResolved ? '当前包含已解决异常' : '当前仅显示未解决异常')" state="info" />
     </div>
-    <section class="card surface-card">
+    <section class="card surface-card incident-list-card">
       <div class="section-head">
         <h2 class="card__title">{{ t('异常列表') }}</h2>
         <StatusBadge :label="t('账号级异常中心')" state="info" :dot="false" />
       </div>
-      <div class="panel-grid panel-grid--two" style="margin-bottom: 16px;">
+      <div class="panel-grid panel-grid--two incident-list-card__filters">
         <FieldBlock for-id="incident-site-filter" :label="t('站点筛选')" :description="t('按站点查看当前聚合的异常记录')">
           <AppSelect
             id="incident-site-filter"
@@ -121,7 +121,7 @@ const visibleIncidents = computed(() => {
           <p v-if="incident.detail" class="muted">{{ incident.detail }}</p>
         </article>
       </div>
-      <div v-else class="dashboard-empty">
+      <div v-else class="dashboard-empty dashboard-empty--compact">
         <span class="dashboard-empty__icon"><AppIcon name="incidents" :size="18" /></span>
         <div class="dashboard-empty__copy">
           <strong>{{ t('最近没有异常记录') }}</strong>

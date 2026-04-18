@@ -255,7 +255,7 @@ const checkinState = (status: AccountRecordView['last_checkin_status']) => {
     </div>
     <p v-if="saveMessage" class="status-note" aria-live="polite">{{ saveMessage }}</p>
     <div class="panel-grid panel-grid--two">
-      <section class="card surface-card">
+      <section class="card surface-card asset-list-card">
         <div class="section-head">
           <h2 class="card__title">{{ editingId ? t('编辑账号') : t('新增账号') }}</h2>
           <button class="button button--secondary" @click="resetDraft">{{ t('清空表单') }}</button>
@@ -364,21 +364,21 @@ const checkinState = (status: AccountRecordView['last_checkin_status']) => {
             />
           </FieldBlock>
         </div>
-        <div v-if="visibleAccounts.length" class="stack-list">
-          <article v-for="account in visibleAccounts" :key="account.id" class="subcard">
-            <div class="section-head">
+        <div v-if="visibleAccounts.length" class="asset-list">
+          <article v-for="account in visibleAccounts" :key="account.id" class="asset-row">
+            <div class="asset-row__title">
               <strong>{{ account.display_name || account.username }}</strong>
-              <StatusBadge :label="account.enabled ? t('已启用') : t('已禁用')" :state="account.enabled ? 'configured' : 'disabled'" />
+              <p class="muted">{{ siteName(account.site_id) }} / {{ accountIdentity(account) }}</p>
             </div>
-            <p class="muted">{{ siteName(account.site_id) }} / {{ accountIdentity(account) }}</p>
-            <div class="status-list">
+            <div class="asset-row__stats">
+              <StatusBadge :label="account.enabled ? t('已启用') : t('已禁用')" :state="account.enabled ? 'configured' : 'disabled'" />
               <StatusBadge :label="`${t('认证方式')} ${authModeLabel(account.auth_mode)}`" :state="authModeState(account.auth_mode)" />
               <StatusBadge :label="`${t('会话状态')} ${t(account.session_status)}`" state="neutral" />
               <StatusBadge :label="`${t('签到状态')} ${t(account.last_checkin_status)}`" :state="checkinState(account.last_checkin_status)" />
               <StatusBadge :label="`${t('累计签到')} ${account.total_checkins}`" state="info" />
               <StatusBadge :label="`${t('累计额度')} ${account.total_quota_awarded}`" state="configured" />
             </div>
-            <div class="button-row">
+            <div class="asset-row__actions">
               <button class="button button--secondary" @click="editAccount(account)">{{ t('编辑') }}</button>
             </div>
           </article>

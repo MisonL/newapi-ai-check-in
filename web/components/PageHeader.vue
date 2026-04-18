@@ -9,7 +9,7 @@ const { t } = useAppI18n()
 </script>
 
 <template>
-  <section class="page-header surface-card">
+  <section class="page-header page-header--compact surface-card">
     <div class="page-header__copy">
       <div v-if="props.eyebrow" class="page-header__eyebrow-row">
         <p class="page-header__eyebrow">{{ t(props.eyebrow) }}</p>

@@ -3,6 +3,7 @@ const route = useRoute()
 const authState = useAuthState()
 const authExpiresAt = useAuthExpiresAt()
 const { t } = useAppI18n()
+const { formatDateTime } = useUiDateTime()
 
 const items = [
   { to: '/dashboard', label: '首页', icon: 'dashboard' },
@@ -36,12 +37,7 @@ const sessionSummary = computed(() => {
   if (!authExpiresAt.value) {
     return t('会话有效')
   }
-  const formatted = new Intl.DateTimeFormat('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(authExpiresAt.value))
+  const formatted = formatDateTime(authExpiresAt.value)
   return t('至 {value}', { value: formatted })
 })
 
@@ -63,8 +59,8 @@ const logout = async () => {
 <template>
   <a class="skip-link" href="#main-content">{{ t('跳到主要内容') }}</a>
   <div class="page-shell">
-    <aside class="page-shell__sidebar">
-      <div class="brand brand--panel">
+    <aside class="page-shell__sidebar page-shell__sidebar--compact">
+      <div class="brand brand--panel brand--panel-compact">
         <div class="brand__mark" />
         <div class="brand__copy">
           <div class="brand__eyebrow">{{ t('任务中心') }}</div>
@@ -76,7 +72,7 @@ const logout = async () => {
         </div>
       </div>
       <p class="sidebar-nav__section">{{ t('主导航') }}</p>
-      <nav class="sidebar-nav" :aria-label="t('主导航')">
+      <nav class="sidebar-nav sidebar-nav--compact" :aria-label="t('主导航')">
         <NuxtLink
           v-for="item in items"
           :key="item.to"
@@ -125,7 +121,7 @@ const logout = async () => {
       </section>
     </aside>
     <div class="page-shell__content">
-      <header class="topbar">
+      <header class="topbar topbar--compact">
         <div class="topbar__context">
           <span class="topbar__badge">{{ t('任务中心') }}</span>
           <div class="topbar__title-group">

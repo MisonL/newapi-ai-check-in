@@ -167,7 +167,7 @@ const applyFilters = async () => {
         </div>
       </template>
     </PageHeader>
-    <div class="panel-grid panel-grid--two" style="margin-bottom: 24px;">
+    <div class="panel-grid panel-grid--two reports-filters">
       <FieldBlock for-id="reports-date-from" :label="t('开始日期')" :description="t('定义报表统计起点')">
         <input id="reports-date-from" v-model="dateFrom" class="input input--code" type="date">
       </FieldBlock>
@@ -203,7 +203,7 @@ const applyFilters = async () => {
       </FieldBlock>
     </div>
     <p v-if="reportMessage" class="status-note" aria-live="polite">{{ reportMessage }}</p>
-    <div class="stat-grid">
+    <div class="stat-grid reports-summary-grid">
       <section class="card surface-card stat-card">
         <div class="stat-card__head"><p class="stat-card__label">{{ t('累计任务数') }}</p><span class="stat-card__icon"><AppIcon name="jobs" :size="16" /></span></div>
         <div class="stat-card__value">{{ totals.totalTasks }}</div>
@@ -234,24 +234,20 @@ const applyFilters = async () => {
           <StatusBadge :label="t('失败 {count}', { count: totals.failedTasks })" :state="totals.failedTasks ? 'failed' : 'neutral'" />
         </div>
       </section>
-      <section class="card surface-card">
+      <section class="card surface-card report-site-summary-card">
         <div class="section-head">
           <h2 class="card__title">{{ t('站点汇总') }}</h2>
           <StatusBadge :label="t('筛选结果 {count}', { count: visibleSiteSummaries.length })" state="info" :dot="false" />
         </div>
-        <div v-if="visibleSiteSummaries.length" class="stack-list">
-          <article v-for="site in visibleSiteSummaries" :key="site.site_id" class="subcard">
-            <div class="section-head">
-              <strong>{{ site.site_name }}</strong>
-              <StatusBadge :label="t('任务 {count}', { count: site.total_tasks })" :state="site.total_tasks ? 'configured' : 'neutral'" />
-            </div>
-            <div class="status-list">
-              <StatusBadge :label="t('成功 {count}', { count: site.success_tasks })" :state="site.success_tasks ? 'success' : 'neutral'" />
-              <StatusBadge :label="t('跳过 {count}', { count: site.skipped_tasks })" :state="site.skipped_tasks ? 'disabled' : 'neutral'" />
-              <StatusBadge :label="t('阻塞 {count}', { count: site.blocked_tasks })" :state="site.blocked_tasks ? 'failed' : 'neutral'" />
-              <StatusBadge :label="t('失败 {count}', { count: site.failed_tasks })" :state="site.failed_tasks ? 'failed' : 'neutral'" />
-              <StatusBadge :label="t('额度 {count}', { count: site.total_quota_awarded })" :state="site.total_quota_awarded ? 'configured' : 'neutral'" />
-            </div>
+        <div v-if="visibleSiteSummaries.length" class="report-site-rows">
+          <article v-for="site in visibleSiteSummaries" :key="site.site_id" class="report-site-row">
+            <strong>{{ site.site_name }}</strong>
+            <span>{{ t('任务 {count}', { count: site.total_tasks }) }}</span>
+            <span>{{ t('成功 {count}', { count: site.success_tasks }) }}</span>
+            <span>{{ t('跳过 {count}', { count: site.skipped_tasks }) }}</span>
+            <span>{{ t('阻塞 {count}', { count: site.blocked_tasks }) }}</span>
+            <span>{{ t('失败 {count}', { count: site.failed_tasks }) }}</span>
+            <span>{{ t('额度 {count}', { count: site.total_quota_awarded }) }}</span>
           </article>
         </div>
         <div v-else class="dashboard-empty">
@@ -262,24 +258,20 @@ const applyFilters = async () => {
           </div>
         </div>
       </section>
-      <section class="card surface-card" style="grid-column: 1 / -1;">
+      <section class="card surface-card reports-history-card" style="grid-column: 1 / -1;">
         <div class="section-head">
           <h2 class="card__title">{{ t('每日趋势') }}</h2>
           <StatusBadge :label="t('趋势日期 {count}', { count: visibleDays.length })" state="info" :dot="false" />
         </div>
-        <div v-if="visibleDays.length" class="stack-list">
-          <article v-for="day in visibleDays" :key="day.task_date" class="subcard">
-            <div class="section-head">
-              <strong>{{ formatDate(day.task_date) }}</strong>
-              <StatusBadge :label="t('任务 {count}', { count: day.total_tasks })" :state="day.total_tasks ? 'configured' : 'neutral'" />
-            </div>
-            <div class="status-list">
-              <StatusBadge :label="t('成功 {count}', { count: day.success_tasks })" :state="day.success_tasks ? 'success' : 'neutral'" />
-              <StatusBadge :label="t('跳过 {count}', { count: day.skipped_tasks })" :state="day.skipped_tasks ? 'disabled' : 'neutral'" />
-              <StatusBadge :label="t('阻塞 {count}', { count: day.blocked_tasks })" :state="day.blocked_tasks ? 'failed' : 'neutral'" />
-              <StatusBadge :label="t('失败 {count}', { count: day.failed_tasks })" :state="day.failed_tasks ? 'failed' : 'neutral'" />
-              <StatusBadge :label="t('额度 {count}', { count: day.total_quota_awarded })" :state="day.total_quota_awarded ? 'configured' : 'neutral'" />
-            </div>
+        <div v-if="visibleDays.length" class="reports-day-list">
+          <article v-for="day in visibleDays" :key="day.task_date" class="reports-day-row">
+            <strong>{{ formatDate(day.task_date) }}</strong>
+            <span>{{ t('任务 {count}', { count: day.total_tasks }) }}</span>
+            <span>{{ t('成功 {count}', { count: day.success_tasks }) }}</span>
+            <span>{{ t('跳过 {count}', { count: day.skipped_tasks }) }}</span>
+            <span>{{ t('阻塞 {count}', { count: day.blocked_tasks }) }}</span>
+            <span>{{ t('失败 {count}', { count: day.failed_tasks }) }}</span>
+            <span>{{ t('额度 {count}', { count: day.total_quota_awarded }) }}</span>
           </article>
         </div>
         <div v-else class="dashboard-empty">

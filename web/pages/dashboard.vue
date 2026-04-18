@@ -38,10 +38,10 @@ const cards = computed(() => [
 ])
 
 const homeSummary = computed(() => [
-  { label: `${t('部署模式')} ${formatDeployMode(status.value?.deploy_mode)}`, state: status.value?.deploy_mode === 'control_plane' ? 'enabled' : 'info' },
-  { label: `${t('本地调度')} ${t(status.value?.scheduler_enabled ? '已启用' : '已禁用')}`, state: status.value?.scheduler_enabled ? 'enabled' : 'disabled' },
   { label: `${t('今日待处理')} ${today.value?.today_pending || 0}`, state: (today.value?.today_pending || 0) > 0 ? 'info' : 'neutral' },
   { label: `${t('今日累计额度')} ${today.value?.today_quota_awarded || 0}`, state: (today.value?.today_quota_awarded || 0) > 0 ? 'configured' : 'neutral' },
+  { label: `${t('部署模式')} ${formatDeployMode(status.value?.deploy_mode)}`, state: status.value?.deploy_mode === 'control_plane' ? 'enabled' : 'info' },
+  { label: `${t('本地调度')} ${t(status.value?.scheduler_enabled ? '已启用' : '已禁用')}`, state: status.value?.scheduler_enabled ? 'enabled' : 'disabled' },
 ])
 </script>
 
