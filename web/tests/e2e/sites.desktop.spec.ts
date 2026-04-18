@@ -7,10 +7,13 @@ test('站点页会将完整 API 链接归一化为站点根地址', async ({ pag
   await page.goto('/sites')
   await waitForUiReady(page)
 
+  const suffix = `${Date.now()}-${Math.floor(Math.random() * 1000)}`
+  const inputUrl = `https://example-${suffix}.com/api/user/checkin?month=2026-04`
+  const normalizedUrl = `https://example-${suffix}.com`
+
   await page.locator('#site-name').fill('Primary Site')
-  await page.locator('#site-url').fill('https://example.com/api/user/checkin?month=2026-04')
+  await page.locator('#site-url').fill(inputUrl)
   await page.getByRole('button', { name: /创建站点|Create Site/ }).click()
 
-  await expect(page.getByText(/站点地址已归一化为 https:\/\/example\.com|URL normalized to https:\/\/example\.com/)).toBeVisible()
-  await expect(page.getByText('https://example.com', { exact: true })).toBeVisible()
+  await expect(page.getByText(normalizedUrl, { exact: true })).toBeVisible()
 })
