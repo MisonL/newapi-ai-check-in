@@ -163,15 +163,15 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
       <StatusBadge :label="linuxdoCountLabel" :state="cleanOAuthRows(linuxdoAccounts).length ? 'configured' : 'unconfigured'" />
     </div>
     <div class="panel-grid aux-job-layout">
-      <section class="card surface-card aux-job-cluster">
-        <div class="section-head aux-job-cluster__head">
+      <details class="card surface-card aux-job-cluster aux-job-cluster--fold" :open="cleanValues(hub996Accounts).length > 0">
+        <summary class="aux-job-cluster__summary">
           <div class="aux-job-cluster__copy">
             <h2 class="card__title">{{ t('996 hub') }}</h2>
             <p class="muted">{{ t('维护访问令牌与代理设置') }}</p>
           </div>
           <StatusBadge :label="hub996CountLabel" :state="cleanValues(hub996Accounts).length ? 'configured' : 'unconfigured'" />
-        </div>
-        <div class="panel-grid panel-grid--two aux-job-cluster__grid">
+        </summary>
+        <div class="panel-grid panel-grid--two aux-job-cluster__body aux-job-cluster__grid">
           <StringListCard
             v-model="hub996Accounts"
             :title="t('996 hub 账号')"
@@ -196,17 +196,17 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
             <p v-if="messages.checkin_996" class="status-note" role="status" aria-live="polite">{{ messages.checkin_996 }}</p>
           </section>
         </div>
-      </section>
+      </details>
 
-      <section class="card surface-card aux-job-cluster">
-        <div class="section-head aux-job-cluster__head">
+      <details class="card surface-card aux-job-cluster aux-job-cluster--fold" :open="cleanValues(qaqAccounts).length > 0">
+        <summary class="aux-job-cluster__summary">
           <div class="aux-job-cluster__copy">
             <h2 class="card__title">{{ t('qaq.al') }}</h2>
             <p class="muted">{{ t('维护 SID、套餐等级与代理参数') }}</p>
           </div>
           <StatusBadge :label="qaqCountLabel" :state="cleanValues(qaqAccounts).length ? 'configured' : 'unconfigured'" />
-        </div>
-        <div class="panel-grid panel-grid--two aux-job-cluster__grid">
+        </summary>
+        <div class="panel-grid panel-grid--two aux-job-cluster__body aux-job-cluster__grid">
           <StringListCard
             v-model="qaqAccounts"
             :title="t('qaq.al 账号')"
@@ -235,17 +235,17 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
             <p v-if="messages.checkin_qaq_al" class="status-note" role="status" aria-live="polite">{{ messages.checkin_qaq_al }}</p>
           </section>
         </div>
-      </section>
+      </details>
 
-      <section class="card surface-card aux-job-cluster">
-        <div class="section-head aux-job-cluster__head">
+      <details class="card surface-card aux-job-cluster aux-job-cluster--fold" :open="cleanOAuthRows(linuxdoAccounts).length > 0">
+        <summary class="aux-job-cluster__summary">
           <div class="aux-job-cluster__copy">
             <h2 class="card__title">{{ t('Linux.do 阅读') }}</h2>
             <p class="muted">{{ t('维护阅读账号、主题锚点和抓取上限') }}</p>
           </div>
           <StatusBadge :label="linuxdoCountLabel" :state="cleanOAuthRows(linuxdoAccounts).length ? 'configured' : 'unconfigured'" />
-        </div>
-        <div class="panel-grid panel-grid--two aux-job-cluster__grid">
+        </summary>
+        <div class="panel-grid panel-grid--two aux-job-cluster__body aux-job-cluster__grid">
           <OAuthAccountsCard v-model="linuxdoAccounts" :title="t('Linux.do 阅读账号')" />
           <section class="card surface-card">
             <h3 class="card__title">{{ t('Linux.do 阅读选项') }}</h3>
@@ -264,7 +264,7 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
             <p v-if="messages.linuxdo_read" class="status-note" role="status" aria-live="polite">{{ messages.linuxdo_read }}</p>
           </section>
         </div>
-      </section>
+      </details>
 
       <JobRunConsole
         :jobs="auxRuns"

@@ -17,27 +17,27 @@ html.dark .confirm-button {
 @media (max-width: 640px) {
   .main-checkin-side,
   .aux-job-layout {
-    gap: 16px;
+    gap: 8px;
   }
 
   .aux-job-cluster,
   .section-card {
-    padding: 18px;
+    padding: 10px;
   }
 
   .account-card__summary {
-    padding: 14px 16px;
+    padding: 10px 12px;
   }
 
   .account-card__body {
-    padding: 16px 16px 14px;
+    padding: 10px 12px 8px;
   }
 
   .section-card--editor .textarea {
-    min-height: 150px;
+    min-height: 138px;
   }
 
   .console-empty--output {
-    min-height: 180px;
+    min-height: 160px;
   }
 }

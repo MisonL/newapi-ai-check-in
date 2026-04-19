@@ -85,61 +85,62 @@ const schedulerStateLabel = computed(() => `${t('本地调度')} ${t(statusRespo
       <p v-if="statusResponse && !statusResponse.scheduler_enabled" class="muted">{{ t('当前环境已关闭本地调度，页面中的 Cron 配置仅保留为计划，不会在本机自动触发。') }}</p>
     </section>
     <div class="panel-grid panel-grid--two">
-      <section
-        v-for="jobType in scheduleOrder"
-        :key="jobType"
-        class="card surface-card schedule-card"
+      <details
+        v-for="item in scheduleItems"
+        :key="item.job_type"
+        class="card surface-card schedule-card schedule-card--fold"
+        :open="item.enabled || item.job_type === 'main_checkin'"
       >
-        <div v-if="scheduleForms[jobType]" class="section-head schedule-card__head">
-          <h2 class="card__title">{{ t('{job} 调度', { job: formatJobType(jobType) }) }}</h2>
-          <StatusBadge :label="formatEnabledState(scheduleForms[jobType].enabled)" :state="scheduleForms[jobType].enabled ? 'enabled' : 'disabled'" />
-        </div>
-        <div v-if="scheduleForms[jobType]" class="stack-list">
+        <summary class="schedule-card__summary">
+          <h2 class="card__title">{{ t('{job} 调度', { job: formatJobType(item.job_type) }) }}</h2>
+          <StatusBadge :label="formatEnabledState(item.enabled)" :state="item.enabled ? 'enabled' : 'disabled'" />
+        </summary>
+        <div class="schedule-card__body stack-list">
           <FieldBlock
-            :for-id="`schedule-${jobType}-enabled`"
+            :for-id="`schedule-${item.job_type}-enabled`"
             :label="t('启用')"
             :description="t('关闭后保留当前配置，但不会进入自动调度')"
           >
             <AppSelect
-              :id="`schedule-${jobType}-enabled`"
-              :model-value="scheduleForms[jobType].enabled"
+              :id="`schedule-${item.job_type}-enabled`"
+              :model-value="item.enabled"
               :options="enabledOptions"
-              @update:model-value="scheduleForms[jobType].enabled = $event as boolean"
+              @update:model-value="item.enabled = $event as boolean"
             />
           </FieldBlock>
           <FieldBlock
-            :for-id="`schedule-${jobType}-cron`"
+            :for-id="`schedule-${item.job_type}-cron`"
             :label="t('Cron 表达式')"
             :description="t('使用五段 Cron：分 时 日 月 周')"
           >
-            <input :id="`schedule-${jobType}-cron`" v-model="scheduleForms[jobType].cron" class="input input--code">
+            <input :id="`schedule-${item.job_type}-cron`" v-model="item.cron" class="input input--code">
           </FieldBlock>
           <FieldBlock
-            :for-id="`schedule-${jobType}-timezone`"
+            :for-id="`schedule-${item.job_type}-timezone`"
             :label="t('时区')"
             :description="t('推荐与部署环境保持一致，例如 Asia/Shanghai')"
           >
-            <input :id="`schedule-${jobType}-timezone`" v-model="scheduleForms[jobType].timezone" class="input input--code">
+            <input :id="`schedule-${item.job_type}-timezone`" v-model="item.timezone" class="input input--code">
           </FieldBlock>
           <FieldBlock
-            :for-id="`schedule-${jobType}-cooldown`"
+            :for-id="`schedule-${item.job_type}-cooldown`"
             :label="t('冷却秒数')"
             :description="t('限制同一任务两次自动触发之间的最小间隔')"
           >
             <input
-              :id="`schedule-${jobType}-cooldown`"
-              v-model.number="scheduleForms[jobType].cooldown_seconds"
+              :id="`schedule-${item.job_type}-cooldown`"
+              v-model.number="item.cooldown_seconds"
               class="input"
               type="number"
               min="0"
             >
           </FieldBlock>
           <div class="button-row">
-            <button class="button button--primary" @click="save(jobType)">{{ t('保存调度') }}</button>
+            <button class="button button--primary" @click="save(item.job_type)">{{ t('保存调度') }}</button>
           </div>
-          <p v-if="messages[jobType]" class="status-note" role="status" aria-live="polite">{{ messages[jobType] }}</p>
+          <p v-if="messages[item.job_type]" class="status-note" role="status" aria-live="polite">{{ messages[item.job_type] }}</p>
         </div>
-      </section>
+      </details>
     </div>
   </AppShell>
 </template>

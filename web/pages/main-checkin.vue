@@ -252,33 +252,37 @@ const mainRuns = computed(() => (jobs.value as any[]) || [])
       <div class="panel-grid main-checkin-side">
         <OAuthAccountsCard v-model="linuxDoAccounts" :title="t('全局 Linux.do 账号')" />
         <OAuthAccountsCard v-model="githubAccounts" :title="t('全局 GitHub 账号')" />
-        <section class="card surface-card section-card section-card--editor">
-          <div class="section-head">
+        <details class="card surface-card section-card section-card--editor section-card--fold" :open="providersJson.trim() !== '{}'">
+          <summary class="section-card__summary">
             <h2 class="card__title">{{ t('自定义提供商') }}</h2>
             <StatusBadge label="JSON" state="info" :dot="false" />
+          </summary>
+          <div class="section-card__body">
+            <div class="field">
+              <label class="field__label" for="main-checkin-providers">{{ t('自定义提供商 JSON') }}</label>
+              <textarea id="main-checkin-providers" v-model="providersJson" autocomplete="off" class="textarea textarea--code" spellcheck="false" />
+            </div>
           </div>
-          <div class="field">
-            <label class="field__label" for="main-checkin-providers">{{ t('自定义提供商 JSON') }}</label>
-            <textarea id="main-checkin-providers" v-model="providersJson" autocomplete="off" class="textarea textarea--code" spellcheck="false" />
-          </div>
-        </section>
-        <section class="card surface-card section-card section-card--editor">
-          <div class="section-head">
+        </details>
+        <details class="card surface-card section-card section-card--editor section-card--fold" :open="Boolean(proxyJson.trim())">
+          <summary class="section-card__summary">
             <h2 class="card__title">{{ t('全局代理') }}</h2>
             <StatusBadge label="JSON" state="info" :dot="false" />
+          </summary>
+          <div class="section-card__body">
+            <div class="field">
+              <label class="field__label" for="main-checkin-proxy">{{ t('代理 JSON') }}</label>
+              <textarea
+                id="main-checkin-proxy"
+                v-model="proxyJson"
+                autocomplete="off"
+                class="textarea textarea--code"
+                placeholder='{"server":"http://proxy.example.com:8080"}'
+                spellcheck="false"
+              />
+            </div>
           </div>
-          <div class="field">
-            <label class="field__label" for="main-checkin-proxy">{{ t('代理 JSON') }}</label>
-            <textarea
-              id="main-checkin-proxy"
-              v-model="proxyJson"
-              autocomplete="off"
-              class="textarea textarea--code"
-              placeholder='{"server":"http://proxy.example.com:8080"}'
-              spellcheck="false"
-            />
-          </div>
-        </section>
+        </details>
         <JobRunConsole
           :jobs="mainRuns"
           :logs="logs || []"

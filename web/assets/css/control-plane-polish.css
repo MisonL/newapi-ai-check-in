@@ -1,36 +1,36 @@
 .brand__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
+  gap: 5px;
+  margin-top: 8px;
 }
 
 .brand__chip {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
-  padding: 0 10px;
+  min-height: 18px;
+  padding: 0 7px;
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   color: rgba(226, 232, 240, 0.82);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
 }
 
 .sidebar-nav__section {
-  margin: 2px 6px 0;
+  margin: 1px 5px 0;
   color: rgba(191, 219, 254, 0.72);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .sidebar-nav__link {
-  min-height: 56px;
-  padding: 10px 12px;
-  border-radius: 18px;
+  min-height: 34px;
+  padding: 5px 7px;
+  border-radius: 8px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
@@ -41,9 +41,9 @@
 }
 
 .sidebar-nav__icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 13px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(148, 163, 184, 0.06));
   transition: transform 0.18s ease, background-color 0.18s ease;
 }
@@ -57,16 +57,16 @@
 .sidebar-nav__text {
   display: flex;
   align-items: center;
-  min-height: 36px;
+  min-height: 20px;
 }
 
 .sidebar-nav__text strong {
-  font-size: 14px;
+  font-size: 11px;
   letter-spacing: 0.01em;
 }
 
 .sidebar-summary {
-  border-radius: 24px;
+  border-radius: 14px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
 }
 
@@ -76,12 +76,12 @@
 
 .topbar__title-group {
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .topbar__caption {
   color: var(--semi-color-text-1);
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.5;
 }
 
@@ -90,9 +90,9 @@
 }
 
 .page-summary-strip {
-  gap: 10px;
-  padding: 8px;
-  border-radius: 14px;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 10px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.48));
 }
 
@@ -101,9 +101,9 @@ html.dark .page-summary-strip {
 }
 
 .page-summary-strip .status-pill {
-  min-height: 38px;
-  padding-right: 14px;
-  padding-left: 14px;
+  min-height: 24px;
+  padding-right: 7px;
+  padding-left: 7px;
   border-width: 1px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -127,14 +127,14 @@ html.dark .page-summary-strip {
   content: '';
   position: absolute;
   inset: 0 0 auto;
-  height: 88px;
+  height: 72px;
   background: linear-gradient(180deg, rgba(37, 99, 235, 0.06), transparent);
   pointer-events: none;
 }
 
 .section-head {
   align-items: flex-start;
-  gap: 16px;
+  gap: 8px;
 }
 
 .section-head strong,
@@ -143,18 +143,18 @@ html.dark .page-summary-strip {
 }
 
 .stack-list {
-  gap: 14px;
+  gap: 8px;
 }
 
 .subcard,
 .dashboard-empty,
 .job-item,
 .account-card[open] {
-  border-radius: 20px;
+  border-radius: 12px;
 }
 
 .subcard {
-  padding: 18px;
+  padding: 10px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.64));
 }
 
@@ -170,11 +170,11 @@ html.dark .account-card[open] {
 .subcard .status-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 5px;
 }
 
 .subcard .status-list .status-pill {
-  min-height: 34px;
+  min-height: 24px;
 }
 
 .dashboard-empty {
@@ -183,9 +183,9 @@ html.dark .account-card[open] {
 
 .settings-form-grid .field {
   margin-bottom: 0;
-  padding: 14px;
+  padding: 8px;
   border: 1px solid rgba(148, 163, 184, 0.14);
-  border-radius: 16px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.52);
 }
 
@@ -194,17 +194,17 @@ html.dark .settings-form-grid .field {
 }
 
 .settings-card--security .status-list {
-  gap: 10px;
+  gap: 8px;
 }
 
 .settings-card--security .status-pill {
-  min-height: 38px;
+  min-height: 24px;
 }
 
 .field-block {
-  padding: 14px 16px;
+  padding: 7px 8px;
   border: 1px solid rgba(148, 163, 184, 0.12);
-  border-radius: 18px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.46);
 }
 
@@ -212,12 +212,35 @@ html.dark .field-block {
   background: rgba(15, 23, 42, 0.34);
 }
 
+html.dark .muted,
+html.dark .topbar__caption,
+html.dark .page-header__description,
+html.dark .login-shell__description,
+html.dark .login-card__hint,
+html.dark .login-shell__feature p {
+  color: rgba(226, 232, 240, 0.84);
+}
+
+html.dark .task-row,
+html.dark .asset-row,
+html.dark .report-site-row,
+html.dark .reports-day-row {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.74);
+}
+
+html.dark .status-note {
+  color: rgba(226, 232, 240, 0.9);
+  border-color: rgba(96, 165, 250, 0.36);
+  background: rgba(30, 64, 175, 0.2);
+}
+
 .status-note {
-  border-radius: 16px;
+  border-radius: 8px;
 }
 
 .login-shell {
-  border-radius: 30px;
+  border-radius: 14px;
 }
 
 .login-shell__intro {
@@ -228,25 +251,25 @@ html.dark .field-block {
 .login-shell__intro::after {
   content: '';
   position: absolute;
-  inset: auto -60px -60px auto;
-  width: 220px;
-  height: 220px;
+  inset: auto -24px -24px auto;
+  width: 96px;
+  height: 96px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.22), transparent 68%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.18), transparent 72%);
   pointer-events: none;
 }
 
 .login-shell__feature {
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
 }
 
 .login-card {
-  border-radius: 24px;
+  border-radius: 12px;
 }
 
 @media (max-width: 960px) {
   .page-summary-strip {
-    padding: 10px;
+    padding: 6px;
   }
 
   .page-summary-strip .status-pill {
@@ -259,6 +282,6 @@ html.dark .field-block {
   }
 
   .field-block {
-    padding: 12px 14px;
+    padding: 8px 9px;
   }
 }
