@@ -38,11 +38,9 @@ const submit = async () => {
   <main class="login-page login-page--console">
     <form class="login-console surface-card" @submit.prevent="submit">
       <input
-        aria-hidden="true"
         autocomplete="username"
+        class="login-console__username-proxy"
         name="username"
-        style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;"
-        tabindex="-1"
         type="text"
         value="admin"
       >

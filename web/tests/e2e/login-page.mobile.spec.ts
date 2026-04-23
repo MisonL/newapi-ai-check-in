@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+import { assertDefined } from './helpers'
+
 test('移动端登录页保持单卡控制台结构', async ({ page }) => {
   await page.goto('/login')
   await page.waitForLoadState('networkidle')
@@ -9,17 +11,8 @@ test('移动端登录页保持单卡控制台结构', async ({ page }) => {
   await expect(page.locator('.login-shell__intro')).toHaveCount(0)
   await expect(page.locator('.login-console__topbar')).toHaveCount(1)
 
-  const boundingBox = await loginConsole.boundingBox()
-  expect(boundingBox).not.toBeNull()
-  if (!boundingBox) {
-    throw new Error('login-console boundingBox is null')
-  }
-
-  const viewport = page.viewportSize()
-  expect(viewport).not.toBeNull()
-  if (!viewport) {
-    throw new Error('viewport size is null')
-  }
+  const boundingBox = assertDefined(await loginConsole.boundingBox(), 'login-console boundingBox')
+  const viewport = assertDefined(page.viewportSize(), 'viewport size')
 
   expect(boundingBox.width).toBeLessThanOrEqual(viewport.width - 20)
 })
