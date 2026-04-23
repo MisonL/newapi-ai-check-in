@@ -2,6 +2,13 @@ import { expect, type Page } from '@playwright/test'
 
 const adminPassword = 'test-admin-password'
 
+export function assertDefined<T>(value: T | null | undefined, name: string): T {
+  if (value == null) {
+    throw new Error(`${name} is null`)
+  }
+  return value
+}
+
 export async function waitForUiReady(page: Page) {
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(800)

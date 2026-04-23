@@ -3,12 +3,14 @@ const props = withDefaults(defineProps<{
   id: string
   name?: string
   autocomplete?: string
+  autofocus?: boolean
   placeholder?: string
   disabled?: boolean
   spellcheck?: boolean
 }>(), {
   name: '',
   autocomplete: 'off',
+  autofocus: false,
   placeholder: '',
   disabled: false,
   spellcheck: false,
@@ -26,6 +28,7 @@ const { t } = useAppI18n()
       v-model="model"
       :name="props.name || undefined"
       :autocomplete="props.autocomplete"
+      :autofocus="props.autofocus"
       class="input input-group__control"
       :type="visible ? 'text' : 'password'"
       :placeholder="props.placeholder"
