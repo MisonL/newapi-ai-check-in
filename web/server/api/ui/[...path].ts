@@ -9,6 +9,9 @@ function taskCenterPath(segments: string[]) {
     return '/api/task-center/today'
   }
   if (segments[1] === 'incidents') {
+    if (segments[2] && segments[3] === 'resolve') {
+      return `/api/task-center/incidents/${segments[2]}/resolve`
+    }
     return '/api/task-center/incidents'
   }
   if (segments[1] === 'reports') {
@@ -16,6 +19,12 @@ function taskCenterPath(segments: string[]) {
   }
   if (segments[1] === 'imports' && segments[2] === 'main-checkin') {
     return '/api/task-center/imports/main-checkin'
+  }
+  if (segments[1] === 'sites' && segments[2] && segments[3] === 'probe') {
+    return `/api/task-center/sites/${segments[2]}/probe`
+  }
+  if (segments[1] === 'accounts' && segments[2] && segments[3] === 'preflight') {
+    return `/api/task-center/accounts/${segments[2]}/preflight`
   }
   if (segments[1] === 'tasks' && segments[2] === 'generate-today') {
     return '/api/task-center/tasks/generate-today'

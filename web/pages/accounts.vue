@@ -8,6 +8,7 @@ type AccountAuthMode = AccountRecordView['auth_mode']
 
 const saveMessage = ref('')
 const refreshBusy = ref(false)
+const preflightBusy = ref<Record<string, boolean>>({})
 const editingId = ref('')
 const editorSection = ref<HTMLElement | null>(null)
 const cookiesJson = ref('')
@@ -89,6 +90,26 @@ const refreshAll = async () => {
     saveMessage.value = translateRequestError(error, '账号刷新失败')
   } finally {
     refreshBusy.value = false
+  }
+}
+
+const preflightAccount = async (account: AccountRecordView) => {
+  saveMessage.value = ''
+  preflightBusy.value = { ...preflightBusy.value, [account.id]: true }
+  try {
+    const result = await api.preflightTaskCenterAccount(account.id)
+    await Promise.all([refreshAccounts(), refreshSites()])
+    if (result.session_status !== 'valid' || result.checkin_status === 'failed' || result.checkin_status === 'blocked') {
+      saveMessage.value = t('账号不可用：{message}', {
+        message: result.message || result.error_code || t(result.checkin_status),
+      })
+      return
+    }
+    saveMessage.value = t('账号预检完成：{status}', { status: t(result.checkin_status) })
+  } catch (error: any) {
+    saveMessage.value = translateRequestError(error, '账号预检失败')
+  } finally {
+    preflightBusy.value = { ...preflightBusy.value, [account.id]: false }
   }
 }
 
@@ -421,6 +442,9 @@ const checkinState = (status: AccountRecordView['last_checkin_status']) => {
               <StatusBadge :label="`${t('累计额度')} ${account.total_quota_awarded}`" state="configured" />
             </div>
             <div class="asset-row__actions">
+              <button type="button" class="button button--secondary" :disabled="preflightBusy[account.id]" @click="preflightAccount(account)">
+                {{ preflightBusy[account.id] ? t('测试中') : t('测试账号') }}
+              </button>
               <button type="button" class="button button--secondary" @click="editAccount(account)">{{ t('编辑') }}</button>
               <ConfirmButton
                 :label="t('删除账号')"

@@ -183,6 +183,33 @@ export interface TaskCenterImportResultView {
   messages: string[]
 }
 
+export interface SiteProbeResultView {
+  site_id: string
+  status: SiteRecordView['last_probe_status']
+  reachable: boolean
+  compatible: boolean
+  checkin_enabled: boolean | null
+  min_quota: number | null
+  max_quota: number | null
+  error_code: string
+  message: string
+}
+
+export interface AccountPreflightResultView {
+  site_id: string
+  account_id: string
+  session_status: AccountRecordView['session_status']
+  checkin_status: AccountRecordView['last_checkin_status']
+  checkin_enabled: boolean | null
+  checked_in_today: boolean
+  min_quota: number | null
+  max_quota: number | null
+  total_checkins: number
+  total_quota_awarded: number
+  error_code: string
+  message: string
+}
+
 export interface TaskCenterTodayTaskView {
   id: string
   site_id: string

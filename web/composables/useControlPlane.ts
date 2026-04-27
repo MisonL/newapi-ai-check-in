@@ -1,10 +1,12 @@
 import type {
   AccountRecordView,
+  AccountPreflightResultView,
   AppStatus,
   ConfigEnvelope,
   DashboardResponse,
   IncidentRecordView,
   RelatedDeletionResultView,
+  SiteProbeResultView,
   SiteRecordView,
   TaskCenterBatchExecutionResultView,
   TaskCenterImportResultView,
@@ -33,6 +35,8 @@ export function useControlPlane() {
   const getTaskCenterSummary = () => request<TaskCenterSummaryResponse>('/api/ui/task-center/summary')
   const getTaskCenterIncidents = (resolved?: boolean) =>
     request<IncidentRecordView[]>('/api/ui/task-center/incidents', { query: resolved === undefined ? {} : { resolved } })
+  const resolveTaskCenterIncident = (incidentId: string) =>
+    request<IncidentRecordView>(`/api/ui/task-center/incidents/${incidentId}/resolve`, { method: 'POST' })
   const getTaskCenterReports = (dateFrom?: string, dateTo?: string) =>
     request<TaskCenterReportResponse>('/api/ui/task-center/reports', {
       query: {
@@ -42,6 +46,10 @@ export function useControlPlane() {
     })
   const importMainCheckinToTaskCenter = () =>
     request<TaskCenterImportResultView>('/api/ui/task-center/imports/main-checkin', { method: 'POST' })
+  const probeTaskCenterSite = (siteId: string) =>
+    request<SiteProbeResultView>(`/api/ui/task-center/sites/${siteId}/probe`, { method: 'POST' })
+  const preflightTaskCenterAccount = (accountId: string) =>
+    request<AccountPreflightResultView>(`/api/ui/task-center/accounts/${accountId}/preflight`, { method: 'POST' })
   const getTaskCenterToday = (taskDate?: string) =>
     request<TaskCenterTodayResponse>('/api/ui/task-center/today', { query: taskDate ? { task_date: taskDate } : {} })
   const generateTaskCenterToday = (taskDate?: string) =>
@@ -95,8 +103,11 @@ export function useControlPlane() {
     getDashboard,
     getTaskCenterSummary,
     getTaskCenterIncidents,
+    resolveTaskCenterIncident,
     getTaskCenterReports,
     importMainCheckinToTaskCenter,
+    probeTaskCenterSite,
+    preflightTaskCenterAccount,
     getTaskCenterToday,
     generateTaskCenterToday,
     executeTaskCenterToday,

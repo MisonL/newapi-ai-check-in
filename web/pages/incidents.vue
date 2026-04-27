@@ -10,10 +10,11 @@ const siteFilter = ref('all')
 const severityFilter = ref<'all' | 'low' | 'medium' | 'high'>('all')
 const actionMessage = ref('')
 const refreshBusy = ref(false)
+const actionBusy = ref<Record<string, boolean>>({})
 
 const { data: incidentsResponse, refresh: refreshIncidents } = await useAsyncData(
   'task-center-incidents-real',
-  () => api.getTaskCenterIncidents(showResolved.value),
+  () => api.getTaskCenterIncidents(showResolved.value ? undefined : false),
   { watch: [showResolved] }
 )
 
@@ -87,6 +88,20 @@ const refreshIncidentsWithMessage = async () => {
     refreshBusy.value = false
   }
 }
+
+const resolveIncident = async (incident: IncidentRecordView) => {
+  actionMessage.value = ''
+  actionBusy.value = { ...actionBusy.value, [incident.id]: true }
+  try {
+    await api.resolveTaskCenterIncident(incident.id)
+    await refreshIncidents()
+    actionMessage.value = t('异常已标记为已解决')
+  } catch (error: any) {
+    actionMessage.value = translateRequestError(error, '异常处理失败')
+  } finally {
+    actionBusy.value = { ...actionBusy.value, [incident.id]: false }
+  }
+}
 </script>
 
 <template>
@@ -150,6 +165,14 @@ const refreshIncidentsWithMessage = async () => {
           </div>
           <p style="margin: 0;">{{ translateError(incident.last_error_message, '任务执行失败') }}</p>
           <p v-if="incidentDetailText(incident)" class="muted">{{ incidentDetailText(incident) }}</p>
+          <div v-if="!incident.resolved" class="button-row">
+            <button type="button" class="button button--secondary" :disabled="actionBusy[incident.id]" @click="resolveIncident(incident)">
+              {{ actionBusy[incident.id] ? t('处理中') : t('标记已解决') }}
+            </button>
+            <NuxtLink v-if="incident.account_id" class="button button--secondary" :to="`/accounts`">
+              {{ t('编辑账号') }}
+            </NuxtLink>
+          </div>
         </article>
       </div>
       <div v-else class="dashboard-empty dashboard-empty--compact">

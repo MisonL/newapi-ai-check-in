@@ -6,6 +6,7 @@ const { t, translateRequestError } = useAppI18n()
 
 const saveMessage = ref('')
 const refreshBusy = ref(false)
+const probeBusy = ref<Record<string, boolean>>({})
 const editingId = ref('')
 const editorSection = ref<HTMLElement | null>(null)
 const draft = reactive({
@@ -76,6 +77,43 @@ const refreshAll = async () => {
     saveMessage.value = translateRequestError(error, '站点刷新失败')
   } finally {
     refreshBusy.value = false
+  }
+}
+
+const probeState = (status: SiteRecordView['last_probe_status']) => {
+  if (status === 'healthy') {
+    return 'success'
+  }
+  if (status === 'unreachable' || status === 'unsupported') {
+    return 'failed'
+  }
+  if (status === 'degraded') {
+    return 'queued'
+  }
+  return 'neutral'
+}
+
+const probeSite = async (site: SiteRecordView) => {
+  saveMessage.value = ''
+  probeBusy.value = { ...probeBusy.value, [site.id]: true }
+  try {
+    const result = await api.probeTaskCenterSite(site.id)
+    await Promise.all([refreshSites(), refreshToday()])
+    if (result.status === 'unreachable') {
+      saveMessage.value = t('站点不可达：{message}', {
+        message: result.message || result.error_code || site.base_url,
+      })
+      return
+    }
+    if (result.status === 'unsupported') {
+      saveMessage.value = t('站点探测完成：响应不符合 new-api 签到接口')
+      return
+    }
+    saveMessage.value = t('站点探测完成：{status}', { status: t(result.status) })
+  } catch (error: any) {
+    saveMessage.value = translateRequestError(error, '站点探测失败')
+  } finally {
+    probeBusy.value = { ...probeBusy.value, [site.id]: false }
   }
 }
 
@@ -252,12 +290,26 @@ const saveSite = async () => {
             <div class="asset-row__stats">
               <StatusBadge :label="site.enabled ? t('已启用') : t('已禁用')" :state="site.enabled ? 'configured' : 'disabled'" />
               <StatusBadge :label="`${t('兼容等级')} ${t(site.compatibility_level)}`" state="info" />
+              <StatusBadge :label="`${t('探测状态')} ${t(site.last_probe_status)}`" :state="probeState(site.last_probe_status)" />
+              <StatusBadge
+                v-if="site.checkin_enabled_detected !== null"
+                :label="site.checkin_enabled_detected ? t('签到接口已启用') : t('签到接口未启用')"
+                :state="site.checkin_enabled_detected ? 'success' : 'failed'"
+              />
+              <StatusBadge
+                v-if="site.checkin_min_quota_detected !== null || site.checkin_max_quota_detected !== null"
+                :label="t('奖励 {min}-{max}', { min: site.checkin_min_quota_detected ?? '-', max: site.checkin_max_quota_detected ?? '-' })"
+                state="info"
+              />
               <StatusBadge :label="t('账号 {count}', { count: siteMetrics[site.id]?.accountCount || 0 })" :state="(siteMetrics[site.id]?.accountCount || 0) > 0 ? 'configured' : 'neutral'" />
               <StatusBadge :label="t('启用账号 {count}', { count: siteMetrics[site.id]?.enabledAccountCount || 0 })" :state="(siteMetrics[site.id]?.enabledAccountCount || 0) > 0 ? 'configured' : 'neutral'" />
               <StatusBadge :label="t('今日完成 {done}/{total}', { done: siteMetrics[site.id]?.todaySuccess || 0, total: siteMetrics[site.id]?.todayTotal || 0 })" :state="(siteMetrics[site.id]?.todaySuccess || 0) > 0 ? 'success' : 'neutral'" />
               <StatusBadge :label="t('今日异常 {count}', { count: (siteMetrics[site.id]?.todayBlocked || 0) + (siteMetrics[site.id]?.todayFailed || 0) })" :state="((siteMetrics[site.id]?.todayBlocked || 0) + (siteMetrics[site.id]?.todayFailed || 0)) > 0 ? 'failed' : 'neutral'" />
             </div>
             <div class="asset-row__actions">
+              <button type="button" class="button button--secondary" :disabled="probeBusy[site.id]" @click="probeSite(site)">
+                {{ probeBusy[site.id] ? t('探测中') : t('探测站点') }}
+              </button>
               <button type="button" class="button button--secondary" @click="editSite(site)">{{ t('编辑') }}</button>
               <ConfirmButton
                 :label="t('删除站点')"

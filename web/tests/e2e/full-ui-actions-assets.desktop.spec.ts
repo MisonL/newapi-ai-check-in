@@ -145,8 +145,9 @@ test('站点与账号表单的创建、编辑、筛选和重置动作正常', as
 
   const suffix = uniqueSuffix('assets')
   const siteName = `E2E UI Site ${suffix}`
-  const siteUrl = `https://ui-${suffix}.example.com/api/user/checkin`
-  const normalizedSiteUrl = `https://ui-${suffix}.example.com`
+  const sitePort = 39000 + Math.floor(Math.random() * 1000)
+  const siteUrl = `http://127.0.0.1:${sitePort}/api/user/checkin`
+  const normalizedSiteUrl = `http://127.0.0.1:${sitePort}`
   const passwordAccountName = `E2E Password ${suffix}`
   const cookieAccountName = `E2E Cookie ${suffix}`
 
@@ -163,6 +164,8 @@ test('站点与账号表单的创建、编辑、筛选和重置动作正常', as
   await expect(page.getByText(normalizedSiteUrl, { exact: true })).toBeVisible()
 
   const siteRow = page.locator('.asset-row').filter({ hasText: siteName }).first()
+  await siteRow.getByRole('button', { name: /探测站点|Probe Site/ }).click()
+  await expect(page.getByText(/站点探测完成|Site probe completed|站点不可达|Site unreachable/)).toBeVisible()
   await siteRow.getByRole('button', { name: /编辑|Edit/ }).click()
   await expect(page.getByText(new RegExp(`正在编辑站点 ${siteName}|Editing site ${siteName}`))).toBeVisible()
   await expect(page.locator('#site-name')).toBeFocused()
@@ -184,6 +187,8 @@ test('站点与账号表单的创建、编辑、筛选和重置动作正常', as
   await expect(page.getByText(/账号已创建|Account created/)).toBeVisible()
 
   const passwordRow = page.locator('.asset-row').filter({ hasText: passwordAccountName }).first()
+  await passwordRow.getByRole('button', { name: /测试账号|Test Account/ }).click()
+  await expect(page.getByText(/账号预检完成|Account preflight completed|账号不可用|Account unavailable/)).toBeVisible()
   await passwordRow.getByRole('button', { name: /编辑|Edit/ }).click()
   await expect(page.getByText(new RegExp(`正在编辑账号 ${passwordAccountName}|Editing account ${passwordAccountName}`))).toBeVisible()
   await expect(page.locator('#account-display-name')).toBeFocused()
@@ -279,11 +284,14 @@ test('今日任务、异常处理和报表筛选动作正常', async ({ page }) 
 
   await page.goto('/incidents')
   await waitForUiReady(page)
-  await page.getByRole('button', { name: /包含已解决异常|Include Resolved/ }).click()
   await page.getByRole('button', { name: /刷新异常|Refresh Incidents/ }).click()
   await selectAppOption(page, '#incident-site-filter', String(site.name))
   await selectAppOption(page, '#incident-severity-filter', /high|高/)
   await expect(page.getByText(String(account.display_name)).first()).toBeVisible()
+  const incidentCard = page.locator('.subcard').filter({ hasText: String(account.display_name) }).first()
+  await incidentCard.getByRole('button', { name: /标记已解决|Mark Resolved/ }).click()
+  await expect(page.getByText(/异常已标记为已解决|Incident marked resolved/)).toBeVisible()
+  await expect(page.locator('.subcard').filter({ hasText: String(account.display_name) })).toHaveCount(0)
 
   await page.goto('/reports')
   await waitForUiReady(page)
