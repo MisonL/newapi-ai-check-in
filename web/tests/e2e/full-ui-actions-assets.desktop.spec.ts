@@ -211,6 +211,37 @@ test('站点与账号表单的创建、编辑、筛选和重置动作正常', as
   await expect(page.getByText(`${passwordAccountName} Updated`).first()).toHaveCount(0)
 })
 
+test('站点与账号清单支持删除并同步级联结果', async ({ page }) => {
+  await login(page)
+
+  const suffix = uniqueSuffix('delete-assets')
+  const site = await createSiteViaApi(page, {
+    name: `E2E Delete Site ${suffix}`,
+    base_url: `http://127.0.0.1:${37000 + Math.floor(Math.random() * 1000)}`,
+  })
+  const account = await createPasswordAccountViaApi(page, String(site.id), {
+    display_name: `E2E Delete Account ${suffix}`,
+    username: `delete-${suffix}`,
+    password: 'delete-password',
+  })
+
+  await page.goto('/accounts')
+  await waitForUiReady(page)
+  const accountRow = page.locator('.asset-row').filter({ hasText: String(account.display_name) }).first()
+  await accountRow.getByRole('button', { name: /删除账号|Delete Account/ }).click()
+  await accountRow.getByRole('button', { name: /确认删除账号|Confirm Delete Account/ }).click()
+  await expect(page.getByText(/账号已删除，已同步清理|Account deleted and related records cleaned/)).toBeVisible()
+  await expect(page.locator('.asset-row').filter({ hasText: String(account.display_name) })).toHaveCount(0)
+
+  await page.goto('/sites')
+  await waitForUiReady(page)
+  const siteRow = page.locator('.asset-row').filter({ hasText: String(site.name) }).first()
+  await siteRow.getByRole('button', { name: /删除站点|Delete Site/ }).click()
+  await siteRow.getByRole('button', { name: /确认删除站点|Confirm Delete Site/ }).click()
+  await expect(page.getByText(/站点已删除，已同步清理|Site deleted and related records cleaned/)).toBeVisible()
+  await expect(page.locator('.asset-row').filter({ hasText: String(site.name) })).toHaveCount(0)
+})
+
 test('今日任务、异常处理和报表筛选动作正常', async ({ page }) => {
   test.setTimeout(60000)
   await login(page)

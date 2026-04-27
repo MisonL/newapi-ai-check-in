@@ -105,6 +105,15 @@ export interface AccountRecordView {
   updated_at: string
 }
 
+export interface RelatedDeletionResultView {
+  deleted: boolean
+  id: string
+  accounts_deleted?: number
+  daily_tasks_deleted: number
+  checkin_results_deleted: number
+  incidents_deleted: number
+}
+
 export interface IncidentRecordView {
   id: string
   account_id: string

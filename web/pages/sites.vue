@@ -79,6 +79,27 @@ const refreshAll = async () => {
   }
 }
 
+const deleteSite = async (site: SiteRecordView) => {
+  saveMessage.value = ''
+  try {
+    const result = await api.deleteSite(site.id)
+    await Promise.all([refreshSites(), refreshAccounts(), refreshToday()])
+    if (editingId.value === site.id) {
+      resetDraft(false)
+    }
+    saveMessage.value = t(
+      '站点已删除，已同步清理 {accounts} 个账号、{tasks} 个任务、{incidents} 条异常',
+      {
+        accounts: result.accounts_deleted || 0,
+        tasks: result.daily_tasks_deleted,
+        incidents: result.incidents_deleted,
+      },
+    )
+  } catch (error: any) {
+    saveMessage.value = translateRequestError(error, '站点删除失败')
+  }
+}
+
 const resetDraft = (clearMessage = true) => {
   if (clearMessage) {
     saveMessage.value = ''
@@ -238,6 +259,11 @@ const saveSite = async () => {
             </div>
             <div class="asset-row__actions">
               <button type="button" class="button button--secondary" @click="editSite(site)">{{ t('编辑') }}</button>
+              <ConfirmButton
+                :label="t('删除站点')"
+                :confirm-label="t('确认删除站点')"
+                @confirm="deleteSite(site)"
+              />
             </div>
           </article>
         </div>

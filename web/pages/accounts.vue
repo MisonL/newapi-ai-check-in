@@ -92,6 +92,26 @@ const refreshAll = async () => {
   }
 }
 
+const deleteAccount = async (account: AccountRecordView) => {
+  saveMessage.value = ''
+  try {
+    const result = await api.deleteAccount(account.id)
+    await refreshAccounts()
+    if (editingId.value === account.id) {
+      resetDraft(false)
+    }
+    saveMessage.value = t(
+      '账号已删除，已同步清理 {tasks} 个任务、{incidents} 条异常',
+      {
+        tasks: result.daily_tasks_deleted,
+        incidents: result.incidents_deleted,
+      },
+    )
+  } catch (error: any) {
+    saveMessage.value = translateRequestError(error, '账号删除失败')
+  }
+}
+
 const resetDraft = (clearMessage = true) => {
   if (clearMessage) {
     saveMessage.value = ''
@@ -402,6 +422,11 @@ const checkinState = (status: AccountRecordView['last_checkin_status']) => {
             </div>
             <div class="asset-row__actions">
               <button type="button" class="button button--secondary" @click="editAccount(account)">{{ t('编辑') }}</button>
+              <ConfirmButton
+                :label="t('删除账号')"
+                :confirm-label="t('确认删除账号')"
+                @confirm="deleteAccount(account)"
+              />
             </div>
           </article>
         </div>

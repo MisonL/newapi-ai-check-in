@@ -4,6 +4,7 @@ import type {
   ConfigEnvelope,
   DashboardResponse,
   IncidentRecordView,
+  RelatedDeletionResultView,
   SiteRecordView,
   TaskCenterBatchExecutionResultView,
   TaskCenterImportResultView,
@@ -61,12 +62,16 @@ export function useControlPlane() {
   const createSite = (payload: Record<string, unknown>) => request<SiteRecordView>('/api/ui/sites', { method: 'POST', body: payload })
   const updateSite = (siteId: string, payload: Record<string, unknown>) =>
     request<SiteRecordView>(`/api/ui/sites/${siteId}`, { method: 'PUT', body: payload })
+  const deleteSite = (siteId: string) =>
+    request<RelatedDeletionResultView>(`/api/ui/sites/${siteId}`, { method: 'DELETE' })
   const listAccounts = (options?: { siteId?: string }) =>
     request<AccountRecordView[]>('/api/ui/accounts', { query: options?.siteId ? { site_id: options.siteId } : {} })
   const createAccount = (payload: Record<string, unknown>) =>
     request<AccountRecordView>('/api/ui/accounts', { method: 'POST', body: payload })
   const updateAccount = (accountId: string, payload: Record<string, unknown>) =>
     request<AccountRecordView>(`/api/ui/accounts/${accountId}`, { method: 'PUT', body: payload })
+  const deleteAccount = (accountId: string) =>
+    request<RelatedDeletionResultView>(`/api/ui/accounts/${accountId}`, { method: 'DELETE' })
   const getConfig = <TPayload = Record<string, unknown>>(domain: string) => request<ConfigEnvelope<TPayload>>(`/api/ui/config/${domain}`)
   const saveConfig = <TPayload = Record<string, unknown>>(domain: string, payload: TPayload) =>
     request<ConfigEnvelope<TPayload>>(`/api/ui/config/${domain}`, { method: 'PUT', body: { domain, payload } })
@@ -100,9 +105,11 @@ export function useControlPlane() {
     listSites,
     createSite,
     updateSite,
+    deleteSite,
     listAccounts,
     createAccount,
     updateAccount,
+    deleteAccount,
     getConfig,
     saveConfig,
     listJobs,
