@@ -307,7 +307,7 @@ class TaskCenterService:
 	def incidents(self, resolved: bool | None = None) -> list[IncidentRecord]:
 		stored = self._storage.list_incidents(resolved=resolved)
 		if stored:
-			return stored
+			return self._coalesce_incidents(stored)
 		sites = {site.id: site for site in self.list_sites()}
 		accounts = {account.id: account for account in self.list_accounts()}
 		derived: list[IncidentRecord] = []
@@ -334,7 +334,43 @@ class TaskCenterService:
 					last_checkin_at=task.finished_at,
 				)
 			)
-		return sorted(derived, key=lambda item: item.last_seen_at, reverse=True)
+		return self._coalesce_incidents(derived)
+
+	def _coalesce_incidents(self, incidents: list[IncidentRecord]) -> list[IncidentRecord]:
+		severity_rank = {"high": 3, "medium": 2, "low": 1}
+		merged_by_key: dict[tuple[str, str, str, str, bool], IncidentRecord] = {}
+		for incident in sorted(incidents, key=lambda item: item.last_seen_at):
+			key = (
+				incident.site_id,
+				incident.account_id,
+				incident.type or incident.status,
+				incident.last_error_message,
+				incident.resolved,
+			)
+			existing = merged_by_key.get(key)
+			if existing is None:
+				merged_by_key[key] = incident
+				continue
+			merged_by_key[key] = incident.model_copy(
+				update={
+					"id": existing.id,
+					"first_seen_at": min(existing.first_seen_at, incident.first_seen_at),
+					"severity": incident.severity
+					if severity_rank.get(incident.severity, 0) >= severity_rank.get(existing.severity, 0)
+					else existing.severity,
+					"resolution_action": incident.resolution_action or existing.resolution_action,
+					"detail": incident.detail or existing.detail,
+					"last_checkin_at": self._latest_datetime(existing.last_checkin_at, incident.last_checkin_at),
+				}
+			)
+		return sorted(merged_by_key.values(), key=lambda item: item.last_seen_at, reverse=True)
+
+	def _latest_datetime(self, left: datetime | None, right: datetime | None) -> datetime | None:
+		if left is None:
+			return right
+		if right is None:
+			return left
+		return max(left, right)
 
 	def summary(self) -> TaskCenterSummary:
 		sites = self.list_sites()
@@ -383,7 +419,7 @@ class TaskCenterService:
 				stats.today_failed += 1
 			elif is_today and account.last_checkin_status == "blocked":
 				stats.today_blocked += 1
-			else:
+			elif is_today:
 				stats.today_pending += 1
 
 			if account.last_checkin_status in {"failed", "blocked"}:
