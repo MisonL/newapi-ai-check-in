@@ -135,7 +135,7 @@ const exportReport = () => {
   reportMessage.value = t('已导出当前报表 CSV')
 }
 
-const applyFilters = async () => {
+const applyFilters = async (successMessage = '报表筛选已应用') => {
   if (dateFrom.value > dateTo.value) {
     reportMessage.value = t('开始日期不能晚于结束日期')
     return
@@ -144,6 +144,7 @@ const applyFilters = async () => {
   reportBusy.value = true
   try {
     await refreshReports()
+    reportMessage.value = t(successMessage)
   } finally {
     reportBusy.value = false
   }
@@ -159,11 +160,13 @@ const applyFilters = async () => {
     >
       <template #actions>
         <div class="button-row">
-          <button class="button button--secondary" :disabled="reportBusy" @click="applyFilters">
+          <button type="button" class="button button--secondary" :disabled="reportBusy" @click="applyFilters('报表筛选已应用')">
             {{ reportBusy ? t('筛选中') : t('应用筛选') }}
           </button>
-          <button class="button button--secondary" :disabled="reportBusy" @click="exportReport">{{ t('导出报表 CSV') }}</button>
-          <button class="button button--secondary" :disabled="reportBusy" @click="applyFilters">{{ t('刷新报表') }}</button>
+          <button type="button" class="button button--secondary" :disabled="reportBusy" @click="exportReport">{{ t('导出报表 CSV') }}</button>
+          <button type="button" class="button button--secondary" :disabled="reportBusy" @click="applyFilters('报表已刷新')">
+            {{ reportBusy ? t('刷新中') : t('刷新报表') }}
+          </button>
         </div>
       </template>
     </PageHeader>

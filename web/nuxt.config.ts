@@ -2,6 +2,7 @@ export default defineNuxtConfig({
   ssr: true,
   devtools: { enabled: false },
   css: [
+    '@fontsource-variable/noto-sans-sc',
     '~/assets/css/main.css',
     '~/assets/css/control-plane.css',
     '~/assets/css/control-plane-layout.css',
@@ -11,6 +12,8 @@ export default defineNuxtConfig({
     '~/assets/css/control-plane-refresh-pages.css',
     '~/assets/css/control-plane-polish.css',
     '~/assets/css/control-plane-enhancements.css',
+    '~/assets/css/control-plane-density.css',
+    '~/assets/css/control-plane-density-components.css',
   ],
   runtimeConfig: {
     controlPlaneUrl: 'http://127.0.0.1:18080',

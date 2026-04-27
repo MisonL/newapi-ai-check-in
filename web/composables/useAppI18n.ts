@@ -22,6 +22,10 @@ const serverMessageKeys: Record<string, string> = {
   'A job of the same type is already running': '同类型任务已在运行中',
   'No account configuration available': '没有可用的主签到账号配置',
   'No 996 accounts configured': '未配置 996 账号',
+  'No qaq.al accounts configured': '未配置 qaq.al 账号',
+  'No Linux.do read accounts configured': '未配置 Linux.do 阅读账号',
+  'Username or password is incorrect, or user has been banned': '用户名或密码错误，或账号已被封禁',
+  'Missing New-Api-User context': '缺少 New-Api-User 上下文，请检查 Cookie 会话配置',
   'qaq.al check-in requires browser support. Enable browser execution first.': 'qaq.al 签到依赖浏览器支持，请先启用浏览器执行',
   'Linux.do read requires browser support. Enable browser execution first.': 'Linux.do 阅读依赖浏览器支持，请先启用浏览器执行',
   'Provider anyrouter requires browser support. Enable browser execution or switch to cookie-only accounts.':
@@ -97,28 +101,48 @@ function normalizeLocale(value?: string): AppLocale {
 }
 
 function normalizeServerMessage(message: string) {
-  if (serverMessageKeys[message]) {
-    return { key: serverMessageKeys[message] }
+  const normalizedMessage = message
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const normalizedWithoutPunctuation = normalizedMessage.replace(/[.!。！？]+$/, '').trim()
+  if (/^Username or password is incorrect, or user has been banned$/i.test(normalizedWithoutPunctuation)) {
+    return { key: '用户名或密码错误，或账号已被封禁' }
   }
-  if (message.startsWith('Value error, ')) {
-    return normalizeServerMessage(message.slice('Value error, '.length))
+  if (/^No Linux\.do read accounts configured$/i.test(normalizedWithoutPunctuation)) {
+    return { key: '未配置 Linux.do 阅读账号' }
   }
-  if (message.startsWith('Invalid JSON response:')) {
+  if (/^No qaq\.al accounts configured$/i.test(normalizedWithoutPunctuation)) {
+    return { key: '未配置 qaq.al 账号' }
+  }
+  if (/^Missing New-Api-User context$/i.test(normalizedWithoutPunctuation)) {
+    return { key: '缺少 New-Api-User 上下文，请检查 Cookie 会话配置' }
+  }
+  if (serverMessageKeys[normalizedMessage]) {
+    return { key: serverMessageKeys[normalizedMessage] }
+  }
+  if (serverMessageKeys[normalizedWithoutPunctuation]) {
+    return { key: serverMessageKeys[normalizedWithoutPunctuation] }
+  }
+  if (normalizedMessage.startsWith('Value error, ')) {
+    return normalizeServerMessage(normalizedMessage.slice('Value error, '.length))
+  }
+  if (normalizedMessage.startsWith('Invalid JSON response:')) {
     return { key: '站点返回的不是有效的 new-api 响应，请检查站点地址、反向代理或登录态' }
   }
-  if (message === 'Unexpected response payload') {
+  if (normalizedMessage === 'Unexpected response payload') {
     return { key: '站点响应结构异常，请确认目标站点兼容 new-api 接口' }
   }
-  if (message === 'Task center engine requires at least one enabled site') {
+  if (normalizedMessage === 'Task center engine requires at least one enabled site') {
     return { key: '任务中心至少需要一个已启用站点' }
   }
-  if (message === 'Legacy OAuth executor returned no result') {
+  if (normalizedMessage === 'Legacy OAuth executor returned no result') {
     return { key: '兼容登录链未返回有效结果，请检查站点登录流程或浏览器策略' }
   }
-  if (message === 'Task requires review') {
+  if (normalizedMessage === 'Task requires review') {
     return { key: '任务结果需要人工复核' }
   }
-  const failuresMatch = message.match(/^(.+?) completed with failures: (\d+)\/(\d+) succeeded$/)
+  const failuresMatch = normalizedMessage.match(/^(.+?) completed with failures: (\d+)\/(\d+) succeeded$/)
   if (failuresMatch) {
     return {
       key: '任务执行完成，但有账号失败：成功 {success} / 总数 {total}',
@@ -128,7 +152,7 @@ function normalizeServerMessage(message: string) {
       },
     }
   }
-  return { key: message }
+  return { key: normalizedMessage }
 }
 
 export function useAppI18n() {

@@ -1,10 +1,19 @@
 <script setup lang="ts">
+const route = useRoute()
 const password = ref('')
 const errorMessage = ref('')
 const isSubmitting = ref(false)
 const authState = useAuthState()
 const authExpiresAt = useAuthExpiresAt()
 const { t, translateRequestError } = useAppI18n()
+
+const nextPath = computed(() => {
+  const value = route.query.next
+  if (typeof value === 'string' && value.startsWith('/')) {
+    return value
+  }
+  return '/dashboard'
+})
 
 const submit = async () => {
   if (isSubmitting.value) {
@@ -23,7 +32,7 @@ const submit = async () => {
     })
     authState.value = true
     authExpiresAt.value = response.expires_at
-    await navigateTo('/dashboard')
+    await navigateTo(nextPath.value)
   } catch (error: any) {
     authState.value = false
     authExpiresAt.value = null

@@ -2,12 +2,14 @@
 import type { IncidentRecordView } from '../types/controlPlane'
 
 const api = useControlPlane()
-const { t, translateError } = useAppI18n()
+const { t, translateError, translateRequestError } = useAppI18n()
 const { formatDateTime } = useUiDateTime()
 
 const showResolved = ref(false)
 const siteFilter = ref('all')
 const severityFilter = ref<'all' | 'low' | 'medium' | 'high'>('all')
+const actionMessage = ref('')
+const refreshBusy = ref(false)
 
 const { data: incidentsResponse, refresh: refreshIncidents } = await useAsyncData(
   'task-center-incidents-real',
@@ -53,12 +55,38 @@ const severityState = (severity?: IncidentRecordView['severity']) => {
   return 'neutral'
 }
 
+const incidentDetailText = (incident: IncidentRecordView) => {
+  const detail = String(incident.detail || '').trim()
+  if (!detail) {
+    return ''
+  }
+  const rawMessage = String(incident.last_error_message || '').trim()
+  const translatedMessage = translateError(incident.last_error_message, '任务执行失败').trim()
+  if (detail === rawMessage || detail === translatedMessage) {
+    return ''
+  }
+  return detail
+}
+
 const unresolvedCount = computed(() => incidents.value.filter((item) => !item.resolved).length)
 const visibleIncidents = computed(() => {
   return incidents.value
     .filter((incident) => (siteFilter.value === 'all' ? true : incident.site_name === siteFilter.value))
     .filter((incident) => (severityFilter.value === 'all' ? true : (incident.severity || 'medium') === severityFilter.value))
 })
+
+const refreshIncidentsWithMessage = async () => {
+  actionMessage.value = ''
+  refreshBusy.value = true
+  try {
+    await refreshIncidents()
+    actionMessage.value = t('异常已刷新')
+  } catch (error: any) {
+    actionMessage.value = translateRequestError(error, '异常刷新失败')
+  } finally {
+    refreshBusy.value = false
+  }
+}
 </script>
 
 <template>
@@ -70,13 +98,16 @@ const visibleIncidents = computed(() => {
     >
       <template #actions>
         <div class="button-row">
-          <button class="button button--secondary" @click="showResolved = !showResolved">
+          <button type="button" class="button button--secondary" @click="showResolved = !showResolved">
             {{ showResolved ? t('仅看未解决异常') : t('包含已解决异常') }}
           </button>
-          <button class="button button--secondary" @click="refreshIncidents()">{{ t('刷新异常') }}</button>
+          <button type="button" class="button button--secondary" :disabled="refreshBusy" @click="refreshIncidentsWithMessage">
+            {{ refreshBusy ? t('刷新中') : t('刷新异常') }}
+          </button>
         </div>
       </template>
     </PageHeader>
+    <p v-if="actionMessage" class="status-note" aria-live="polite">{{ actionMessage }}</p>
     <div class="button-row page-summary-strip">
       <StatusBadge :label="t('异常记录 {count}', { count: incidents.length })" :state="incidents.length ? 'failed' : 'configured'" />
       <StatusBadge :label="t('未解决 {count}', { count: unresolvedCount })" :state="unresolvedCount ? 'failed' : 'neutral'" />
@@ -118,7 +149,7 @@ const visibleIncidents = computed(() => {
             <StatusBadge :label="incident.resolved ? t('已解决') : t('待处理')" :state="incident.resolved ? 'configured' : 'failed'" />
           </div>
           <p style="margin: 0;">{{ translateError(incident.last_error_message, '任务执行失败') }}</p>
-          <p v-if="incident.detail" class="muted">{{ incident.detail }}</p>
+          <p v-if="incidentDetailText(incident)" class="muted">{{ incidentDetailText(incident) }}</p>
         </article>
       </div>
       <div v-else class="dashboard-empty dashboard-empty--compact">

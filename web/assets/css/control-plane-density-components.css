@@ -1,0 +1,299 @@
+/* Compact component density for cards, forms, lists, and badges. */
+.app-console-shell :where(.panel-grid, .stack-list, .button-row, .status-list) {
+  gap: var(--compact-gap);
+}
+
+.app-console-shell :where(.card, .surface-card, .section-card, .settings-card, .schedule-card, .aux-job-cluster) {
+  border-radius: var(--compact-radius);
+}
+
+.app-console-shell .card,
+.app-console-shell .dashboard-panel {
+  padding: 12px;
+}
+
+.app-console-shell .section-head {
+  gap: 6px;
+  min-height: 24px;
+  margin-bottom: 8px;
+}
+
+.app-console-shell .card__title {
+  font-size: 16px;
+}
+
+.app-console-shell .button {
+  min-height: 30px;
+  padding: 5px 11px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.app-console-shell .status-pill {
+  min-height: 21px;
+  padding: 0 7px;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.app-console-shell .status-pill__dot {
+  width: 5px;
+  height: 5px;
+  flex-basis: 5px;
+}
+
+.app-console-shell :where(.page-summary-strip, .asset-row, .task-row, .subcard) .status-pill {
+  font-size: 11px;
+}
+
+.app-console-shell .card > .panel-grid--two:has(.field-block),
+.app-console-shell .incident-list-card__filters,
+.app-console-shell .reports-filters {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px !important;
+}
+
+.app-console-shell .field,
+.app-console-shell .field-block {
+  margin-bottom: 8px;
+}
+
+.app-console-shell .settings-form-grid .field,
+.app-console-shell .field-block {
+  gap: 5px;
+  padding: 8px 9px;
+  border-radius: 10px;
+}
+
+.app-console-shell .field-block__head {
+  gap: 2px;
+}
+
+.app-console-shell .field__label,
+.app-console-shell .login-card__field-label {
+  font-size: 12px;
+}
+
+.app-console-shell .field-block__description {
+  font-size: 11px;
+  line-height: 1.28;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-console-shell :where(.input, .textarea, .select, .app-select__trigger) {
+  min-height: 30px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.app-console-shell :where(.input, .textarea, .select) {
+  padding: 5px 9px;
+}
+
+.app-console-shell .app-select__trigger {
+  padding: 0 8px;
+}
+
+@media (min-width: 961px) {
+  .app-console-shell .card > .stack-list > .field-block,
+  .app-console-shell .section-card__body > .stack-list > .field-block,
+  .app-console-shell .settings-card > .field-block {
+    grid-template-columns: minmax(118px, 0.42fr) minmax(0, 1fr);
+    gap: 8px 10px;
+    align-items: center;
+  }
+
+  .app-console-shell .card > .stack-list > .field-block:has(textarea),
+  .app-console-shell .section-card__body > .stack-list > .field-block:has(textarea),
+  .app-console-shell .settings-card > .field-block:has(textarea) {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
+
+.app-console-shell :where(.stat-grid, .dashboard-panels, .dashboard-columns, .dashboard-column, .aux-job-layout) {
+  gap: 10px;
+}
+
+.app-console-shell .stat-card {
+  min-height: 74px;
+  padding: 10px 12px;
+}
+
+.app-console-shell .stat-card__head {
+  margin-bottom: 6px;
+}
+
+.app-console-shell .stat-card__icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+}
+
+.app-console-shell .stat-card__label {
+  font-size: 12px;
+}
+
+.app-console-shell .stat-card__value {
+  font-size: 23px;
+}
+
+.app-console-shell :where(.subcard, .job-item, .asset-row, .task-row, .account-card, .settings-card, .schedule-card, .aux-job-cluster) {
+  font-size: 13px;
+  line-height: 1.42;
+}
+
+.app-console-shell :where(.subcard, .job-item) {
+  padding: 9px 10px;
+}
+
+.app-console-shell :where(.task-row, .asset-row, .report-site-row, .reports-day-row) {
+  gap: 5px 8px;
+  padding: 8px 9px;
+  border-radius: 10px;
+}
+
+.app-console-shell :where(.task-row__main .muted, .asset-row__title .muted, .task-row__time) {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.app-console-shell :where(.task-row__actions, .asset-row__actions) .button {
+  min-height: 26px;
+  padding: 3px 8px;
+}
+
+.app-console-shell :where(.dashboard-empty, .console-empty) {
+  min-height: 94px;
+  padding: 12px;
+  border-radius: var(--compact-radius);
+}
+
+.app-console-shell :where(.dashboard-empty__icon, .console-empty__icon) {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.app-console-shell :where(.dashboard-empty__copy p, .console-empty__copy p) {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.app-console-shell .dashboard-panel .stack-list {
+  gap: 6px;
+}
+
+.app-console-shell .dashboard-panel .subcard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 8px;
+  min-height: 0;
+  padding: 8px 10px;
+}
+
+.app-console-shell .dashboard-panel .subcard .section-head {
+  display: contents;
+}
+
+.app-console-shell .dashboard-panel .subcard :where(.muted, p, .status-list) {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.app-console-shell .dashboard-panel .subcard p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.app-console-shell .incident-list-card .subcard {
+  gap: 6px;
+  min-height: 0;
+  padding: 10px 12px;
+}
+
+.app-console-shell .incident-list-card .subcard p {
+  margin: 0;
+  line-height: 1.38;
+}
+
+.app-console-shell .incident-list-card .subcard p:not(.muted) {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.app-console-shell .schedule-intro-card {
+  margin-bottom: 12px;
+}
+
+.app-console-shell .schedule-intro-card p {
+  margin: 0 0 6px;
+  line-height: 1.42;
+}
+
+.app-console-shell .schedule-intro-card p:last-child {
+  margin-bottom: 0;
+}
+
+.app-console-shell .schedule-card__summary {
+  min-height: 54px;
+  padding: 12px 14px;
+}
+
+.app-console-shell .fold-summary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: fit-content;
+}
+
+.app-console-shell .fold-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--semi-color-text-2);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.app-console-shell .fold-hint::after {
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  content: '';
+  transform: rotate(45deg);
+  transition: transform 0.16s ease;
+}
+
+.app-console-shell details[open] > summary .fold-hint::after {
+  transform: rotate(225deg);
+}
+
+.app-console-shell .schedule-card__body {
+  padding: 0 12px 12px;
+}
+
+.app-console-shell .aux-job-cluster:not([open]) {
+  min-height: 104px;
+}
+
+.app-console-shell .aux-job-cluster:not([open]) .aux-job-cluster__summary {
+  min-height: 104px;
+  padding: 14px 16px;
+}
+
+.app-console-shell .aux-job-cluster:not([open]) .aux-job-cluster__copy {
+  gap: 5px;
+}

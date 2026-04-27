@@ -87,7 +87,7 @@ const summaryTags = (account: AccountRow): Array<{ label: string, state: string 
   <section class="card surface-card">
     <div class="section-head">
       <h2 class="card__title">{{ t('账号') }}</h2>
-      <button class="button button--secondary" @click="addAccount">{{ t('新增账号') }}</button>
+      <button type="button" class="button button--secondary" @click="addAccount">{{ t('新增账号') }}</button>
     </div>
     <div class="stack-list">
       <details
@@ -109,6 +109,7 @@ const summaryTags = (account: AccountRow): Array<{ label: string, state: string 
               :state="tag.state"
               :dot="false"
             />
+            <span class="fold-hint" aria-hidden="true">{{ t('展开或收起') }}</span>
           </div>
         </summary>
         <div class="account-card__body">

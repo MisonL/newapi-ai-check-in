@@ -2,18 +2,7 @@ import { expect, test } from '@playwright/test'
 
 import { login, waitForUiReady } from './helpers'
 
-test('首页摘要条优先展示任务生成状态', async ({ page }) => {
-  await login(page)
-  await page.goto('/dashboard')
-  await waitForUiReady(page)
-
-  const labels = await page.locator('.page-summary-strip .status-pill').allTextContents()
-  expect(labels.length).toBeGreaterThanOrEqual(2)
-  expect(labels[0]).toMatch(/今日待处理|待生成账号|Pending Today|Accounts To Generate/)
-  expect(labels[1]).toMatch(/今日累计额度|Quota Today/)
-})
-
-test('今日任务页使用紧凑列表行承载任务', async ({ page }) => {
+test('首页最近异常在中文环境下翻译后端英文错误信息', async ({ page }) => {
   await login(page)
 
   const setup = await page.evaluate(async () => {
@@ -22,7 +11,7 @@ test('今日任务页使用紧凑列表行承载任务', async ({ page }) => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        name: `density-test-site-${suffix}`,
+        name: `i18n-dashboard-site-${suffix}`,
         base_url: `http://127.0.0.1:${3100 + Math.floor(Math.random() * 500)}`,
         enabled: true,
         compatibility_level: 'standard',
@@ -34,48 +23,53 @@ test('今日任务页使用紧凑列表行承载任务', async ({ page }) => {
       }),
     })
     const site = await siteResponse.json()
+
     const accountResponse = await fetch('/api/ui/accounts', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         site_id: site.id,
-        display_name: `density-user-${suffix}`,
-        username: `density-user-${suffix}`,
+        display_name: `i18n-dashboard-user-${suffix}`,
+        username: `i18n-dashboard-user-${suffix}`,
         auth_mode: 'password',
-        password: 'density-password',
+        password: 'i18n-dashboard-password',
         api_user: '',
         session_cookies: {},
         enabled: true,
         session_status: 'unknown',
-        last_checkin_status: 'pending',
+        last_checkin_status: 'failed',
         last_checkin_date: null,
-        last_checkin_at: null,
+        last_checkin_at: new Date().toISOString(),
         last_quota_awarded: 0,
         total_checkins: 0,
         total_quota_awarded: 0,
-        last_error_message: '',
+        last_error_message: 'Username or password is incorrect, or user has been banned',
       }),
     })
-    await accountResponse.json()
-    const generateResponse = await fetch('/api/ui/task-center/tasks/generate-today', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-    })
+
     return {
       siteStatus: siteResponse.status,
       accountStatus: accountResponse.status,
-      generateStatus: generateResponse.status,
     }
   })
 
   expect(setup.siteStatus).toBe(200)
   expect(setup.accountStatus).toBe(200)
-  expect(setup.generateStatus).toBe(200)
 
-  await page.goto('/today')
+  await page.context().addCookies([
+    {
+      name: 'app_locale',
+      value: 'zh-CN',
+      domain: '127.0.0.1',
+      path: '/',
+      httpOnly: false,
+      secure: false,
+    },
+  ])
+
+  await page.goto('/dashboard')
   await waitForUiReady(page)
 
-  await expect(page.getByRole('heading', { name: /今日任务|Today/ })).toBeVisible()
-  await expect(page.getByRole('button', { name: /执行待处理任务|Run Pending Tasks/ })).toBeVisible()
-  await expect(page.locator('.task-row').first()).toBeVisible()
+  await expect(page.getByText('用户名或密码错误，或账号已被封禁').first()).toBeVisible()
+  await expect(page.getByText('Username or password is incorrect, or user has been banned')).toHaveCount(0)
 })

@@ -47,13 +47,11 @@ watchEffect(() => {
   qaqTier.value = payloadQaq.tier ?? 4
 
   const payloadLinuxdo = configLinuxdo.value?.payload || {}
-  linuxdoAccounts.value = (payloadLinuxdo.accounts || []).map((item: any) => ({
+  const configuredLinuxdoAccounts = (payloadLinuxdo.accounts || []).map((item: any) => ({
     username: item.username || '',
     password: item.password || ''
   }))
-  if (!linuxdoAccounts.value.length) {
-    linuxdoAccounts.value = [{ username: '', password: '' }]
-  }
+  linuxdoAccounts.value = configuredLinuxdoAccounts.length ? configuredLinuxdoAccounts : [{ username: '', password: '' }]
   linuxdoBaseTopicId.value = payloadLinuxdo.base_topic_id ?? null
   linuxdoMaxPosts.value = payloadLinuxdo.max_posts ?? 100
 })
@@ -169,7 +167,10 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
             <h2 class="card__title">{{ t('996 hub') }}</h2>
             <p class="muted">{{ t('维护访问令牌与代理设置') }}</p>
           </div>
-          <StatusBadge :label="hub996CountLabel" :state="cleanValues(hub996Accounts).length ? 'configured' : 'unconfigured'" />
+          <div class="fold-summary-meta">
+            <StatusBadge :label="hub996CountLabel" :state="cleanValues(hub996Accounts).length ? 'configured' : 'unconfigured'" />
+            <span class="fold-hint" aria-hidden="true">{{ t('展开或收起') }}</span>
+          </div>
         </summary>
         <div class="panel-grid panel-grid--two aux-job-cluster__body aux-job-cluster__grid">
           <StringListCard
@@ -190,8 +191,8 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
               />
             </div>
             <div class="button-row">
-              <button class="button button--primary" @click="save996">{{ t('保存配置') }}</button>
-              <button class="button button--secondary" @click="runJob('checkin_996')">{{ t('立即运行') }}</button>
+              <button type="button" class="button button--primary" @click="save996">{{ t('保存配置') }}</button>
+              <button type="button" class="button button--secondary" @click="runJob('checkin_996')">{{ t('立即运行') }}</button>
             </div>
             <p v-if="messages.checkin_996" class="status-note" role="status" aria-live="polite">{{ messages.checkin_996 }}</p>
           </section>
@@ -204,7 +205,10 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
             <h2 class="card__title">{{ t('qaq.al') }}</h2>
             <p class="muted">{{ t('维护 SID、套餐等级与代理参数') }}</p>
           </div>
-          <StatusBadge :label="qaqCountLabel" :state="cleanValues(qaqAccounts).length ? 'configured' : 'unconfigured'" />
+          <div class="fold-summary-meta">
+            <StatusBadge :label="qaqCountLabel" :state="cleanValues(qaqAccounts).length ? 'configured' : 'unconfigured'" />
+            <span class="fold-hint" aria-hidden="true">{{ t('展开或收起') }}</span>
+          </div>
         </summary>
         <div class="panel-grid panel-grid--two aux-job-cluster__body aux-job-cluster__grid">
           <StringListCard
@@ -229,8 +233,8 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
               />
             </div>
             <div class="button-row">
-              <button class="button button--primary" @click="saveQaq">{{ t('保存配置') }}</button>
-              <button class="button button--secondary" @click="runJob('checkin_qaq_al')">{{ t('立即运行') }}</button>
+              <button type="button" class="button button--primary" @click="saveQaq">{{ t('保存配置') }}</button>
+              <button type="button" class="button button--secondary" @click="runJob('checkin_qaq_al')">{{ t('立即运行') }}</button>
             </div>
             <p v-if="messages.checkin_qaq_al" class="status-note" role="status" aria-live="polite">{{ messages.checkin_qaq_al }}</p>
           </section>
@@ -243,7 +247,10 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
             <h2 class="card__title">{{ t('Linux.do 阅读') }}</h2>
             <p class="muted">{{ t('维护阅读账号、主题锚点和抓取上限') }}</p>
           </div>
-          <StatusBadge :label="linuxdoCountLabel" :state="cleanOAuthRows(linuxdoAccounts).length ? 'configured' : 'unconfigured'" />
+          <div class="fold-summary-meta">
+            <StatusBadge :label="linuxdoCountLabel" :state="cleanOAuthRows(linuxdoAccounts).length ? 'configured' : 'unconfigured'" />
+            <span class="fold-hint" aria-hidden="true">{{ t('展开或收起') }}</span>
+          </div>
         </summary>
         <div class="panel-grid panel-grid--two aux-job-cluster__body aux-job-cluster__grid">
           <OAuthAccountsCard v-model="linuxdoAccounts" :title="t('Linux.do 阅读账号')" />
@@ -258,8 +265,8 @@ const linuxdoCountLabel = computed(() => `${t('Linux.do 阅读账号')} ${cleanO
               <input id="linuxdo-max-posts" v-model.number="linuxdoMaxPosts" class="input" type="number" min="1">
             </div>
             <div class="button-row">
-              <button class="button button--primary" @click="saveLinuxdo">{{ t('保存配置') }}</button>
-              <button class="button button--secondary" @click="runJob('linuxdo_read')">{{ t('立即运行') }}</button>
+              <button type="button" class="button button--primary" @click="saveLinuxdo">{{ t('保存配置') }}</button>
+              <button type="button" class="button button--secondary" @click="runJob('linuxdo_read')">{{ t('立即运行') }}</button>
             </div>
             <p v-if="messages.linuxdo_read" class="status-note" role="status" aria-live="polite">{{ messages.linuxdo_read }}</p>
           </section>

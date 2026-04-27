@@ -5,7 +5,9 @@ const api = useControlPlane()
 const { t, translateRequestError } = useAppI18n()
 
 const saveMessage = ref('')
+const refreshBusy = ref(false)
 const editingId = ref('')
+const editorSection = ref<HTMLElement | null>(null)
 const draft = reactive({
   id: '',
   name: '',
@@ -65,10 +67,22 @@ const siteMetrics = computed(() => {
   }, {})
 })
 const refreshAll = async () => {
-  await Promise.all([refreshSites(), refreshAccounts(), refreshToday()])
+  saveMessage.value = ''
+  refreshBusy.value = true
+  try {
+    await Promise.all([refreshSites(), refreshAccounts(), refreshToday()])
+    saveMessage.value = t('站点已刷新')
+  } catch (error: any) {
+    saveMessage.value = translateRequestError(error, '站点刷新失败')
+  } finally {
+    refreshBusy.value = false
+  }
 }
 
-const resetDraft = () => {
+const resetDraft = (clearMessage = true) => {
+  if (clearMessage) {
+    saveMessage.value = ''
+  }
   editingId.value = ''
   draft.id = ''
   draft.name = ''
@@ -87,6 +101,11 @@ const resetDraft = () => {
 const editSite = (site: SiteRecordView) => {
   editingId.value = site.id
   Object.assign(draft, site)
+  saveMessage.value = t('正在编辑站点 {name}', { name: site.name })
+  nextTick(() => {
+    editorSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document.getElementById('site-name')?.focus({ preventScroll: true })
+  })
 }
 
 const saveSite = async () => {
@@ -127,7 +146,7 @@ const saveSite = async () => {
         : t('站点已创建，站点地址已归一化为 {value}', { value: site.base_url })
     }
     await refreshSites()
-    resetDraft()
+    resetDraft(false)
   } catch (error: any) {
     saveMessage.value = translateRequestError(error, '站点保存失败')
   }
@@ -138,12 +157,14 @@ const saveSite = async () => {
   <AppShell>
     <PageHeader
       :title="t('站点')"
-      :description="t('管理 new-api 站点地址、兼容等级与签到能力探测结果')"
+      :description="t('管理 new-api 站点地址、兼容等级与今日任务表现')"
       :eyebrow="t('任务中心')"
     >
       <template #actions>
         <div class="button-row">
-          <button class="button button--secondary" @click="refreshAll">{{ t('刷新站点') }}</button>
+          <button type="button" class="button button--secondary" :disabled="refreshBusy" @click="refreshAll">
+            {{ refreshBusy ? t('刷新中') : t('刷新站点') }}
+          </button>
         </div>
       </template>
     </PageHeader>
@@ -152,10 +173,10 @@ const saveSite = async () => {
     </div>
     <p v-if="saveMessage" class="status-note" aria-live="polite">{{ saveMessage }}</p>
     <div class="panel-grid panel-grid--two">
-      <section class="card surface-card">
+      <section ref="editorSection" class="card surface-card">
         <div class="section-head">
           <h2 class="card__title">{{ editingId ? t('编辑站点') : t('新增站点') }}</h2>
-          <button class="button button--secondary" @click="resetDraft">{{ t('清空表单') }}</button>
+          <button type="button" class="button button--secondary" @click="resetDraft">{{ t('清空表单') }}</button>
         </div>
         <div class="stack-list">
           <FieldBlock for-id="site-name" :label="t('站点名称')" :description="t('用于任务中心和报表展示')">
@@ -192,7 +213,7 @@ const saveSite = async () => {
             <textarea id="site-notes" v-model="draft.notes" class="textarea" />
           </FieldBlock>
           <div class="button-row">
-            <button class="button button--primary" @click="saveSite">{{ t(editingId ? '保存站点修改' : '创建站点') }}</button>
+            <button type="button" class="button button--primary" @click="saveSite">{{ t(editingId ? '保存站点修改' : '创建站点') }}</button>
           </div>
         </div>
       </section>
@@ -210,18 +231,13 @@ const saveSite = async () => {
             <div class="asset-row__stats">
               <StatusBadge :label="site.enabled ? t('已启用') : t('已禁用')" :state="site.enabled ? 'configured' : 'disabled'" />
               <StatusBadge :label="`${t('兼容等级')} ${t(site.compatibility_level)}`" state="info" />
-              <StatusBadge :label="`${t('探测状态')} ${t(site.last_probe_status)}`" state="neutral" />
               <StatusBadge :label="t('账号 {count}', { count: siteMetrics[site.id]?.accountCount || 0 })" :state="(siteMetrics[site.id]?.accountCount || 0) > 0 ? 'configured' : 'neutral'" />
               <StatusBadge :label="t('启用账号 {count}', { count: siteMetrics[site.id]?.enabledAccountCount || 0 })" :state="(siteMetrics[site.id]?.enabledAccountCount || 0) > 0 ? 'configured' : 'neutral'" />
               <StatusBadge :label="t('今日完成 {done}/{total}', { done: siteMetrics[site.id]?.todaySuccess || 0, total: siteMetrics[site.id]?.todayTotal || 0 })" :state="(siteMetrics[site.id]?.todaySuccess || 0) > 0 ? 'success' : 'neutral'" />
               <StatusBadge :label="t('今日异常 {count}', { count: (siteMetrics[site.id]?.todayBlocked || 0) + (siteMetrics[site.id]?.todayFailed || 0) })" :state="((siteMetrics[site.id]?.todayBlocked || 0) + (siteMetrics[site.id]?.todayFailed || 0)) > 0 ? 'failed' : 'neutral'" />
-              <StatusBadge
-                :label="site.checkin_enabled_detected === null ? t('签到能力待探测') : t(site.checkin_enabled_detected ? '签到已开启' : '签到未开启')"
-                :state="site.checkin_enabled_detected ? 'success' : 'neutral'"
-              />
             </div>
             <div class="asset-row__actions">
-              <button class="button button--secondary" @click="editSite(site)">{{ t('编辑') }}</button>
+              <button type="button" class="button button--secondary" @click="editSite(site)">{{ t('编辑') }}</button>
             </div>
           </article>
         </div>

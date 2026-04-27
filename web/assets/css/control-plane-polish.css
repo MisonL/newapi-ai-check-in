@@ -67,11 +67,11 @@
 
 .sidebar-summary {
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
 }
 
 .sidebar-summary--current {
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.14), rgba(255, 255, 255, 0.04));
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.1), rgba(255, 255, 255, 0.03));
 }
 
 .topbar__title-group {
@@ -89,11 +89,33 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26);
 }
 
-.page-summary-strip {
+.topbar__actions {
   gap: 6px;
-  padding: 4px;
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.48));
+}
+
+.topbar__actions .button--danger-outline {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.page-header__actions .button-row {
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.page-header__actions .button--primary {
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.22);
+}
+
+.page-summary-strip {
+  gap: 7px;
+  padding: 5px 6px;
+  border-radius: 12px;
+  border-color: var(--shell-outline-strong);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.56));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
 }
 
 html.dark .page-summary-strip {
@@ -184,9 +206,9 @@ html.dark .account-card[open] {
 .settings-form-grid .field {
   margin-bottom: 0;
   padding: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(100, 116, 139, 0.24);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.52);
+  background: rgba(255, 255, 255, 0.66);
 }
 
 html.dark .settings-form-grid .field {
@@ -203,9 +225,9 @@ html.dark .settings-form-grid .field {
 
 .field-block {
   padding: 7px 8px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(100, 116, 139, 0.22);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.46);
+  background: rgba(255, 255, 255, 0.64);
 }
 
 html.dark .field-block {
@@ -233,6 +255,12 @@ html.dark .status-note {
   color: rgba(226, 232, 240, 0.9);
   border-color: rgba(96, 165, 250, 0.36);
   background: rgba(30, 64, 175, 0.2);
+}
+
+html.dark .status-note--warning {
+  color: rgba(254, 243, 199, 0.94);
+  border-color: rgba(245, 158, 11, 0.34);
+  background: rgba(146, 64, 14, 0.26);
 }
 
 .status-note {
@@ -283,5 +311,1492 @@ html.dark .status-note {
 
   .field-block {
     padding: 8px 9px;
+  }
+}
+
+:root {
+  --shell-sidebar-width: 204px;
+  --shell-radius-xl: 14px;
+  --shell-radius-lg: 10px;
+  --shell-radius-md: 8px;
+  --shell-shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.06);
+  --shell-shadow-card: 0 6px 18px rgba(15, 23, 42, 0.045);
+}
+
+.page-shell {
+  gap: 8px;
+  padding: 8px;
+}
+
+.page-shell__sidebar,
+.page-shell__content {
+  min-height: calc(100vh - 16px);
+}
+
+.page-shell__sidebar {
+  top: 8px;
+  gap: 8px;
+  padding: 8px;
+}
+
+.brand--panel {
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.brand__mark {
+  width: 36px;
+  height: 36px;
+}
+
+.page-shell__sidebar .brand__title {
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.page-shell__sidebar .brand__subtitle {
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+.brand__chips {
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.brand__chip {
+  min-height: 18px;
+  padding: 0 7px;
+  font-size: 10px;
+}
+
+.sidebar-nav__section {
+  margin: 1px 6px 0;
+}
+
+.sidebar-nav__link {
+  min-height: 35px;
+  gap: 8px;
+  padding: 5px 8px;
+}
+
+.sidebar-nav__icon {
+  width: 21px;
+  height: 21px;
+}
+
+.sidebar-summary {
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.topbar {
+  height: 48px;
+  padding: 0 12px;
+}
+
+.topbar__badge,
+.topbar__status,
+.status-pill {
+  min-height: 22px;
+  padding: 0 7px;
+}
+
+.topbar__context strong {
+  font-size: 17px;
+}
+
+.topbar__caption {
+  font-size: 11px;
+}
+
+.topbar__actions .button--danger-outline {
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.content-wrap {
+  padding: 12px;
+}
+
+.page-header {
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.page-header::after {
+  width: 88px;
+  height: 88px;
+}
+
+.page-header__copy {
+  gap: 5px;
+}
+
+.page-header__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.page-header__title {
+  font-size: 22px;
+  line-height: 1.18;
+}
+
+.page-header__description {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.page-header__actions .button-row {
+  gap: 7px;
+}
+
+.card,
+.section-card,
+.settings-card,
+.schedule-card,
+.aux-job-cluster {
+  border-radius: 12px;
+}
+
+.card {
+  padding: 12px;
+}
+
+.card__title {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.panel-grid {
+  gap: 10px;
+}
+
+.panel-grid--two {
+  gap: 10px;
+}
+
+.stat-grid {
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.stat-card {
+  padding: 9px 10px;
+}
+
+.stat-card__head {
+  margin-bottom: 4px;
+}
+
+.stat-card__value {
+  font-size: 18px;
+}
+
+.field {
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.field__label {
+  font-size: 11px;
+}
+
+.input,
+.textarea,
+.app-select__trigger {
+  min-height: 34px;
+  border-radius: 8px;
+}
+
+.input,
+.textarea,
+.select {
+  padding: 7px 10px;
+}
+
+.button {
+  min-height: 32px;
+  padding: 5px 12px;
+  border-radius: 8px;
+}
+
+.page-summary-strip {
+  margin-bottom: 10px;
+  padding: 5px 6px;
+}
+
+.page-summary-strip .status-pill,
+.subcard .status-list .status-pill,
+.settings-card--security .status-pill {
+  min-height: 24px;
+}
+
+.subcard {
+  padding: 9px;
+}
+
+.dashboard-empty {
+  min-height: 92px;
+  padding: 12px;
+}
+
+.dashboard-empty__icon,
+.console-empty__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.settings-form-grid .field,
+.field-block {
+  padding: 8px 9px;
+}
+
+.task-row,
+.asset-row,
+.report-site-row,
+.reports-day-row {
+  padding: 8px 9px;
+  border-radius: 10px;
+}
+
+.card:hover,
+.subcard:hover,
+.job-item:hover {
+  transform: none;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+@media (max-width: 960px) {
+  .topbar {
+    height: auto;
+    padding: 8px 10px;
+  }
+
+  .content-wrap {
+    padding: 8px;
+  }
+
+  .page-header__title {
+    font-size: 20px;
+  }
+}
+
+:root {
+  --shell-sidebar-width: 180px;
+  --shell-max-width: none;
+  --shell-radius-xl: 0;
+  --shell-radius-lg: 16px;
+  --shell-radius-md: 10px;
+  --shell-shadow-soft: none;
+  --shell-shadow-card: 0 2px 10px rgba(15, 23, 42, 0.055);
+  --shell-outline: rgba(15, 23, 42, 0.08);
+  --shell-outline-strong: rgba(15, 23, 42, 0.1);
+  --shell-panel-bg: var(--semi-color-bg-0);
+  --shell-panel-strong: var(--semi-color-bg-0);
+  --shell-card-bg: #ffffff;
+  --shell-card-muted-bg: rgba(248, 250, 252, 0.92);
+  --shell-muted-bg: rgba(15, 23, 42, 0.035);
+}
+
+html.dark {
+  --shell-shadow-card: 0 2px 12px rgba(2, 6, 23, 0.28);
+  --shell-outline: rgba(148, 163, 184, 0.14);
+  --shell-outline-strong: rgba(148, 163, 184, 0.2);
+  --shell-card-bg: rgba(15, 23, 42, 0.92);
+  --shell-card-muted-bg: rgba(30, 41, 59, 0.78);
+  --shell-muted-bg: rgba(148, 163, 184, 0.1);
+}
+
+body {
+  background: var(--semi-color-bg-0);
+}
+
+.page-shell {
+  min-height: 100vh;
+  gap: 0;
+  padding: 0;
+  background: var(--semi-color-bg-0);
+}
+
+.page-shell__sidebar,
+.page-shell__content {
+  min-height: 100vh;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.page-shell__sidebar {
+  top: 0;
+  height: 100vh;
+  gap: 0;
+  padding: 0 8px;
+  border-right: 1px solid var(--semi-color-border);
+  background: var(--semi-color-bg-0);
+}
+
+.page-shell__content {
+  overflow: auto;
+  background: var(--semi-color-bg-0);
+}
+
+.page-shell__content::before {
+  display: none;
+}
+
+.brand--panel {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin: 8px 0 10px;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.brand__mark {
+  width: 34px;
+  height: 34px;
+  box-shadow: none;
+}
+
+.page-shell__sidebar .brand__eyebrow,
+.sidebar-summary__label,
+.sidebar-nav__section {
+  color: var(--semi-color-text-2);
+  letter-spacing: 0.04em;
+}
+
+.page-shell__sidebar .brand__title,
+.sidebar-summary__title {
+  color: var(--semi-color-text-0);
+}
+
+.page-shell__sidebar .brand__title {
+  font-size: 17px;
+  line-height: 1.12;
+}
+
+.page-shell__sidebar .brand__subtitle,
+.sidebar-summary__caption {
+  color: var(--semi-color-text-2);
+}
+
+.brand__chips {
+  display: none;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar-nav__group {
+  display: grid;
+  gap: 2px;
+  padding: 3px 0;
+}
+
+.sidebar-nav__section {
+  margin: 0;
+  padding: 0 10px 3px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.sidebar-nav__link {
+  min-height: 38px;
+  gap: 8px;
+  margin: 1px 0;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--semi-color-text-1);
+  box-shadow: none;
+}
+
+.sidebar-nav__link:hover,
+.sidebar-nav__link--active {
+  color: var(--semi-color-primary);
+  border-color: transparent;
+  background: var(--semi-color-primary-light-default);
+  box-shadow: none;
+}
+
+.sidebar-nav__icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: currentColor;
+  background: transparent;
+}
+
+.sidebar-nav__link:hover .sidebar-nav__icon,
+.sidebar-nav__link--active .sidebar-nav__icon {
+  transform: none;
+  background: transparent;
+}
+
+.sidebar-nav__text strong {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.sidebar-summary {
+  margin: 8px 0;
+  padding: 10px 8px;
+  border: 0;
+  border-top: 1px solid var(--semi-color-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.sidebar-summary--current {
+  display: none;
+}
+
+.legacy-link-list {
+  gap: 4px;
+}
+
+.legacy-link {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.legacy-link:hover,
+.legacy-link:focus-visible,
+.legacy-link--active {
+  background: var(--semi-color-primary-light-default);
+  color: var(--semi-color-primary);
+  transform: none;
+}
+
+.topbar {
+  height: 64px;
+  padding: 0 24px;
+  background: var(--semi-color-overlay-bg);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--semi-color-border);
+}
+
+.topbar__badge,
+.topbar__status {
+  display: none;
+}
+
+.topbar__context strong {
+  font-size: 18px;
+}
+
+.topbar__caption {
+  color: var(--semi-color-text-2);
+  font-size: 12px;
+}
+
+.topbar__utility {
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.topbar__actions {
+  gap: 8px;
+}
+
+.topbar__actions .button--danger-outline {
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.app-select--sm .app-select__trigger,
+.login-topbar__actions .app-select__trigger {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--semi-color-fill-0);
+}
+
+.content-wrap {
+  width: 100%;
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page-header::before,
+.page-header::after,
+.panel-grid--two > .card::before,
+.dashboard-panel::before,
+.settings-card::before,
+.schedule-card::before,
+.section-card::before,
+.aux-job-cluster::before,
+.stat-card::after {
+  display: none;
+}
+
+.page-header__copy {
+  gap: 6px;
+}
+
+.page-header__eyebrow-row {
+  display: none;
+}
+
+.page-header__title {
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.page-header__description {
+  color: var(--semi-color-text-1);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.page-header__actions .button-row {
+  gap: 8px;
+}
+
+.page-summary-strip {
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.status-pill {
+  min-height: 24px;
+  padding: 2px 10px;
+  border-color: var(--semi-color-border);
+  background: var(--semi-color-fill-0);
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: none;
+}
+
+.card,
+.section-card,
+.settings-card,
+.schedule-card,
+.aux-job-cluster,
+.surface-card,
+.console-card__output,
+.login-card {
+  border: 1px solid var(--semi-color-border);
+  border-radius: 16px;
+  background: var(--shell-card-bg);
+  box-shadow: var(--shell-shadow-card);
+}
+
+.card,
+.section-card,
+.settings-card,
+.schedule-card,
+.aux-job-cluster {
+  padding: 14px;
+}
+
+.card__title {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.panel-grid,
+.panel-grid--two {
+  gap: 14px;
+}
+
+.stat-grid {
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.stat-card {
+  padding: 12px;
+}
+
+.stat-card__head {
+  margin-bottom: 8px;
+}
+
+.stat-card__icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+.stat-card__label {
+  font-size: 12px;
+}
+
+.stat-card__value {
+  font-size: 24px;
+  letter-spacing: -0.04em;
+}
+
+.section-head {
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.stack-list,
+.status-list,
+.job-list {
+  gap: 10px;
+}
+
+.subcard,
+.job-item,
+.account-card[open] {
+  border-radius: 14px;
+  background: var(--shell-card-muted-bg);
+}
+
+.subcard,
+.job-item {
+  padding: 12px;
+}
+
+.field {
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.field__label {
+  font-size: 13px;
+}
+
+.input,
+.textarea,
+.select,
+.app-select__trigger {
+  min-height: 36px;
+  border-radius: 10px;
+  background: var(--semi-color-bg-0);
+}
+
+.input,
+.textarea,
+.select {
+  padding: 8px 12px;
+}
+
+.button {
+  min-height: 32px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.button-row {
+  gap: 8px;
+}
+
+.task-row,
+.asset-row,
+.report-site-row,
+.reports-day-row {
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.task-row__actions .button,
+.asset-row__actions .button {
+  min-height: 30px;
+  padding: 4px 12px;
+}
+
+.dashboard-empty,
+.console-empty {
+  border-radius: 14px;
+}
+
+.dashboard-empty {
+  min-height: 124px;
+  padding: 16px;
+}
+
+.dashboard-empty__icon,
+.console-empty__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.settings-form-grid .field,
+.field-block {
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.card:hover,
+.subcard:hover,
+.job-item:hover {
+  transform: none;
+  box-shadow: var(--shell-shadow-card);
+}
+
+@media (max-width: 960px) {
+  .topbar {
+    height: auto;
+    padding: 12px 16px;
+  }
+
+  .content-wrap {
+    padding: 16px;
+  }
+
+  .page-header__title {
+    font-size: 22px;
+  }
+}
+
+.app-console-shell {
+  min-height: 100vh;
+  background: var(--semi-color-bg-0);
+}
+
+.global-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  height: 64px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--semi-color-border);
+  background: var(--semi-color-overlay-bg);
+  backdrop-filter: blur(18px);
+}
+
+.global-topbar__brand,
+.global-topbar__nav,
+.global-topbar__actions,
+.global-topbar__link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.global-topbar__brand {
+  flex: 0 0 auto;
+  gap: 10px;
+  color: var(--semi-color-text-0);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.global-topbar__mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: conic-gradient(from 210deg, #06b6d4, #2563eb, #10b981, #22c55e, #06b6d4);
+}
+
+.global-topbar__nav {
+  flex: 1 1 auto;
+  gap: 4px;
+  min-width: 0;
+}
+
+.global-topbar__link {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: var(--semi-color-text-0);
+  font-weight: 600;
+}
+
+.global-topbar__link:hover,
+.global-topbar__link:focus-visible,
+.global-topbar__link--active {
+  color: var(--semi-color-primary);
+  background: var(--semi-color-primary-light-default);
+}
+
+.global-topbar__actions {
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.app-console-shell > .page-shell {
+  min-height: calc(100vh - 64px);
+}
+
+.app-console-shell .page-shell__sidebar,
+.app-console-shell .page-shell__content {
+  min-height: calc(100vh - 64px);
+}
+
+.app-console-shell .page-shell__sidebar {
+  position: sticky;
+  top: 64px;
+  height: calc(100vh - 64px);
+  padding-top: 8px;
+}
+
+.app-console-shell .topbar {
+  display: none;
+}
+
+.app-console-shell .topbar__context strong {
+  font-size: 20px;
+}
+
+.app-console-shell .content-wrap {
+  padding-top: 24px;
+}
+
+.app-console-shell .brand--panel {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .global-topbar {
+    height: auto;
+    min-height: 64px;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 10px 16px;
+  }
+
+  .global-topbar__nav {
+    order: 3;
+    flex-basis: 100%;
+    overflow-x: auto;
+  }
+
+  .global-topbar__actions {
+    margin-left: auto;
+  }
+
+  .app-console-shell .page-shell__sidebar {
+    display: none;
+  }
+
+  .app-console-shell .topbar {
+    display: flex;
+    position: sticky;
+    top: 0;
+  }
+
+  .app-console-shell .content-wrap {
+    padding-top: 16px;
+  }
+}
+
+.app-console-shell {
+  color: var(--semi-color-text-0);
+  font-size: 14px;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-console-shell :where(p, h1, h2, h3, h4) {
+  margin-top: 0;
+}
+
+.app-console-shell :where(.muted, .field-block__description, .page-header__description, .topbar__caption) {
+  color: var(--semi-color-text-1);
+}
+
+.app-console-shell .global-topbar__brand strong {
+  font-size: 19px;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.app-console-shell .global-topbar__link {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.app-console-shell .sidebar-nav__section {
+  color: var(--semi-color-text-2);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+.app-console-shell .sidebar-nav__text strong,
+.app-console-shell .legacy-link {
+  color: var(--semi-color-text-0);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.app-console-shell .sidebar-summary__label {
+  color: var(--semi-color-text-2);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.app-console-shell .sidebar-summary__caption {
+  color: var(--semi-color-text-1);
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+.app-console-shell .page-header__title {
+  color: var(--semi-color-text-0);
+  font-size: 26px;
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+
+.app-console-shell .page-header__description {
+  max-width: 760px;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.015em;
+}
+
+.app-console-shell .card__title,
+.app-console-shell .section-card__summary strong,
+.app-console-shell .account-card__summary strong,
+.app-console-shell .subcard strong,
+.app-console-shell .job-item strong,
+.app-console-shell .asset-row__title strong,
+.app-console-shell .task-row__title strong,
+.app-console-shell .dashboard-empty__copy strong,
+.app-console-shell .console-empty__copy strong {
+  color: var(--semi-color-text-0);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+
+.app-console-shell .card__title {
+  font-size: 17px;
+}
+
+.app-console-shell .subcard,
+.app-console-shell .job-item,
+.app-console-shell .asset-row,
+.app-console-shell .task-row,
+.app-console-shell .account-card,
+.app-console-shell .settings-card,
+.app-console-shell .schedule-card,
+.app-console-shell .aux-job-cluster {
+  color: var(--semi-color-text-0);
+  font-size: 14px;
+  line-height: 1.48;
+}
+
+.app-console-shell .subcard p,
+.app-console-shell .job-item p,
+.app-console-shell .asset-row p,
+.app-console-shell .task-row p,
+.app-console-shell .account-card p,
+.app-console-shell .settings-card p,
+.app-console-shell .schedule-card p,
+.app-console-shell .aux-job-cluster p {
+  color: var(--semi-color-text-1);
+  line-height: 1.55;
+}
+
+.app-console-shell .field__label,
+.app-console-shell .login-card__field-label {
+  color: var(--semi-color-text-0);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.app-console-shell .field-block__description,
+.app-console-shell .asset-row__title .muted,
+.app-console-shell .task-row__time,
+.app-console-shell .topbar__caption {
+  color: var(--semi-color-text-1);
+  font-size: 12px;
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+}
+
+.app-console-shell .input,
+.app-console-shell .textarea,
+.app-console-shell .select,
+.app-console-shell .app-select__trigger {
+  color: var(--semi-color-text-0);
+  font-size: 15px;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+}
+
+.app-console-shell .textarea--code,
+.app-console-shell .input--code {
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+
+.app-console-shell .button {
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.app-console-shell .status-pill {
+  min-height: 23px;
+  padding: 0 9px;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.app-console-shell .status-pill__dot {
+  width: 6px;
+  height: 6px;
+  flex-basis: 6px;
+}
+
+.app-console-shell .page-summary-strip .status-pill,
+.app-console-shell .asset-row .status-pill,
+.app-console-shell .task-row .status-pill,
+.app-console-shell .subcard .status-pill {
+  font-size: 12px;
+}
+
+.app-console-shell .stat-card__label {
+  color: var(--semi-color-text-1);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.app-console-shell .stat-card__value {
+  color: var(--semi-color-text-0);
+  font-size: 26px;
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+}
+
+.app-console-shell .dashboard-empty__copy p,
+.app-console-shell .console-empty__copy p {
+  color: var(--semi-color-text-1);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+html.dark .app-console-shell :where(.muted, .field-block__description, .page-header__description, .topbar__caption),
+html.dark .app-console-shell :where(.subcard p, .job-item p, .asset-row p, .task-row p, .account-card p, .settings-card p, .schedule-card p, .aux-job-cluster p) {
+  color: rgba(226, 232, 240, 0.74);
+}
+
+@media (max-width: 960px) {
+  .app-console-shell .global-topbar__brand strong {
+    font-size: 17px;
+  }
+
+  .app-console-shell .page-header__title {
+    font-size: 22px;
+  }
+
+  .app-console-shell .page-header__description {
+    font-size: 13px;
+  }
+}
+
+.app-console-shell .subcard strong,
+.app-console-shell .job-item strong,
+.app-console-shell .asset-row__title strong,
+.app-console-shell .task-row__title strong,
+.app-console-shell .account-card__summary strong {
+  font-weight: 650;
+  letter-spacing: -0.018em;
+}
+
+.app-console-shell .aux-job-cluster > strong,
+.app-console-shell .schedule-card > strong {
+  font-weight: 700;
+}
+
+.app-console-shell .page-header,
+.app-console-shell .card,
+.app-console-shell .section-card,
+.app-console-shell .settings-card,
+.app-console-shell .schedule-card,
+.app-console-shell .aux-job-cluster {
+  color: var(--semi-color-text-0);
+}
+
+.app-console-shell .page-header {
+  display: flex;
+  align-items: center;
+  min-height: 70px;
+  margin-bottom: 14px;
+  padding: 14px 18px 14px 24px;
+  border: 1px solid var(--semi-color-border);
+  border-radius: 14px;
+  background: var(--shell-card-bg);
+  box-shadow: var(--shell-shadow-card);
+}
+
+.app-console-shell .page-header__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 0;
+}
+
+.app-console-shell .page-header__title {
+  margin: 0;
+  line-height: 1.08;
+}
+
+.app-console-shell .page-header__description {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.app-console-shell .page-header__actions {
+  align-self: flex-start;
+  padding-top: 1px;
+}
+
+.app-console-shell .page-header__actions .button-row {
+  align-items: center;
+}
+
+@media (max-width: 960px) {
+  .app-console-shell .page-header {
+    min-height: auto;
+    padding: 14px 16px;
+  }
+
+  .app-console-shell .page-header__actions {
+    align-self: stretch;
+    padding-top: 4px;
+  }
+}
+
+.app-console-shell .content-wrap {
+  max-width: 1520px;
+  margin: 0 auto;
+}
+
+.app-console-shell .page-summary-strip {
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.app-console-shell .stat-grid {
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.app-console-shell .stat-card {
+  min-height: 88px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.9)),
+    var(--shell-card-bg);
+}
+
+.app-console-shell .stat-card__head {
+  margin-bottom: 10px;
+}
+
+.app-console-shell .stat-card__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.app-console-shell .stat-card__value {
+  font-size: 27px;
+}
+
+.app-console-shell .dashboard-panels {
+  gap: 12px;
+}
+
+.app-console-shell .dashboard-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.app-console-shell .dashboard-column {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.app-console-shell .dashboard-panel {
+  gap: 12px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.app-console-shell .dashboard-panel > .section-head:first-child,
+.app-console-shell .section-card > .section-head:first-child,
+.app-console-shell .settings-card > .section-head:first-child,
+.app-console-shell .schedule-card > .section-head:first-child,
+.app-console-shell .aux-job-cluster > .section-head:first-child {
+  min-height: 28px;
+  margin: -2px 0 2px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.app-console-shell .dashboard-panel > .section-head:first-child .card__title {
+  margin: 0;
+}
+
+.app-console-shell .status-list {
+  gap: 6px;
+}
+
+.app-console-shell .dashboard-panel > .status-list {
+  padding: 2px 0 0;
+}
+
+.app-console-shell .dashboard-panel > .status-list .status-pill {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 999px;
+  background: rgba(241, 245, 249, 0.72);
+}
+
+.app-console-shell .stack-list {
+  gap: 8px;
+}
+
+.app-console-shell .subcard,
+.app-console-shell .job-item,
+.app-console-shell .asset-row,
+.app-console-shell .task-row {
+  border-radius: 12px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.app-console-shell .subcard {
+  padding: 13px 14px;
+}
+
+.app-console-shell .subcard .section-head {
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.app-console-shell .subcard p + .status-list {
+  margin-top: 9px;
+}
+
+.app-console-shell .dashboard-empty {
+  min-height: 140px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  align-content: center;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(219, 234, 254, 0.58), rgba(238, 242, 255, 0.62)),
+    rgba(248, 250, 252, 0.82);
+}
+
+.app-console-shell .dashboard-empty__icon,
+.app-console-shell .console-empty__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.app-console-shell .dashboard-empty__copy {
+  gap: 5px;
+}
+
+html.dark .app-console-shell .stat-card,
+html.dark .app-console-shell .subcard,
+html.dark .app-console-shell .job-item,
+html.dark .app-console-shell .asset-row,
+html.dark .app-console-shell .task-row {
+  background: rgba(15, 23, 42, 0.68);
+}
+
+html.dark .app-console-shell .dashboard-panel > .section-head:first-child,
+html.dark .app-console-shell .section-card > .section-head:first-child,
+html.dark .app-console-shell .settings-card > .section-head:first-child,
+html.dark .app-console-shell .schedule-card > .section-head:first-child,
+html.dark .app-console-shell .aux-job-cluster > .section-head:first-child {
+  border-bottom-color: rgba(148, 163, 184, 0.14);
+}
+
+.app-console-shell .task-snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.app-console-shell .task-snapshot-tile {
+  display: grid;
+  gap: 4px;
+  min-height: 62px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.76);
+}
+
+.app-console-shell .task-snapshot-tile span {
+  color: var(--semi-color-text-1);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.app-console-shell .task-snapshot-tile strong {
+  color: var(--semi-color-text-0);
+  font-size: 22px;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.app-console-shell .task-snapshot-tile--success {
+  border-color: rgba(5, 150, 105, 0.18);
+  background: rgba(236, 253, 245, 0.76);
+}
+
+.app-console-shell .task-snapshot-tile--danger {
+  border-color: rgba(220, 38, 38, 0.16);
+  background: rgba(254, 242, 242, 0.72);
+}
+
+html.dark .app-console-shell .task-snapshot-tile {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.62);
+}
+
+@media (max-width: 720px) {
+  .app-console-shell .dashboard-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .app-console-shell .task-snapshot-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.app-console-shell .panel-grid--two {
+  align-items: start;
+}
+
+.app-console-shell .panel-grid--two > :where(.card, .surface-card, .section-card, .settings-card, .schedule-card, .aux-job-cluster) {
+  align-self: start;
+}
+
+.app-console-shell .dashboard-empty {
+  min-height: 108px;
+  padding: 14px 16px;
+}
+
+.app-console-shell .incident-list-card > .stack-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.app-console-shell .incident-list-card .subcard {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.app-console-shell .aux-job-layout {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.app-console-shell .aux-job-cluster:not([open]) {
+  min-height: 96px;
+}
+
+.app-console-shell .aux-job-cluster:not([open]) .aux-job-cluster__summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 96px;
+  align-items: center;
+  justify-items: start;
+  padding: 16px 18px;
+}
+
+.app-console-shell .aux-job-cluster:not([open]) .aux-job-cluster__copy {
+  gap: 6px;
+}
+
+.app-console-shell .aux-job-cluster:not([open]) .status-pill {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.app-console-shell .aux-job-cluster[open],
+.app-console-shell .aux-job-layout > .console-card {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1180px) {
+  .app-console-shell .aux-job-layout,
+  .app-console-shell .incident-list-card > .stack-list {
+    grid-template-columns: 1fr;
   }
 }

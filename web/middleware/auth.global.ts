@@ -18,6 +18,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
   authState.value = session.authenticated
   authExpiresAt.value = session.expires_at
   if (!session.authenticated) {
-    return navigateTo('/login')
+    return navigateTo({
+      path: '/login',
+      query: {
+        next: to.fullPath
+      }
+    })
   }
 })

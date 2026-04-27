@@ -74,7 +74,7 @@ const schedulerStateLabel = computed(() => `${t('本地调度')} ${t(statusRespo
       <StatusBadge :label="deployModeLabel" :state="statusResponse?.deploy_mode === 'control_plane' ? 'enabled' : 'info'" />
       <StatusBadge :label="schedulerStateLabel" :state="statusResponse?.scheduler_enabled ? 'enabled' : 'failed'" />
     </div>
-    <section class="card surface-card" style="margin-bottom: 24px;">
+    <section class="card surface-card schedule-intro-card">
       <div class="section-head">
         <h2 class="card__title">{{ t('调度源说明') }}</h2>
         <StatusBadge :label="t('避免重复执行')" state="failed" :dot="false" />
@@ -93,7 +93,10 @@ const schedulerStateLabel = computed(() => `${t('本地调度')} ${t(statusRespo
       >
         <summary class="schedule-card__summary">
           <h2 class="card__title">{{ t('{job} 调度', { job: formatJobType(item.job_type) }) }}</h2>
-          <StatusBadge :label="formatEnabledState(item.enabled)" :state="item.enabled ? 'enabled' : 'disabled'" />
+          <div class="fold-summary-meta">
+            <StatusBadge :label="formatEnabledState(item.enabled)" :state="item.enabled ? 'enabled' : 'disabled'" />
+            <span class="fold-hint" aria-hidden="true">{{ t('展开或收起') }}</span>
+          </div>
         </summary>
         <div class="schedule-card__body stack-list">
           <FieldBlock
@@ -136,7 +139,7 @@ const schedulerStateLabel = computed(() => `${t('本地调度')} ${t(statusRespo
             >
           </FieldBlock>
           <div class="button-row">
-            <button class="button button--primary" @click="save(item.job_type)">{{ t('保存调度') }}</button>
+            <button type="button" class="button button--primary" @click="save(item.job_type)">{{ t('保存调度') }}</button>
           </div>
           <p v-if="messages[item.job_type]" class="status-note" role="status" aria-live="polite">{{ messages[item.job_type] }}</p>
         </div>

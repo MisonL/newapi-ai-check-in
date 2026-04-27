@@ -1,0 +1,221 @@
+/* Compact workbench density layer. Imported after all theme layers. */
+:root {
+  --sidebar-width: 168px;
+  --shell-sidebar-width: 168px;
+}
+
+.app-console-shell {
+  --compact-page-x: 16px;
+  --compact-page-y: 14px;
+  --compact-radius: 12px;
+  --compact-gap: 8px;
+}
+
+@media (min-width: 961px) {
+  .app-console-shell .global-topbar {
+    height: 52px;
+    gap: 14px;
+    padding: 0 16px;
+  }
+
+  .app-console-shell > .page-shell,
+  .app-console-shell .page-shell__sidebar,
+  .app-console-shell .page-shell__content {
+    min-height: calc(100vh - 52px);
+  }
+
+  .app-console-shell .page-shell__sidebar {
+    top: 52px;
+    height: calc(100vh - 52px);
+    padding: 6px 8px 0;
+  }
+
+}
+
+.app-console-shell .global-topbar__brand {
+  gap: 8px;
+}
+
+.app-console-shell .global-topbar__brand strong {
+  font-size: 17px;
+  letter-spacing: -0.03em;
+}
+
+.app-console-shell .global-topbar__mark {
+  width: 18px;
+  height: 18px;
+}
+
+.app-console-shell .global-topbar__link {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.app-console-shell .global-topbar__actions {
+  gap: 6px;
+}
+
+.app-console-shell .content-wrap {
+  padding: var(--compact-page-y) var(--compact-page-x) 18px;
+}
+
+.app-console-shell .page-shell__sidebar .sidebar-nav {
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.app-console-shell .sidebar-nav__group {
+  gap: 4px;
+}
+
+.app-console-shell .sidebar-nav__section {
+  margin-bottom: 2px;
+  font-size: 10px;
+}
+
+.app-console-shell .sidebar-nav__link {
+  min-height: 30px;
+  gap: 8px;
+  padding: 5px 7px;
+  border-radius: 8px;
+}
+
+.app-console-shell .sidebar-nav__icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+}
+
+.app-console-shell .sidebar-nav__text strong,
+.app-console-shell .legacy-link {
+  font-size: 13px;
+}
+
+.app-console-shell .sidebar-summary {
+  margin-top: 10px;
+  padding: 9px;
+  border-radius: var(--compact-radius);
+}
+
+.app-console-shell .sidebar-summary__caption {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.app-console-shell .legacy-link-list {
+  gap: 3px;
+}
+
+.app-console-shell .legacy-link {
+  min-height: 24px;
+  padding: 0 6px;
+  border-radius: 7px;
+}
+
+.app-console-shell .page-header {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 0;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: var(--compact-radius);
+}
+
+.app-console-shell .page-header__copy {
+  gap: 3px;
+}
+
+.app-console-shell .page-header__title {
+  font-size: 22px;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.app-console-shell .page-header__description {
+  max-width: 680px;
+  font-size: 13px;
+  line-height: 1.35;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.app-console-shell .page-header__actions {
+  align-self: center;
+  padding-top: 0;
+}
+
+.app-console-shell .page-header__actions .button-row,
+.app-console-shell .page-header__actions .today-action-board {
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.app-console-shell .page-header__actions .button-row {
+  flex-wrap: nowrap;
+}
+
+.app-console-shell .page-header__actions .button {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.app-console-shell .page-summary-strip {
+  gap: 5px;
+  margin-bottom: 8px;
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.app-console-shell .status-note {
+  margin-bottom: 8px;
+  padding: 6px 9px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@media (max-width: 1180px) and (min-width: 961px) {
+  .app-console-shell .page-header {
+    grid-template-columns: 1fr;
+  }
+
+  .app-console-shell .page-header__actions .button-row {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .app-console-shell .page-header__actions .today-action-board {
+    justify-content: start;
+  }
+}
+
+@media (max-width: 960px) {
+  .app-console-shell .global-topbar {
+    min-height: 54px;
+    padding: 8px 12px;
+  }
+
+  .app-console-shell .content-wrap {
+    padding: 12px;
+  }
+
+  .app-console-shell .page-header {
+    gap: 8px;
+    padding: 11px 12px;
+  }
+
+  .app-console-shell .page-header__title {
+    font-size: 19px;
+  }
+
+  .app-console-shell .page-header__description {
+    font-size: 12px;
+  }
+}

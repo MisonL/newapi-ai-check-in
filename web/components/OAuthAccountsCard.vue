@@ -22,7 +22,7 @@ const fieldId = (index: number, name: string) => `${props.title}-${index}-${name
   <section class="card surface-card">
     <div class="section-head">
       <h2 class="card__title">{{ t(props.title) }}</h2>
-      <button class="button button--secondary" @click="addAccount">{{ t('新增') }}</button>
+      <button type="button" class="button button--secondary" @click="addAccount">{{ t('新增') }}</button>
     </div>
     <div class="stack-list">
       <form v-for="(item, index) in accounts" :key="`${props.title}-${index}`" class="subcard" @submit.prevent>

@@ -7,7 +7,9 @@ const { t, translateRequestError } = useAppI18n()
 type AccountAuthMode = AccountRecordView['auth_mode']
 
 const saveMessage = ref('')
+const refreshBusy = ref(false)
 const editingId = ref('')
+const editorSection = ref<HTMLElement | null>(null)
 const cookiesJson = ref('')
 const siteFilter = ref('all')
 const authFilter = ref<'all' | AccountAuthMode>('all')
@@ -78,10 +80,22 @@ const visibleAccounts = computed(() => {
 })
 const hasSites = computed(() => sites.value.length > 0)
 const refreshAll = async () => {
-  await Promise.all([refreshSites(), refreshAccounts()])
+  saveMessage.value = ''
+  refreshBusy.value = true
+  try {
+    await Promise.all([refreshSites(), refreshAccounts()])
+    saveMessage.value = t('账号已刷新')
+  } catch (error: any) {
+    saveMessage.value = translateRequestError(error, '账号刷新失败')
+  } finally {
+    refreshBusy.value = false
+  }
 }
 
-const resetDraft = () => {
+const resetDraft = (clearMessage = true) => {
+  if (clearMessage) {
+    saveMessage.value = ''
+  }
   editingId.value = ''
   cookiesJson.value = ''
   draft.id = ''
@@ -115,6 +129,11 @@ const editAccount = (account: AccountRecordView) => {
   editingId.value = account.id
   Object.assign(draft, account)
   cookiesJson.value = account.auth_mode === 'cookies' ? JSON.stringify(account.session_cookies || {}, null, 2) : ''
+  saveMessage.value = t('正在编辑账号 {name}', { name: account.display_name || account.username })
+  nextTick(() => {
+    editorSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document.getElementById('account-display-name')?.focus({ preventScroll: true })
+  })
 }
 
 const isCookieMode = computed(() => draft.auth_mode === 'cookies')
@@ -197,7 +216,7 @@ const saveAccount = async () => {
     }
     await refreshAccounts()
     saveMessage.value = t(editingId.value ? '账号已更新' : '账号已创建')
-    resetDraft()
+    resetDraft(false)
   } catch (error: any) {
     saveMessage.value = translateRequestError(error, '账号保存失败')
   }
@@ -246,7 +265,9 @@ const checkinState = (status: AccountRecordView['last_checkin_status']) => {
     >
       <template #actions>
         <div class="button-row">
-          <button class="button button--secondary" @click="refreshAll">{{ t('刷新账号') }}</button>
+          <button type="button" class="button button--secondary" :disabled="refreshBusy" @click="refreshAll">
+            {{ refreshBusy ? t('刷新中') : t('刷新账号') }}
+          </button>
         </div>
       </template>
     </PageHeader>
@@ -255,10 +276,10 @@ const checkinState = (status: AccountRecordView['last_checkin_status']) => {
     </div>
     <p v-if="saveMessage" class="status-note" aria-live="polite">{{ saveMessage }}</p>
     <div class="panel-grid panel-grid--two">
-      <section class="card surface-card asset-list-card">
+      <section ref="editorSection" class="card surface-card asset-list-card">
         <div class="section-head">
           <h2 class="card__title">{{ editingId ? t('编辑账号') : t('新增账号') }}</h2>
-          <button class="button button--secondary" @click="resetDraft">{{ t('清空表单') }}</button>
+          <button type="button" class="button button--secondary" @click="resetDraft">{{ t('清空表单') }}</button>
         </div>
         <div class="stack-list">
           <FieldBlock for-id="account-auth-mode" :label="t('认证方式')" :description="t('为每个账号选择密码登录、Cookie 会话或 OAuth 兼容模式')">
@@ -331,11 +352,12 @@ const checkinState = (status: AccountRecordView['last_checkin_status']) => {
               @update:model-value="draft.enabled = $event as boolean"
             />
           </FieldBlock>
-          <FieldBlock for-id="account-last-error" :label="t('最近异常')" :description="t('记录密码失效、验证码或兼容问题')">
-            <textarea id="account-last-error" v-model="draft.last_error_message" class="textarea" />
-          </FieldBlock>
+          <div v-if="editingId && draft.last_error_message" class="status-note status-note--warning" role="status">
+            <strong>{{ t('最近异常') }}</strong>
+            <span>{{ draft.last_error_message }}</span>
+          </div>
           <div class="button-row">
-            <button class="button button--primary" :disabled="!hasSites" @click="saveAccount">{{ t(editingId ? '保存账号修改' : '创建账号') }}</button>
+            <button type="button" class="button button--primary" :disabled="!hasSites" @click="saveAccount">{{ t(editingId ? '保存账号修改' : '创建账号') }}</button>
             <NuxtLink v-if="!hasSites" class="button button--secondary" to="/sites">{{ t('前往站点') }}</NuxtLink>
           </div>
           <p v-if="!hasSites" class="status-note">{{ t('先创建站点后才能录入账号。') }}</p>
@@ -379,7 +401,7 @@ const checkinState = (status: AccountRecordView['last_checkin_status']) => {
               <StatusBadge :label="`${t('累计额度')} ${account.total_quota_awarded}`" state="configured" />
             </div>
             <div class="asset-row__actions">
-              <button class="button button--secondary" @click="editAccount(account)">{{ t('编辑') }}</button>
+              <button type="button" class="button button--secondary" @click="editAccount(account)">{{ t('编辑') }}</button>
             </div>
           </article>
         </div>

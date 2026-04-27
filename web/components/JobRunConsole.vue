@@ -33,6 +33,7 @@ const logText = computed(() => props.logs.map((item) => `[${item.stream}] ${item
         <button
           v-for="job in props.jobs"
           :key="job.id"
+          type="button"
           class="job-item"
           :class="{ 'job-item--selected': props.selectedRunId === job.id }"
           @click="emit('select', job.id)"

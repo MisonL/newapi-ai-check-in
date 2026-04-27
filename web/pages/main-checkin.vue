@@ -79,7 +79,7 @@ watchEffect(() => {
   const payload = configResponse.value?.payload || {}
   providersJson.value = JSON.stringify(payload.providers || {}, null, 2)
   proxyJson.value = payload.proxy ? JSON.stringify(payload.proxy, null, 2) : ''
-  accounts.value = (payload.accounts || []).map((item: any) => {
+  const configuredAccounts = (payload.accounts || []).map((item: any) => {
     const extra = { ...item }
     delete extra.name
     delete extra.provider
@@ -105,6 +105,7 @@ watchEffect(() => {
       extra_json: Object.keys(extra).length ? JSON.stringify(extra, null, 2) : ''
     }
   })
+  accounts.value = configuredAccounts.length ? configuredAccounts : [createAccount()]
   linuxDoAccounts.value = (payload.accounts_linux_do || []).map((item: any) => ({
     username: item.username || '',
     password: item.password || ''
@@ -113,9 +114,6 @@ watchEffect(() => {
     username: item.username || '',
     password: item.password || ''
   }))
-  if (!accounts.value.length) {
-    accounts.value = [createAccount()]
-  }
 })
 
 const parseObject = (value: string, emptyValue: any = undefined) => {
@@ -236,8 +234,8 @@ const mainRuns = computed(() => (jobs.value as any[]) || [])
     >
       <template #actions>
         <div class="button-row">
-          <button class="button button--primary" @click="saveConfig">{{ t('保存配置') }}</button>
-          <button class="button button--secondary" @click="runJob">{{ t('立即运行') }}</button>
+          <button type="button" class="button button--primary" @click="saveConfig">{{ t('保存配置') }}</button>
+          <button type="button" class="button button--secondary" @click="runJob">{{ t('立即运行') }}</button>
         </div>
       </template>
     </PageHeader>
@@ -255,7 +253,10 @@ const mainRuns = computed(() => (jobs.value as any[]) || [])
         <details class="card surface-card section-card section-card--editor section-card--fold" :open="providersJson.trim() !== '{}'">
           <summary class="section-card__summary">
             <h2 class="card__title">{{ t('自定义提供商') }}</h2>
-            <StatusBadge label="JSON" state="info" :dot="false" />
+            <div class="fold-summary-meta">
+              <StatusBadge label="JSON" state="info" :dot="false" />
+              <span class="fold-hint" aria-hidden="true">{{ t('展开或收起') }}</span>
+            </div>
           </summary>
           <div class="section-card__body">
             <div class="field">
@@ -267,7 +268,10 @@ const mainRuns = computed(() => (jobs.value as any[]) || [])
         <details class="card surface-card section-card section-card--editor section-card--fold" :open="Boolean(proxyJson.trim())">
           <summary class="section-card__summary">
             <h2 class="card__title">{{ t('全局代理') }}</h2>
-            <StatusBadge label="JSON" state="info" :dot="false" />
+            <div class="fold-summary-meta">
+              <StatusBadge label="JSON" state="info" :dot="false" />
+              <span class="fold-hint" aria-hidden="true">{{ t('展开或收起') }}</span>
+            </div>
           </summary>
           <div class="section-card__body">
             <div class="field">
