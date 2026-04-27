@@ -7,11 +7,12 @@ from control_plane.services.task_center_executor import TaskCenterTaskExecutor
 from control_plane.storage.base import StorageBackend
 
 
+def build_newapi_checkin_service(storage: StorageBackend) -> NewApiCheckinService:
+	return NewApiCheckinService(
+		lambda site: NewApiClient(site.base_url),
+		oauth_executor=LegacyOAuthExecutor(storage).run,
+	)
+
+
 def build_task_center_executor(storage: StorageBackend) -> TaskCenterTaskExecutor:
-    return TaskCenterTaskExecutor(
-        storage,
-        NewApiCheckinService(
-            lambda site: NewApiClient(site.base_url),
-            oauth_executor=LegacyOAuthExecutor(storage).run,
-        ),
-    )
+	return TaskCenterTaskExecutor(storage, build_newapi_checkin_service(storage))

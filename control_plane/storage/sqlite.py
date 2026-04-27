@@ -364,14 +364,15 @@ class SqliteStorage(StorageBackend):
 				).fetchone()
 				if row is not None:
 					duplicate = IncidentRecord.model_validate_json(row['payload'])
-					incident = incident.model_copy(
-						update={
-							'id': duplicate.id,
-							'first_seen_at': duplicate.first_seen_at,
-							'resolved': duplicate.resolved,
-							'resolution_action': duplicate.resolution_action,
-						}
-					)
+					update = {
+						'id': duplicate.id,
+						'first_seen_at': duplicate.first_seen_at,
+					}
+					if not incident.resolved:
+						update['resolved'] = duplicate.resolved
+					if not incident.resolution_action:
+						update['resolution_action'] = duplicate.resolution_action
+					incident = incident.model_copy(update=update)
 			conn.execute(
 				'INSERT INTO incidents(id, site_id, account_id, task_id, resolved, severity, last_seen_at, payload) '
 				'VALUES(?, ?, ?, ?, ?, ?, ?, ?) '

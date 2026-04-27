@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import asdict, is_dataclass
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from control_plane.services.task_center_import import TaskCenterMainCheckinImporter
-from control_plane.services.task_runtime import build_task_center_executor
+from control_plane.services.task_runtime import build_newapi_checkin_service, build_task_center_executor
 from control_plane.settings import settings
 from control_plane.storage.base import StorageBackend
 from control_plane.task_center_models import (
@@ -30,7 +31,7 @@ class TaskCenterService:
 		self._storage = storage
 
 	def _account_identity(self, account: AccountRecord) -> tuple[str, str, str]:
-		if account.auth_mode == "cookies":
+		if account.auth_mode == 'cookies':
 			return (account.site_id, account.auth_mode, account.api_user)
 		return (account.site_id, account.auth_mode, account.username)
 
@@ -46,10 +47,19 @@ class TaskCenterService:
 	def list_sites(self) -> list[SiteRecord]:
 		return self._storage.list_sites()
 
+	def _result_payload(self, result) -> dict:
+		if isinstance(result, dict):
+			return result
+		if is_dataclass(result):
+			return asdict(result)
+		if hasattr(result, 'model_dump'):
+			return result.model_dump()
+		return dict(result)
+
 	def save_site(self, site: SiteRecord) -> SiteRecord:
 		for existing in self._storage.list_sites():
 			if existing.id != site.id and existing.base_url == site.base_url:
-				raise ValueError("Site base URL already exists")
+				raise ValueError('Site base URL already exists')
 		site.updated_at = datetime.now(timezone.utc)
 		self._storage.save_site(site)
 		return site
@@ -57,14 +67,68 @@ class TaskCenterService:
 	def list_accounts(self, site_id: str | None = None) -> list[AccountRecord]:
 		return self._storage.list_accounts(site_id)
 
+	async def probe_site(self, site_id: str):
+		site = self._storage.get_site(site_id)
+		if site is None:
+			raise KeyError(site_id)
+		result = await build_newapi_checkin_service(self._storage).probe_site(site)
+		payload = self._result_payload(result)
+		update = {
+			'last_probe_status': payload['status'],
+			'updated_at': self._now(),
+		}
+		if payload.get('checkin_enabled') is not None:
+			update['checkin_enabled_detected'] = payload.get('checkin_enabled')
+		if payload.get('min_quota') is not None:
+			update['checkin_min_quota_detected'] = payload.get('min_quota')
+		if payload.get('max_quota') is not None:
+			update['checkin_max_quota_detected'] = payload.get('max_quota')
+		self._storage.save_site(site.model_copy(update=update))
+		return result
+
 	def save_account(self, account: AccountRecord) -> AccountRecord:
 		target_identity = self._account_identity(account)
 		for existing in self._storage.list_accounts():
 			if existing.id != account.id and self._account_identity(existing) == target_identity:
-				raise ValueError("Account already exists for this site and auth mode")
+				raise ValueError('Account already exists for this site and auth mode')
 		account.updated_at = datetime.now(timezone.utc)
 		self._storage.save_account(account)
 		return account
+
+	async def preflight_account(self, account_id: str):
+		account = self._storage.get_account(account_id)
+		if account is None:
+			raise KeyError(account_id)
+		site = self._storage.get_site(account.site_id)
+		if site is None:
+			raise KeyError(account.site_id)
+		result = await build_newapi_checkin_service(self._storage).preflight_account(site, account)
+		payload = self._result_payload(result)
+		now = self._now()
+		account_update = {
+			'session_status': payload['session_status'],
+			'last_checkin_status': payload['checkin_status'],
+			'last_checkin_at': now,
+			'last_error_message': payload.get('message', '') if payload.get('error_code') else '',
+			'updated_at': now,
+		}
+		if payload.get('checked_in_today') is True:
+			account_update['last_checkin_date'] = self._resolve_date()
+		if payload.get('total_checkins') is not None:
+			account_update['total_checkins'] = payload.get('total_checkins')
+		if payload.get('total_quota_awarded') is not None:
+			account_update['total_quota_awarded'] = payload.get('total_quota_awarded')
+		self._storage.save_account(account.model_copy(update=account_update))
+		site_update = {'updated_at': now}
+		if payload.get('checkin_enabled') is not None:
+			site_update['checkin_enabled_detected'] = payload.get('checkin_enabled')
+		if payload.get('min_quota') is not None:
+			site_update['checkin_min_quota_detected'] = payload.get('min_quota')
+		if payload.get('max_quota') is not None:
+			site_update['checkin_max_quota_detected'] = payload.get('max_quota')
+		if len(site_update) > 1:
+			self._storage.save_site(site.model_copy(update=site_update))
+		return result
 
 	def delete_account(self, account_id: str) -> dict[str, int | str | bool]:
 		account = self._storage.get_account(account_id)
@@ -143,8 +207,8 @@ class TaskCenterService:
 					site_id=account.site_id,
 					account_id=account.id,
 					task_date=run_date,
-					status="pending",
-					trigger_type="manual",
+					status='pending',
+					trigger_type='manual',
 					attempt_count=0,
 				)
 			)
@@ -162,14 +226,14 @@ class TaskCenterService:
 			raise KeyError(task_id)
 		retried = task.model_copy(
 			update={
-				"status": "pending",
-				"trigger_type": "retry",
-				"attempt_count": task.attempt_count + 1,
-				"started_at": None,
-				"finished_at": None,
-				"error_code": "",
-				"error_message": "",
-				"updated_at": self._now(),
+				'status': 'pending',
+				'trigger_type': 'retry',
+				'attempt_count': task.attempt_count + 1,
+				'started_at': None,
+				'finished_at': None,
+				'error_code': '',
+				'error_message': '',
+				'updated_at': self._now(),
 			}
 		)
 		self._storage.save_daily_task(retried)
@@ -180,21 +244,18 @@ class TaskCenterService:
 
 	async def execute_today_tasks(self, task_date: date | None = None) -> TaskCenterBatchExecutionResult:
 		run_date = self._resolve_date(task_date)
-		tasks = [
-			task for task in self._storage.list_daily_tasks(task_date=run_date)
-			if task.status == "pending"
-		]
+		tasks = [task for task in self._storage.list_daily_tasks(task_date=run_date) if task.status == 'pending']
 		result = TaskCenterBatchExecutionResult(task_date=run_date, total_selected=len(tasks))
 		executor = build_task_center_executor(self._storage)
 		for task in sorted(tasks, key=lambda item: item.created_at):
 			finished = await executor.execute_task(task.id)
 			result.executed_count += 1
 			result.task_ids.append(finished.id)
-			if finished.status == "success":
+			if finished.status == 'success':
 				result.success_count += 1
-			elif finished.status == "skipped":
+			elif finished.status == 'skipped':
 				result.skipped_count += 1
-			elif finished.status == "blocked":
+			elif finished.status == 'blocked':
 				result.blocked_count += 1
 			else:
 				result.failed_count += 1
@@ -216,11 +277,13 @@ class TaskCenterService:
 				TaskCenterTodayTaskView(
 					id=task.id,
 					site_id=task.site_id,
-					site_name=site.name if site is not None else "Unknown Site",
+					site_name=site.name if site is not None else 'Unknown Site',
 					account_id=task.account_id,
-					account_display_name=(account.display_name or account.username) if account is not None else task.account_id,
-					username=account.username if account is not None else "",
-					auth_mode=account.auth_mode if account is not None else "password",
+					account_display_name=(account.display_name or account.username)
+					if account is not None
+					else task.account_id,
+					username=account.username if account is not None else '',
+					auth_mode=account.auth_mode if account is not None else 'password',
 					task_date=task.task_date,
 					status=task.status,
 					trigger_type=task.trigger_type,
@@ -236,15 +299,15 @@ class TaskCenterService:
 			)
 			payload.total_tasks += 1
 			payload.total_quota_awarded += result.quota_awarded if result is not None else 0
-			if task.status == "pending":
+			if task.status == 'pending':
 				payload.pending_tasks += 1
-			elif task.status == "success":
+			elif task.status == 'success':
 				payload.success_tasks += 1
-			elif task.status == "skipped":
+			elif task.status == 'skipped':
 				payload.skipped_tasks += 1
-			elif task.status == "failed":
+			elif task.status == 'failed':
 				payload.failed_tasks += 1
-			elif task.status == "blocked":
+			elif task.status == 'blocked':
 				payload.blocked_tasks += 1
 			else:
 				payload.running_tasks += 1
@@ -254,10 +317,7 @@ class TaskCenterService:
 	def reports(self, date_from: date | None = None, date_to: date | None = None) -> TaskCenterReportPayload:
 		end_date = self._resolve_date(date_to)
 		start_date = date_from or (end_date - timedelta(days=29))
-		all_tasks = [
-			task for task in self._storage.list_daily_tasks()
-			if start_date <= task.task_date <= end_date
-		]
+		all_tasks = [task for task in self._storage.list_daily_tasks() if start_date <= task.task_date <= end_date]
 		results = {result.task_id: result for result in self._storage.list_checkin_results()}
 		sites = {site.id: site for site in self.list_sites()}
 		day_map: dict[date, TaskCenterReportDay] = {}
@@ -273,21 +333,21 @@ class TaskCenterService:
 				task.site_id,
 				TaskCenterReportSite(
 					site_id=task.site_id,
-					site_name=site.name if site is not None else "Unknown Site",
+					site_name=site.name if site is not None else 'Unknown Site',
 				),
 			)
 			day.total_tasks += 1
 			site_summary.total_tasks += 1
-			if task.status == "success":
+			if task.status == 'success':
 				day.success_tasks += 1
 				site_summary.success_tasks += 1
-			elif task.status == "skipped":
+			elif task.status == 'skipped':
 				day.skipped_tasks += 1
 				site_summary.skipped_tasks += 1
-			elif task.status == "failed":
+			elif task.status == 'failed':
 				day.failed_tasks += 1
 				site_summary.failed_tasks += 1
-			elif task.status == "blocked":
+			elif task.status == 'blocked':
 				day.blocked_tasks += 1
 				site_summary.blocked_tasks += 1
 			result = results.get(task.id)
@@ -308,11 +368,13 @@ class TaskCenterService:
 		stored = self._storage.list_incidents(resolved=resolved)
 		if stored:
 			return self._coalesce_incidents(stored)
+		if self._storage.list_incidents():
+			return []
 		sites = {site.id: site for site in self.list_sites()}
 		accounts = {account.id: account for account in self.list_accounts()}
 		derived: list[IncidentRecord] = []
 		for task in self._storage.list_daily_tasks():
-			if task.status not in {"failed", "blocked"}:
+			if task.status not in {'failed', 'blocked'}:
 				continue
 			account = accounts.get(task.account_id)
 			site = sites.get(task.site_id)
@@ -322,12 +384,12 @@ class TaskCenterService:
 					site_id=task.site_id,
 					task_id=task.id,
 					display_name=(account.display_name or account.username) if account is not None else task.account_id,
-					site_name=site.name if site is not None else "Unknown Site",
-					status="failed" if task.status == "failed" else "blocked",
-					last_error_message=task.error_message or "Task requires review",
+					site_name=site.name if site is not None else 'Unknown Site',
+					status='failed' if task.status == 'failed' else 'blocked',
+					last_error_message=task.error_message or 'Task requires review',
 					type=task.error_code or task.status,
-					severity="high" if task.status == "failed" else "medium",
-					dedupe_key=f"{task.account_id}:{task.task_date}:{task.error_code or task.status}",
+					severity='high' if task.status == 'failed' else 'medium',
+					dedupe_key=f'{task.account_id}:{task.task_date}:{task.error_code or task.status}',
 					first_seen_at=task.started_at or task.created_at,
 					last_seen_at=task.finished_at or task.updated_at,
 					detail=task.error_message,
@@ -336,8 +398,44 @@ class TaskCenterService:
 			)
 		return self._coalesce_incidents(derived)
 
+	def resolve_incident(self, incident_id: str) -> IncidentRecord:
+		incidents = self._storage.list_incidents()
+		incident = next((item for item in incidents if item.id == incident_id), None)
+		if incident is None:
+			raise KeyError(incident_id)
+		group_key = self._incident_group_key(incident)
+		resolved_at = self._now()
+		resolved = incident.model_copy(
+			update={
+				'resolved': True,
+				'resolution_action': 'manual_resolved',
+				'last_seen_at': resolved_at,
+			}
+		)
+		for candidate in incidents:
+			if candidate.resolved or self._incident_group_key(candidate) != group_key:
+				continue
+			self._storage.save_incident(
+				candidate.model_copy(
+					update={
+						'resolved': True,
+						'resolution_action': 'manual_resolved',
+						'last_seen_at': resolved_at,
+					}
+				)
+			)
+		return resolved
+
+	def _incident_group_key(self, incident: IncidentRecord) -> tuple[str, str, str, str]:
+		return (
+			incident.site_id,
+			incident.account_id,
+			incident.type or incident.status,
+			incident.last_error_message,
+		)
+
 	def _coalesce_incidents(self, incidents: list[IncidentRecord]) -> list[IncidentRecord]:
-		severity_rank = {"high": 3, "medium": 2, "low": 1}
+		severity_rank = {'high': 3, 'medium': 2, 'low': 1}
 		merged_by_key: dict[tuple[str, str, str, str, bool], IncidentRecord] = {}
 		for incident in sorted(incidents, key=lambda item: item.last_seen_at):
 			key = (
@@ -353,14 +451,14 @@ class TaskCenterService:
 				continue
 			merged_by_key[key] = incident.model_copy(
 				update={
-					"id": existing.id,
-					"first_seen_at": min(existing.first_seen_at, incident.first_seen_at),
-					"severity": incident.severity
+					'id': existing.id,
+					'first_seen_at': min(existing.first_seen_at, incident.first_seen_at),
+					'severity': incident.severity
 					if severity_rank.get(incident.severity, 0) >= severity_rank.get(existing.severity, 0)
 					else existing.severity,
-					"resolution_action": incident.resolution_action or existing.resolution_action,
-					"detail": incident.detail or existing.detail,
-					"last_checkin_at": self._latest_datetime(existing.last_checkin_at, incident.last_checkin_at),
+					'resolution_action': incident.resolution_action or existing.resolution_action,
+					'detail': incident.detail or existing.detail,
+					'last_checkin_at': self._latest_datetime(existing.last_checkin_at, incident.last_checkin_at),
 				}
 			)
 		return sorted(merged_by_key.values(), key=lambda item: item.last_seen_at, reverse=True)
@@ -410,25 +508,25 @@ class TaskCenterService:
 			if not account.enabled:
 				continue
 			is_today = account.last_checkin_date == today
-			if is_today and account.last_checkin_status == "success":
+			if is_today and account.last_checkin_status == 'success':
 				stats.today_success += 1
 				stats.today_quota_awarded += account.last_quota_awarded
-			elif is_today and account.last_checkin_status == "skipped":
+			elif is_today and account.last_checkin_status == 'skipped':
 				stats.today_skipped += 1
-			elif is_today and account.last_checkin_status == "failed":
+			elif is_today and account.last_checkin_status == 'failed':
 				stats.today_failed += 1
-			elif is_today and account.last_checkin_status == "blocked":
+			elif is_today and account.last_checkin_status == 'blocked':
 				stats.today_blocked += 1
 			elif is_today:
 				stats.today_pending += 1
 
-			if account.last_checkin_status in {"failed", "blocked"}:
+			if account.last_checkin_status in {'failed', 'blocked'}:
 				recent_incidents.append(
 					IncidentRecord(
 						account_id=account.id,
 						site_id=account.site_id,
 						display_name=account.display_name or account.username,
-						site_name=site_names.get(account.site_id, "Unknown Site"),
+						site_name=site_names.get(account.site_id, 'Unknown Site'),
 						status=account.last_checkin_status,
 						last_error_message=account.last_error_message,
 						last_checkin_at=account.last_checkin_at,

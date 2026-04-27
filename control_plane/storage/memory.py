@@ -202,14 +202,15 @@ class MemoryStorage(StorageBackend):
 				None,
 			)
 			if duplicate is not None:
-				incident = incident.model_copy(
-					update={
-						'id': duplicate.id,
-						'first_seen_at': duplicate.first_seen_at,
-						'resolved': duplicate.resolved,
-						'resolution_action': duplicate.resolution_action,
-					}
-				)
+				update = {
+					'id': duplicate.id,
+					'first_seen_at': duplicate.first_seen_at,
+				}
+				if not incident.resolved:
+					update['resolved'] = duplicate.resolved
+				if not incident.resolution_action:
+					update['resolution_action'] = duplicate.resolution_action
+				incident = incident.model_copy(update=update)
 		self._incidents[incident.id] = deepcopy(incident)
 
 	def delete_incident(self, incident_id: str) -> None:
