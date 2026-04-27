@@ -6,7 +6,7 @@
 - `web/`: Nuxt 3 WebUI with pages, components, composables, and locale files.
 - `tests/`: Python service and API tests such as `test_control_plane_api.py`.
 - `scripts/`: local helper scripts for starting and validating the stack.
-- `assets/`, `docs/`, `secret-json-generator.html`: static assets, review records, and config helpers.
+- `assets/`, `docs/architecture/`, `docs/superpowers/`, `secret-json-generator.html`: static assets, durable design docs, Superpowers specs/plans, and config helpers.
 
 Keep backend changes inside `control_plane/` and UI changes inside `web/`. Avoid unrelated refactors in the same change.
 
@@ -32,8 +32,17 @@ Wait for `docker compose ps` to report `healthy` before opening the UI.
 ## Testing Guidelines
 
 - Backend tests use `pytest`; add new tests under `tests/` with names like `test_<feature>.py`.
-- Start with the smallest regression test that covers the changed service or route.
+- For any code or behavior change, follow TDD: write the smallest failing test first, run it and confirm the expected failure, implement the minimal change, then rerun the test.
 - For UI changes, always run `npm --prefix web run build`; verify affected pages in the browser when behavior changes.
+
+## Superpowers Workflow
+
+- Start every task with `superpowers:using-superpowers` to check applicable skills before acting.
+- Use `superpowers:test-driven-development` for implementation, refactors, and bug fixes.
+- Follow Red-Green-Refactor: add the smallest failing test, confirm the expected failure, implement the minimum change, then rerun the test.
+- Use `superpowers:systematic-debugging` for failures or unexpected behavior.
+- Use `superpowers:verification-before-completion` before claiming work is complete, committing, or pushing.
+- Keep generated reviews, screenshots, Playwright output, caches, and temporary artifacts out of the repository. Use ignored local paths only.
 
 ## Commit & Pull Request Guidelines
 

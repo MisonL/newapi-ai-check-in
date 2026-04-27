@@ -1,5 +1,6 @@
 .git
 .github
+.worktrees
 .venv
 __pycache__
 .pytest_cache
@@ -16,6 +17,8 @@ web/.nuxt
 web/.output
 web/playwright-report
 web/test-results
+test-results
+docs/reviews
 tmp-artifacts
 *.pyc
 *.pyo

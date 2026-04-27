@@ -3,12 +3,18 @@
 __pycache__
 .pytest_cache
 .ruff_cache
+.DS_Store
+*.log
+*.tmp
 screenshots
 storage-states
 logs
+test-results/
 balance_hash.txt
 balance_hash_*.txt
 linuxdo_reads
+docs/reviews/
+tmp-artifacts/
 
 # Claude
 .claude/**/*.local.*

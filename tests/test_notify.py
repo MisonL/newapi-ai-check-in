@@ -1,16 +1,8 @@
-import os
-import sys
-from datetime import datetime
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from utils.notify import NotificationKit
-
-# 添加项目根目录到 PATH
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
 
 @pytest.fixture
@@ -29,16 +21,6 @@ def notification_kit(monkeypatch):
 	monkeypatch.setenv('TELEGRAM_BOT_TOKEN', 'telegram-bot-token')
 	monkeypatch.setenv('TELEGRAM_CHAT_ID', '123456')
 	return NotificationKit()
-
-
-def test_real_notification(notification_kit):
-	"""真实接口测试，需要配置.env.local文件"""
-	if os.getenv('ENABLE_REAL_TEST') != 'true':
-		pytest.skip('未启用真实接口测试')
-
-	notification_kit.push_message(
-		'测试消息', f'这是一条测试消息\n发送时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
-	)
 
 
 @patch('smtplib.SMTP_SSL')
