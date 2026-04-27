@@ -98,7 +98,10 @@ const homeSummary = computed(() => {
         <section class="card surface-card dashboard-panel">
           <div class="section-head">
             <h2 class="card__title">{{ t('站点概览') }}</h2>
-            <StatusBadge :label="t('真实站点资产')" state="info" :dot="false" />
+            <div class="button-row">
+              <StatusBadge :label="t('真实站点资产')" state="info" :dot="false" />
+              <NuxtLink class="button button--secondary" to="/sites">{{ t('管理站点') }}</NuxtLink>
+            </div>
           </div>
           <div v-if="sites.length" class="stack-list">
             <article v-for="site in sites.slice(0, 6)" :key="site.id" class="subcard">
@@ -123,7 +126,10 @@ const homeSummary = computed(() => {
         <section class="card surface-card dashboard-panel">
           <div class="section-head">
             <h2 class="card__title">{{ t('账号动态') }}</h2>
-            <StatusBadge :label="t('最近更新账号')" state="info" :dot="false" />
+            <div class="button-row">
+              <StatusBadge :label="t('最近更新账号')" state="info" :dot="false" />
+              <NuxtLink class="button button--secondary" to="/accounts">{{ t('管理账号') }}</NuxtLink>
+            </div>
           </div>
           <div v-if="recentAccounts.length" class="stack-list">
             <article v-for="account in recentAccounts" :key="account.id" class="subcard">
@@ -144,7 +150,10 @@ const homeSummary = computed(() => {
         <section class="card surface-card dashboard-panel">
           <div class="section-head">
             <h2 class="card__title">{{ t('今日任务快照') }}</h2>
-            <StatusBadge :label="t('任务日期 {value}', { value: todayTasks?.task_date || '-' })" state="info" :dot="false" />
+            <div class="button-row">
+              <StatusBadge :label="t('任务日期 {value}', { value: todayTasks?.task_date || '-' })" state="info" :dot="false" />
+              <NuxtLink class="button button--secondary" to="/today">{{ t('处理今日任务') }}</NuxtLink>
+            </div>
           </div>
           <div class="task-snapshot-grid">
             <div class="task-snapshot-tile task-snapshot-tile--success">
@@ -188,7 +197,10 @@ const homeSummary = computed(() => {
         <section class="card surface-card dashboard-panel">
           <div class="section-head">
             <h2 class="card__title">{{ t('最近异常') }}</h2>
-            <StatusBadge :label="t('异常中心摘要')" state="info" :dot="false" />
+            <div class="button-row">
+              <StatusBadge :label="t('异常中心摘要')" state="info" :dot="false" />
+              <NuxtLink class="button button--secondary" to="/incidents">{{ t('查看异常') }}</NuxtLink>
+            </div>
           </div>
           <div v-if="recentIncidents.length" class="stack-list">
             <article v-for="incident in recentIncidents" :key="incident.id" class="subcard">
