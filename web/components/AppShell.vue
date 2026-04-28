@@ -5,13 +5,17 @@ const authExpiresAt = useAuthExpiresAt()
 const { t } = useAppI18n()
 
 const items = [
-  { to: '/dashboard', label: '首页', icon: 'dashboard', group: 'overview' },
-  { to: '/today', label: '今日任务', icon: 'jobs', group: 'overview' },
-  { to: '/sites', label: '站点', icon: 'sites', group: 'assets' },
-  { to: '/accounts', label: '账号', icon: 'accounts', group: 'assets' },
-  { to: '/reports', label: '历史与报表', icon: 'reports', group: 'operations' },
-  { to: '/incidents', label: '异常处理', icon: 'incidents', group: 'operations' },
-  { to: '/settings', label: '系统设置', icon: 'settings', group: 'operations' },
+  { to: '/dashboard', label: '首页', icon: 'dashboard', group: 'daily' },
+  { to: '/setup', label: '接入', icon: 'sites', group: 'daily' },
+  { to: '/today', label: '今日任务', icon: 'jobs', group: 'daily' },
+  { to: '/incidents', label: '异常', icon: 'incidents', group: 'daily' },
+  { to: '/reports', label: '报表', icon: 'reports', group: 'daily' },
+  { to: '/settings', label: '系统设置', icon: 'settings', group: 'advanced' },
+]
+
+const assetItems = [
+  { to: '/sites', label: '站点清单', icon: 'sites' },
+  { to: '/accounts', label: '账号清单', icon: 'accounts' },
 ]
 
 const advancedItems = [
@@ -21,16 +25,17 @@ const advancedItems = [
 ]
 
 const currentItem = computed(() => {
-  return items.find((item) => item.to === route.path) || advancedItems.find((item) => item.to === route.path)
+  return items.find((item) => item.to === route.path)
+    || assetItems.find((item) => item.to === route.path)
+    || advancedItems.find((item) => item.to === route.path)
 })
 const currentLabel = computed(() => t(currentItem.value?.label || '任务中心'))
 const navigationOptions = computed(() => {
-  return [...items, ...advancedItems].map((item) => ({ label: t(item.label), value: item.to }))
+  return [...items, ...assetItems, ...advancedItems].map((item) => ({ label: t(item.label), value: item.to }))
 })
 const navigationGroups = computed(() => [
-  { key: 'overview', label: t('日常使用'), items: items.filter((item) => item.group === 'overview') },
-  { key: 'assets', label: t('资产配置'), items: items.filter((item) => item.group === 'assets') },
-  { key: 'operations', label: t('运营管理'), items: items.filter((item) => item.group === 'operations') },
+  { key: 'daily', label: t('日常使用'), items: items.filter((item) => item.group === 'daily') },
+  { key: 'advanced', label: t('系统管理'), items: items.filter((item) => item.group === 'advanced') },
 ])
 
 const navigate = async (value: string | number | boolean | null) => {
@@ -58,9 +63,10 @@ const logout = async () => {
       </div>
       <nav class="global-topbar__nav" :aria-label="t('主导航')">
         <NuxtLink to="/dashboard" class="global-topbar__link" :class="{ 'global-topbar__link--active': route.path === '/dashboard' }">{{ t('首页') }}</NuxtLink>
+        <NuxtLink to="/setup" class="global-topbar__link" :class="{ 'global-topbar__link--active': route.path === '/setup' }">{{ t('接入') }}</NuxtLink>
         <NuxtLink to="/today" class="global-topbar__link" :class="{ 'global-topbar__link--active': route.path === '/today' }">{{ t('今日任务') }}</NuxtLink>
-        <NuxtLink to="/sites" class="global-topbar__link" :class="{ 'global-topbar__link--active': route.path === '/sites' }">{{ t('站点') }}</NuxtLink>
-        <NuxtLink to="/reports" class="global-topbar__link" :class="{ 'global-topbar__link--active': route.path === '/reports' }">{{ t('历史与报表') }}</NuxtLink>
+        <NuxtLink to="/incidents" class="global-topbar__link" :class="{ 'global-topbar__link--active': route.path === '/incidents' }">{{ t('异常') }}</NuxtLink>
+        <NuxtLink to="/reports" class="global-topbar__link" :class="{ 'global-topbar__link--active': route.path === '/reports' }">{{ t('报表') }}</NuxtLink>
       </nav>
       <div class="global-topbar__actions">
         <LocaleToggle />
@@ -96,6 +102,16 @@ const logout = async () => {
           <p class="sidebar-summary__label">{{ t('高级配置') }}</p>
           <p class="sidebar-summary__caption">{{ t('仅首次接入、调度调优或排障时使用') }}</p>
           <div class="legacy-link-list">
+            <NuxtLink
+              v-for="item in assetItems"
+              :key="item.to"
+              :to="item.to"
+              class="legacy-link"
+              :class="{ 'legacy-link--active': route.path === item.to }"
+            >
+              <span class="legacy-link__icon"><AppIcon :name="item.icon" :size="14" /></span>
+              {{ t(item.label) }}
+            </NuxtLink>
             <NuxtLink
               v-for="item in advancedItems"
               :key="item.to"

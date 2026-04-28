@@ -79,13 +79,8 @@ test('首页核心区块提供明确的后续处理入口', async ({ page }) => 
   await page.goto('/dashboard')
   await waitForUiReady(page)
 
-  const sitesPanel = page.locator('.dashboard-panel').filter({ hasText: /站点概览|Site Overview/ }).first()
-  const accountsPanel = page.locator('.dashboard-panel').filter({ hasText: /账号动态|Account Activity/ }).first()
-  const todayPanel = page.locator('.dashboard-panel').filter({ hasText: /今日任务快照|Today Snapshot/ }).first()
-  const incidentsPanel = page.locator('.dashboard-panel').filter({ hasText: /最近异常|Recent Incidents/ }).first()
-
-  await expect(sitesPanel.getByRole('link', { name: /管理站点|Manage Sites/ })).toHaveAttribute('href', '/sites')
-  await expect(accountsPanel.getByRole('link', { name: /管理账号|Manage Accounts/ })).toHaveAttribute('href', '/accounts')
-  await expect(todayPanel.getByRole('link', { name: /处理今日任务|Handle Today Tasks/ })).toHaveAttribute('href', '/today')
-  await expect(incidentsPanel.getByRole('link', { name: /查看异常|View Incidents/ })).toHaveAttribute('href', '/incidents')
+  await expect(page.getByRole('link', { name: /接入站点账号|Onboard Sites and Accounts/ })).toHaveAttribute('href', '/setup')
+  await expect(page.getByRole('link', { name: /查看今日任务|View Today Tasks/ })).toHaveAttribute('href', '/today')
+  await expect(page.getByRole('link', { name: /处理异常/ }).first()).toHaveAttribute('href', '/incidents')
+  await expect(page.getByRole('link', { name: /复核今日任务|Review Today Tasks/ })).toHaveAttribute('href', '/today')
 })

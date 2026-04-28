@@ -19,6 +19,7 @@ type TopActionReceipt = {
   sequence: number
   time: string
 }
+type BusyAction = TopAction | 'runAll'
 type TodayStats = Pick<
   TaskCenterTodayResponse,
   | 'total_tasks'
@@ -45,9 +46,11 @@ const { t, translateError, translateRequestError } = useAppI18n()
 const { formatDateTime } = useUiDateTime()
 
 const actionMessage = ref('')
-const actionBusy = ref<TopAction | ''>('')
+const actionBusy = ref<BusyAction | ''>('')
 const recentAction = ref<TopAction | ''>('')
 const lastActionResult = ref<ActionResultPanelView | null>(null)
+const advancedFiltersVisible = ref(false)
+const incidentOnly = ref(false)
 const actionReceipts = reactive<Record<TopAction, TopActionReceipt | null>>({
   import: null,
   generate: null,
@@ -88,6 +91,9 @@ const actionStatusMessage = computed(() => {
   }
   if (actionBusy.value === 'check') {
     return t('正在检查待处理任务，请稍候')
+  }
+  if (actionBusy.value === 'runAll') {
+    return t('正在准备并执行今日签到，请稍候')
   }
   return actionMessage.value
 })
@@ -350,10 +356,16 @@ const taskResultMessage = (task: { status?: TaskCenterTodayTaskView['status'], e
 }
 
 const showStatusTasks = (status: TaskCenterTodayTaskView['status'] | 'all') => {
+  incidentOnly.value = false
   if (['all', 'pending', 'success', 'skipped', 'blocked', 'failed'].includes(status)) {
     statusFilter.value = status
     return
   }
+  statusFilter.value = 'all'
+}
+
+const showIncidentTasks = () => {
+  incidentOnly.value = true
   statusFilter.value = 'all'
 }
 
@@ -476,6 +488,53 @@ const refreshTodayWithMessage = async () => {
   }
 }
 
+const prepareAndRunToday = async () => {
+  if (operationBusy.value) {
+    return
+  }
+  const before = currentStats()
+  actionMessage.value = ''
+  actionBusy.value = 'runAll'
+  try {
+    await refreshToday()
+    let generatedCount = 0
+    let executionResult: TopActionResult | undefined
+    if ((todayResponse.value?.total_tasks || 0) === 0) {
+      const generationResult = await api.generateTaskCenterToday()
+      generatedCount = generationResult.created_count || 0
+      await refreshToday()
+    }
+    if ((todayResponse.value?.pending_tasks || 0) > 0) {
+      executionResult = await api.executeTaskCenterToday()
+      await refreshToday()
+    }
+    const after = currentStats()
+    const message = executionResult
+      ? t('已准备今日签到：新增 {created} 条，执行 {executed} 条，成功 {success}，失败或阻塞 {failed}', {
+        created: generatedCount,
+        executed: executionResult.executed_count || 0,
+        success: executionResult.success_count || 0,
+        failed: (executionResult.failed_count || 0) + (executionResult.blocked_count || 0),
+      })
+      : generatedCount > 0
+        ? t('已生成今日任务 {count} 条，当前没有待执行任务', { count: generatedCount })
+        : t('当前没有待执行任务')
+    completeAction('execute', message)
+    recordActionResult('execute', message, before, after, executionResult)
+    if (after.failed_tasks || after.blocked_tasks) {
+      showIncidentTasks()
+    } else {
+      showStatusTasks('all')
+    }
+  } catch (error: any) {
+    const message = translateRequestError(error, '今日签到执行失败')
+    completeAction('execute', message)
+    recordActionResult('execute', message, before, currentStats(), undefined, true)
+  } finally {
+    actionBusy.value = ''
+  }
+}
+
 const retryTask = async (taskId: string) => {
   if (operationBusy.value) {
     return
@@ -526,6 +585,7 @@ const runTask = async (taskId: string) => {
 
 const visibleTasks = computed(() => {
   return tasks.value
+    .filter((task) => (incidentOnly.value ? ['failed', 'blocked'].includes(task.status) : true))
     .filter((task) => (statusFilter.value === 'all' ? true : task.status === statusFilter.value))
     .filter((task) => (siteFilter.value === 'all' ? true : task.site_name === siteFilter.value))
     .filter((task) => (authFilter.value === 'all' ? true : task.auth_mode === authFilter.value))
@@ -550,49 +610,26 @@ const visibleTasks = computed(() => {
           <div class="today-action-command">
             <button
               type="button"
-              class="button"
-              :class="[hasTasks ? 'button--secondary' : 'button--primary', topActionStateClass('generate')]"
+              class="button button--primary"
+              :class="{ 'button--busy': actionBusy === 'runAll', 'button--recent-action': recentAction === 'execute' && actionBusy === '' }"
               :disabled="operationBusy"
-              :aria-busy="actionBusy === 'generate'"
-              data-testid="today-action-generate"
-              @click="generateTasks"
+              :aria-busy="actionBusy === 'runAll'"
+              data-testid="today-action-run-all"
+              @click="prepareAndRunToday"
             >
-              {{ actionBusy === 'generate' ? t('生成中') : t('生成今日任务') }}
+              {{ actionBusy === 'runAll' ? t('执行中') : t('准备并执行今日签到') }}
             </button>
-            <span
-              v-if="actionReceipts.generate"
-              class="today-action-receipt"
-              data-testid="today-action-generate-receipt"
-              :title="actionReceipts.generate.message"
-            >
-              {{ actionReceiptText(actionReceipts.generate) }}
-            </span>
           </div>
           <div class="today-action-command">
             <button
               type="button"
-              class="button"
-              :class="[
-                pendingTaskCount > 0 ? 'button--primary' : 'button--secondary',
-                {
-                  'button--busy': pendingActionActive,
-                  'button--recent-action': pendingActionRecent && actionBusy === '',
-                },
-              ]"
+              class="button button--secondary"
               :disabled="operationBusy"
-              :aria-busy="actionBusy === 'execute' || actionBusy === 'check'"
+              :aria-busy="pendingActionActive"
               data-testid="today-action-execute"
-              @click="handlePendingAction"
+              @click="showIncidentTasks"
             >
-              {{
-                actionBusy === 'execute'
-                  ? t('执行中')
-                  : actionBusy === 'check'
-                    ? t('检查中')
-                    : pendingTaskCount === 0
-                      ? t('检查待处理任务')
-                      : t('执行待处理任务')
-              }}
+              {{ t('只看异常') }}
             </button>
             <span
               v-if="pendingActionReceipt"
@@ -607,34 +644,13 @@ const visibleTasks = computed(() => {
             <button
               type="button"
               class="button button--secondary"
-              :class="topActionStateClass('import')"
-              :disabled="operationBusy"
-              :aria-busy="actionBusy === 'import'"
-              data-testid="today-action-import"
-              @click="importConfig"
-            >
-              {{ actionBusy === 'import' ? t('导入中') : t('导入旧主签到配置') }}
-            </button>
-            <span
-              v-if="actionReceipts.import"
-              class="today-action-receipt"
-              data-testid="today-action-import-receipt"
-              :title="actionReceipts.import.message"
-            >
-              {{ actionReceiptText(actionReceipts.import) }}
-            </span>
-          </div>
-          <div class="today-action-command">
-            <button
-              type="button"
-              class="button button--secondary"
               :class="topActionStateClass('refresh')"
               :disabled="operationBusy"
               :aria-busy="actionBusy === 'refresh'"
               data-testid="today-action-refresh"
               @click="refreshTodayWithMessage"
             >
-              {{ actionBusy === 'refresh' ? t('刷新中') : t('刷新今日任务') }}
+              {{ actionBusy === 'refresh' ? t('刷新中') : t('刷新') }}
             </button>
             <span
               v-if="actionReceipts.refresh"
@@ -644,6 +660,17 @@ const visibleTasks = computed(() => {
             >
               {{ actionReceiptText(actionReceipts.refresh) }}
             </span>
+          </div>
+          <div class="today-action-command">
+            <button
+              type="button"
+              class="button button--secondary"
+              :disabled="operationBusy"
+              :aria-expanded="advancedFiltersVisible"
+              @click="advancedFiltersVisible = !advancedFiltersVisible"
+            >
+              {{ t('高级筛选') }}
+            </button>
           </div>
         </div>
       </template>
@@ -690,6 +717,8 @@ const visibleTasks = computed(() => {
             @update:model-value="siteFilter = String($event || 'all')"
           />
         </FieldBlock>
+      </div>
+      <div v-if="advancedFiltersVisible" class="panel-grid panel-grid--two today-advanced-filters">
         <FieldBlock for-id="today-auth-filter" :label="t('认证方式筛选')" :description="t('按密码、Cookie 或 OAuth 方式筛选账号任务')">
           <AppSelect
             id="today-auth-filter"
@@ -706,6 +735,50 @@ const visibleTasks = computed(() => {
             @update:model-value="executorFilter = ($event as typeof executorFilter.value)"
           />
         </FieldBlock>
+        <div class="today-legacy-actions">
+          <div class="today-action-command">
+            <button
+              type="button"
+              class="button button--secondary"
+              :class="topActionStateClass('import')"
+              :disabled="operationBusy"
+              :aria-busy="actionBusy === 'import'"
+              data-testid="today-action-import"
+              @click="importConfig"
+            >
+              {{ actionBusy === 'import' ? t('导入中') : t('导入旧主签到配置') }}
+            </button>
+            <span
+              v-if="actionReceipts.import"
+              class="today-action-receipt"
+              data-testid="today-action-import-receipt"
+              :title="actionReceipts.import.message"
+            >
+              {{ actionReceiptText(actionReceipts.import) }}
+            </span>
+          </div>
+          <div class="today-action-command">
+            <button
+              type="button"
+              class="button button--secondary"
+              :class="topActionStateClass('generate')"
+              :disabled="operationBusy"
+              :aria-busy="actionBusy === 'generate'"
+              data-testid="today-action-generate"
+              @click="generateTasks"
+            >
+              {{ actionBusy === 'generate' ? t('生成中') : t('仅生成今日任务') }}
+            </button>
+            <span
+              v-if="actionReceipts.generate"
+              class="today-action-receipt"
+              data-testid="today-action-generate-receipt"
+              :title="actionReceipts.generate.message"
+            >
+              {{ actionReceiptText(actionReceipts.generate) }}
+            </span>
+          </div>
+        </div>
       </div>
       <div v-if="visibleTasks.length" class="task-table">
         <article v-for="task in visibleTasks" :key="task.id" class="task-row">

@@ -7,10 +7,10 @@ test('首页摘要条优先展示任务生成状态', async ({ page }) => {
   await page.goto('/dashboard')
   await waitForUiReady(page)
 
-  const labels = await page.locator('.page-summary-strip .status-pill').allTextContents()
-  expect(labels.length).toBeGreaterThanOrEqual(2)
-  expect(labels[0]).toMatch(/今日待处理|待生成账号|Pending Today|Accounts To Generate/)
-  expect(labels[1]).toMatch(/今日累计额度|Quota Today/)
+  const heroText = await page.locator('.daily-ops-hero').textContent()
+  expect(heroText).toMatch(/今日状态|Today Status/)
+  expect(heroText).toMatch(/今日额度|Quota Today/)
+  await expect(page.getByTestId('daily-ops-primary-action')).toBeVisible()
 })
 
 test('今日任务页使用紧凑列表行承载任务', async ({ page }) => {
@@ -76,6 +76,6 @@ test('今日任务页使用紧凑列表行承载任务', async ({ page }) => {
   await waitForUiReady(page)
 
   await expect(page.getByRole('heading', { name: /今日任务|Today/ })).toBeVisible()
-  await expect(page.getByRole('button', { name: /执行待处理任务|Run Pending Tasks/ })).toBeVisible()
+  await expect(page.getByTestId('today-action-run-all')).toBeVisible()
   await expect(page.locator('.task-row').first()).toBeVisible()
 })

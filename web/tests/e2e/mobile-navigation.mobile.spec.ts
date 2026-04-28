@@ -7,7 +7,7 @@ test('移动端页面导航可切换到历史与报表', async ({ page }) => {
   await waitForUiReady(page)
 
   await page.getByRole('button', { name: /页面导航 首页|Page Navigation Home/ }).click()
-  await page.getByRole('option', { name: /历史与报表|History and Reports/ }).click()
+  await page.getByRole('option', { name: /^报表$|^Reports$/ }).click()
   await expect(page).toHaveURL(/\/reports$/)
   await expect(page.getByRole('heading', { name: /历史与报表|History and Reports/ })).toBeVisible()
 })
@@ -43,7 +43,7 @@ test('移动端账号空态显式禁用无站点创建路径', async ({ page }) 
   })
 
   await page.getByRole('button', { name: /页面导航 首页|Page Navigation Home/ }).click()
-  await page.getByRole('option', { name: /^账号$|^Accounts$/ }).click()
+  await page.getByRole('option', { name: /^账号清单$|^Account List$/ }).click()
   await expect(page).toHaveURL(/\/accounts$/)
   await waitForUiReady(page)
   await expect(page.locator('#account-site')).toBeDisabled()

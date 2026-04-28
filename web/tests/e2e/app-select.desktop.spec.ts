@@ -7,7 +7,7 @@ test('语言切换与调度下拉键盘交互正常', async ({ page }) => {
 
   await page.getByRole('button', { name: /语言切换 中文|Language Switch/ }).click()
   await page.getByRole('option', { name: /英文|English/ }).click()
-  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Daily Check-in Operations|今日签到运营台/ })).toBeVisible()
 
   await page.goto('/schedules')
   await waitForUiReady(page)

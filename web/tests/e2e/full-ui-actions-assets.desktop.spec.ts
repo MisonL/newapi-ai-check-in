@@ -54,8 +54,8 @@ test('登录页、Shell 导航、主题切换和退出登录动作正常', async
   await expect(page).toHaveURL(/\/today$/)
   await expect(page.getByRole('heading', { name: /今日任务|Today/ })).toBeVisible()
 
-  await page.locator('.global-topbar__nav').getByRole('link', { name: /站点|Sites/ }).click()
-  await expect(page).toHaveURL(/\/sites$/)
+  await page.locator('.global-topbar__nav').getByRole('link', { name: /接入|Setup/ }).click()
+  await expect(page).toHaveURL(/\/setup$/)
 
   await page.getByRole('button', { name: /主题切换|Theme Switch/ }).click()
   await page.getByRole('option', { name: /暗色|Dark/ }).click()
@@ -65,26 +65,50 @@ test('登录页、Shell 导航、主题切换和退出登录动作正常', async
   await expect(page).toHaveURL(/\/login$/)
 })
 
+test('普通用户主路径包含接入、首页一键签到和今日任务高级筛选', async ({ page }) => {
+  await login(page)
+
+  await page.goto('/dashboard')
+  await waitForUiReady(page)
+  await expect(page.getByRole('heading', { name: /今日签到运营台/ })).toBeVisible()
+  await expect(page.getByTestId('daily-ops-primary-action')).toBeVisible()
+  await expect(page.getByRole('link', { name: '处理异常', exact: true })).toBeVisible()
+
+  await page.locator('.global-topbar__nav').getByRole('link', { name: /^接入$/ }).click()
+  await expect(page).toHaveURL(/\/setup$/)
+  await expect(page.getByRole('heading', { name: /接入 new-api 站点和账号/ })).toBeVisible()
+  await expect(page.getByText(/先添加站点，再添加账号/).first()).toBeVisible()
+
+  await page.goto('/today')
+  await waitForUiReady(page)
+  await expect(page.getByTestId('today-action-run-all')).toBeVisible()
+  await expect(page.getByText(/认证方式筛选/)).toHaveCount(0)
+  await page.getByRole('button', { name: /高级筛选/ }).click()
+  await expect(page.getByText(/认证方式筛选/)).toBeVisible()
+  await expect(page.getByText(/执行链筛选/)).toBeVisible()
+})
+
 test('主要刷新按钮均有明确点击反馈', async ({ page }) => {
   await login(page)
 
   await page.goto('/dashboard')
   await waitForUiReady(page)
-  await page.getByRole('button', { name: /刷新首页|Refresh Home/ }).click()
+  await page.getByTestId('daily-ops-refresh-action').click()
   await expect(page.getByText(/首页已刷新|Home refreshed/)).toBeVisible()
 
   await page.goto('/today')
   await waitForUiReady(page)
-  await page.getByRole('button', { name: /刷新今日任务|Refresh Today Tasks/ }).click()
+  await page.getByTestId('today-action-refresh').click()
   await expect(page.locator('#today-action-status')).toContainText(/今日任务已刷新|Today tasks refreshed/)
   await expect(page.getByTestId('today-action-refresh')).toHaveClass(/button--recent-action/)
   await expect(page.getByTestId('today-action-refresh-receipt')).toContainText(/已响应|Responded/)
   await expect(page.getByTestId('today-action-result')).toContainText(/刷新今日任务|Refresh Today Tasks/)
-  await page.getByTestId('today-action-execute').click()
-  await expect(page.locator('#today-action-status')).toContainText(/当前没有待执行任务|There are no pending tasks/)
-  await expect(page.getByTestId('today-action-execute')).toHaveClass(/button--recent-action/)
+  await page.getByTestId('today-action-run-all').click()
+  await expect(page.locator('#today-action-status')).toContainText(/当前没有待执行任务|已准备今日签到|已生成今日任务|There are no pending tasks/)
+  await expect(page.getByTestId('today-action-run-all')).toHaveClass(/button--recent-action/)
   await expect(page.getByTestId('today-action-execute-receipt')).toContainText(/已响应|Responded/)
-  await expect(page.getByTestId('today-action-result')).toContainText(/检查待处理任务|Check Pending Tasks/)
+  await expect(page.getByTestId('today-action-result')).toContainText(/执行待处理任务|检查待处理任务|Execute Pending Tasks|Check Pending Tasks/)
+  await page.getByRole('button', { name: /高级筛选|Advanced Filters/ }).click()
   await page.getByTestId('today-action-import').click()
   await expect(page.locator('#today-action-status')).toContainText(/旧配置中没有新增站点或账号|已导入站点|No new sites or accounts|Imported/)
   await expect(page.getByTestId('today-action-import')).toHaveClass(/button--recent-action/)
@@ -122,6 +146,7 @@ test('核心页面可见启用按钮均无遮挡可命中', async ({ page }) => 
 
   const routes = [
     '/dashboard',
+    '/setup',
     '/today',
     '/sites',
     '/accounts',
@@ -264,7 +289,8 @@ test('今日任务、异常处理和报表筛选动作正常', async ({ page }) 
 
   await page.goto('/today')
   await waitForUiReady(page)
-  await page.getByRole('button', { name: /生成今日任务|Generate Today/ }).click()
+  await page.getByRole('button', { name: /高级筛选|Advanced Filters/ }).click()
+  await page.getByTestId('today-action-generate').click()
   await expect(page.locator('#today-action-status')).toContainText(/已生成今日任务|Generated today/)
 
   await page.getByRole('button', { name: /执行账号任务|Run Account Task/ }).first().click()
@@ -273,8 +299,8 @@ test('今日任务、异常处理和报表筛选动作正常', async ({ page }) 
 
   await page.getByRole('button', { name: /重置后重试|Reset and Retry/ }).first().click()
   await expect(page.locator('#today-action-status')).toContainText(/任务已重置为待执行|reset to pending/)
-  await page.getByRole('button', { name: /执行待处理任务|Run Pending Tasks/ }).click()
-  await expect(page.locator('#today-action-status')).toContainText(/已批量执行|Batch executed/, { timeout: 20000 })
+  await page.getByTestId('today-action-run-all').click()
+  await expect(page.locator('#today-action-status')).toContainText(/已准备今日签到|Batch executed/, { timeout: 20000 })
 
   await selectAppOption(page, '#today-status-filter', /失败|failed/)
   await selectAppOption(page, '#today-site-filter', String(site.name))
@@ -318,7 +344,8 @@ test('今日任务页单账号动作完成后保留下一步按钮入口', async
 
   await page.goto('/today')
   await waitForUiReady(page)
-  await page.getByRole('button', { name: /生成今日任务|Generate Today/ }).click()
+  await page.getByRole('button', { name: /高级筛选|Advanced Filters/ }).click()
+  await page.getByTestId('today-action-generate').click()
 
   const taskRow = page.locator('.task-row').filter({ hasText: String(account.display_name) }).first()
   await expect(taskRow.getByRole('button', { name: /执行账号任务|Run Account Task/ })).toBeVisible()
@@ -381,7 +408,7 @@ test('今日任务页执行类按钮有忙碌锁和结果反馈', async ({ page 
   await taskRow.getByRole('button', { name: /执行账号任务|Run Account Task/ }).click()
 
   await expect(taskRow.getByRole('button', { name: /执行中|Running/ })).toBeDisabled()
-  await expect(page.getByRole('button', { name: /生成今日任务|Generate Today/ })).toBeDisabled()
-  await expect(page.getByRole('button', { name: /刷新今日任务|Refresh Today/ })).toBeDisabled()
+  await expect(page.getByTestId('today-action-run-all')).toBeDisabled()
+  await expect(page.getByTestId('today-action-refresh')).toBeDisabled()
   await expect(page.getByText(/账号任务执行失败：simulated delayed failure|Account task failed: simulated delayed failure/)).toBeVisible()
 })
