@@ -19,6 +19,7 @@ Keep backend changes inside `control_plane/` and UI changes inside `web/`. Avoid
 - `npm --prefix web run dev`: start the Nuxt development server.
 - `npm --prefix web run build`: create the production WebUI build.
 - `HOST_PORT=3300 docker compose up -d --build`: run the full stack locally.
+- `gh run list --repo MisonL/newapi-ai-check-in --workflow CI --limit 3`: inspect recent CI results.
 
 Wait for `docker compose ps` to report `healthy` before opening the UI.
 
@@ -34,6 +35,7 @@ Wait for `docker compose ps` to report `healthy` before opening the UI.
 - Backend tests use `pytest`; add new tests under `tests/` with names like `test_<feature>.py`.
 - For any code or behavior change, follow TDD: write the smallest failing test first, run it and confirm the expected failure, implement the minimal change, then rerun the test.
 - For UI changes, always run `npm --prefix web run build`; verify affected pages in the browser when behavior changes.
+- GitHub CI runs Ruff, all backend tests, Nuxt build, and Playwright E2E on `main` pushes and pull requests.
 
 ## Superpowers Workflow
 

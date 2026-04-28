@@ -136,6 +136,21 @@ npm run test:e2e
 - `npm run test:e2e` 默认会自动拉起后端测试服务和前端构建产物。
 - 若你已经在本机手动启动了 `18081` 和 `39329` 对应服务，可用 `PLAYWRIGHT_EXTERNAL_SERVER=1 npm run test:e2e` 复用现有服务。
 
+### CI 验证链路
+
+仓库的 `.github/workflows/ci.yml` 会在 `main` 分支推送和 Pull Request 时运行完整验证：
+
+- `uv run ruff check . --no-fix`
+- `uv run pytest tests -q`
+- `npm --prefix web run build`
+- `npm --prefix web run test:e2e`
+
+查看最近 CI 结果：
+
+```bash
+gh run list --repo MisonL/newapi-ai-check-in --workflow CI --limit 3
+```
+
 ### 开发协作规则
 
 - 本项目使用 Superpowers 工作流；开始任务前先检查并启用适用的 `superpowers:*` 技能。
