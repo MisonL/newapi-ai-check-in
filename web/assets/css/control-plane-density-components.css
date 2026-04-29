@@ -321,6 +321,103 @@
   padding: 12px;
 }
 
+.app-console-shell .workflow-console,
+.app-console-shell .onboarding-guide {
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.app-console-shell .daily-ops-side-stack {
+  gap: 10px;
+}
+
+.app-console-shell .daily-ops-side-stack .workflow-console {
+  margin-bottom: 0;
+}
+
+.app-console-shell .workflow-console__grid,
+.app-console-shell .onboarding-guide__steps,
+.app-console-shell .onboarding-guide__providers,
+.app-console-shell .provider-template-panel__grid {
+  gap: 7px;
+}
+
+.app-console-shell .workflow-console__step,
+.app-console-shell .onboarding-guide__step,
+.app-console-shell .onboarding-guide__provider,
+.app-console-shell .provider-template-card {
+  gap: 5px;
+  padding: 9px 10px;
+  border-radius: 11px;
+}
+
+.app-console-shell .workflow-console__step {
+  grid-template-rows: minmax(52px, auto) auto auto;
+}
+
+.app-console-shell .workflow-console__step strong,
+.app-console-shell .onboarding-guide__step strong,
+.app-console-shell .onboarding-guide__provider strong,
+.app-console-shell .provider-template-card strong {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.app-console-shell .workflow-console__step p,
+.app-console-shell .onboarding-guide__step p,
+.app-console-shell .onboarding-guide__provider p,
+.app-console-shell .provider-template-card span,
+.app-console-shell .provider-template-card small,
+.app-console-shell .workflow-console__action {
+  font-size: 11px;
+  line-height: 1.38;
+}
+
+.app-console-shell .provider-template-panel {
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 9px;
+  border-radius: 11px;
+}
+
+.app-console-shell .incident-diagnosis-card__advice {
+  gap: 3px;
+  padding: 8px 9px;
+  border-radius: 10px;
+}
+
+.app-console-shell .account-diagnosis-guide,
+.app-console-shell .today-stage-rail {
+  gap: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.app-console-shell .account-diagnosis-guide__steps,
+.app-console-shell .today-stage-rail {
+  gap: 7px;
+}
+
+.app-console-shell .account-diagnosis-guide__steps div,
+.app-console-shell .today-stage-rail button {
+  gap: 4px;
+  padding: 8px 9px;
+  border-radius: 10px;
+}
+
+.app-console-shell .account-diagnosis-guide__steps strong,
+.app-console-shell .today-stage-rail strong {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.app-console-shell .account-diagnosis-guide__steps span,
+.app-console-shell .today-stage-rail span {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .app-console-shell .daily-task-workbench__head {
   gap: 10px;
 }

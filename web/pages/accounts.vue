@@ -352,6 +352,29 @@ const checkinState = (status: AccountRecordView['last_checkin_status']) => {
     <div class="button-row page-summary-strip">
       <StatusBadge v-for="item in accountLabels" :key="item.label" :label="item.label" :state="item.state" />
     </div>
+    <section class="account-diagnosis-guide surface-card" data-testid="account-diagnosis-guide">
+      <div class="section-head">
+        <div>
+          <p class="workflow-console__eyebrow">{{ t('账号操作指引') }}</p>
+          <h2 class="card__title">{{ t('先确认账号能登录，再进入每日任务') }}</h2>
+        </div>
+        <StatusBadge :label="t('启用账号 {count}', { count: accounts.filter((account) => account.enabled).length })" state="info" :dot="false" />
+      </div>
+      <div class="account-diagnosis-guide__steps">
+        <div>
+          <strong>{{ t('先测试账号') }}</strong>
+          <span>{{ t('保存账号后点击测试账号，确认登录态和签到接口都可用。') }}</span>
+        </div>
+        <div>
+          <strong>{{ t('失败后编辑或禁用') }}</strong>
+          <span>{{ t('密码过期、Cookie 失效或账号封禁时，先编辑凭据；暂不可用账号直接禁用。') }}</span>
+        </div>
+        <div>
+          <strong>{{ t('最后生成今日任务') }}</strong>
+          <span>{{ t('只有启用账号会进入今日任务，避免无效账号反复失败。') }}</span>
+        </div>
+      </div>
+    </section>
     <p v-if="saveMessage" class="status-note" aria-live="polite">{{ saveMessage }}</p>
     <div class="panel-grid panel-grid--two">
       <section ref="editorSection" class="card surface-card asset-list-card">

@@ -4,6 +4,8 @@ import type { AccountRecordView, SiteRecordView } from '../types/controlPlane'
 const api = useControlPlane()
 const { t, translateRequestError } = useAppI18n()
 
+type SiteProviderTemplateId = 'standard' | 'browser' | 'legacy'
+
 const saveMessage = ref('')
 const refreshBusy = ref(false)
 const probeBusy = ref<Record<string, boolean>>({})
@@ -157,6 +159,22 @@ const resetDraft = (clearMessage = true) => {
   draft.updated_at = ''
 }
 
+const applyProviderTemplate = (template: SiteProviderTemplateId) => {
+  saveMessage.value = ''
+  if (template === 'browser') {
+    draft.compatibility_level = 'browser'
+    draft.notes = t('NewAPI + WAF：需要 WAF Cookie、Cookie 会话或浏览器回退登录态。')
+    return
+  }
+  if (template === 'legacy') {
+    draft.compatibility_level = 'legacy'
+    draft.notes = t('自定义兼容：用于迁移旧配置或接口差异较大的站点。')
+    return
+  }
+  draft.compatibility_level = 'standard'
+  draft.notes = t('标准 NewAPI：默认登录 /login，签到 /api/user/checkin，优先使用 HTTP-only 执行链。')
+}
+
 const editSite = (site: SiteRecordView) => {
   editingId.value = site.id
   Object.assign(draft, site)
@@ -233,6 +251,7 @@ const saveSite = async () => {
     <p v-if="saveMessage" class="status-note" aria-live="polite">{{ saveMessage }}</p>
     <div class="panel-grid panel-grid--two">
       <section ref="editorSection" class="card surface-card">
+        <SiteProviderTemplates @select="applyProviderTemplate" />
         <div class="section-head">
           <h2 class="card__title">{{ editingId ? t('编辑站点') : t('新增站点') }}</h2>
           <button type="button" class="button button--secondary" @click="resetDraft">{{ t('清空表单') }}</button>

@@ -69,6 +69,20 @@ const incidentDetailText = (incident: IncidentRecordView) => {
   return detail
 }
 
+const incidentRecommendation = (incident: IncidentRecordView) => {
+  const message = `${incident.last_error_message || ''} ${incident.detail || ''}`.toLowerCase()
+  if (message.includes('password') || message.includes('banned') || message.includes('用户名') || message.includes('密码')) {
+    return t('先测试账号登录态；如果仍失败，打开账号详情更新密码或禁用该账号。')
+  }
+  if (message.includes('cookie') || message.includes('new-api-user')) {
+    return t('先刷新 Cookie 会话和 API 用户，再执行账号测试。')
+  }
+  if (message.includes('provider') || message.includes('unsupported')) {
+    return t('先检查站点 Provider 模板和兼容等级，再重新探测站点。')
+  }
+  return t('先测试账号，再根据错误信息选择重试、编辑账号或标记已解决。')
+}
+
 const unresolvedCount = computed(() => incidents.value.filter((item) => !item.resolved).length)
 const visibleIncidents = computed(() => {
   return incidents.value
@@ -152,7 +166,7 @@ const resolveIncident = async (incident: IncidentRecordView) => {
         </FieldBlock>
       </div>
       <div v-if="visibleIncidents.length" class="stack-list">
-        <article v-for="incident in visibleIncidents" :key="incident.id" class="subcard">
+        <article v-for="incident in visibleIncidents" :key="incident.id" class="subcard incident-diagnosis-card">
           <div class="section-head">
             <strong>{{ incident.display_name }}</strong>
             <StatusBadge :label="t(incident.status)" :state="statusState(incident.status)" />
@@ -163,14 +177,19 @@ const resolveIncident = async (incident: IncidentRecordView) => {
             <StatusBadge :label="`${t('最近发生')} ${formatDateTime(incident.last_seen_at || incident.last_checkin_at)}`" state="neutral" />
             <StatusBadge :label="incident.resolved ? t('已解决') : t('待处理')" :state="incident.resolved ? 'configured' : 'failed'" />
           </div>
-          <p style="margin: 0;">{{ translateError(incident.last_error_message, '任务执行失败') }}</p>
+          <p class="incident-diagnosis-card__error">{{ translateError(incident.last_error_message, '任务执行失败') }}</p>
           <p v-if="incidentDetailText(incident)" class="muted">{{ incidentDetailText(incident) }}</p>
+          <div class="incident-diagnosis-card__advice">
+            <strong>{{ t('建议处理') }}</strong>
+            <span>{{ incidentRecommendation(incident) }}</span>
+          </div>
           <div v-if="!incident.resolved" class="button-row">
             <button type="button" class="button button--secondary" :disabled="actionBusy[incident.id]" @click="resolveIncident(incident)">
               {{ actionBusy[incident.id] ? t('处理中') : t('标记已解决') }}
             </button>
             <NuxtLink v-if="incident.account_id" class="button button--secondary" :to="`/accounts?edit=${encodeURIComponent(incident.account_id)}`">
-              {{ t('编辑账号') }}
+              <span>{{ t('打开账号详情') }}</span>
+              <span class="app-select__sr">{{ t('编辑账号') }}</span>
             </NuxtLink>
           </div>
         </article>

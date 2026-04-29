@@ -638,6 +638,256 @@ html.dark .topbar {
   gap: 12px;
 }
 
+.daily-ops-side-stack {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.daily-ops-side-stack .workflow-console {
+  margin-bottom: 0;
+}
+
+.daily-ops-side-stack .workflow-console__grid {
+  grid-template-columns: 1fr;
+}
+
+.daily-ops-side-stack .workflow-console__step {
+  grid-template-rows: none;
+}
+
+.workflow-console,
+.onboarding-guide {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: var(--shell-radius-xl);
+}
+
+.workflow-console__head {
+  align-items: flex-start;
+}
+
+.workflow-console__eyebrow {
+  margin: 0 0 4px;
+  color: var(--shell-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.workflow-console__runtime {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.workflow-console__grid,
+.onboarding-guide__steps,
+.onboarding-guide__providers,
+.provider-template-panel__grid {
+  display: grid;
+  gap: 8px;
+}
+
+.workflow-console__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.workflow-console__step,
+.onboarding-guide__step,
+.onboarding-guide__provider,
+.provider-template-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--shell-outline);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.72);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+.workflow-console__step {
+  grid-template-rows: minmax(64px, auto) auto auto;
+}
+
+.workflow-console__step:hover,
+.workflow-console__step:focus-visible,
+.onboarding-guide__step:hover,
+.onboarding-guide__step:focus-visible,
+.provider-template-card:hover,
+.provider-template-card:focus-visible {
+  border-color: rgba(37, 99, 235, 0.32);
+  background: rgba(239, 246, 255, 0.9);
+}
+
+.workflow-console__step:focus-visible,
+.onboarding-guide__step:focus-visible,
+.provider-template-card:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.28);
+  outline-offset: 2px;
+}
+
+.workflow-console__step-main,
+.onboarding-guide__step div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.workflow-console__step strong,
+.onboarding-guide__step strong,
+.onboarding-guide__provider strong,
+.provider-template-card strong {
+  color: var(--semi-color-text-0);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.workflow-console__step p,
+.onboarding-guide__step p,
+.onboarding-guide__provider p,
+.provider-template-card span,
+.provider-template-card small {
+  margin: 0;
+  color: var(--semi-color-text-2);
+  font-size: 12px;
+  line-height: 1.48;
+}
+
+.workflow-console__action {
+  color: var(--shell-accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.onboarding-guide__providers {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.onboarding-guide__steps {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.onboarding-guide__step {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.provider-template-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--shell-outline);
+  border-radius: 13px;
+  background: rgba(248, 250, 252, 0.62);
+}
+
+.provider-template-panel__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.provider-template-card {
+  cursor: pointer;
+  font: inherit;
+}
+
+.account-diagnosis-guide {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: var(--shell-radius-xl);
+}
+
+.account-diagnosis-guide__steps,
+.today-stage-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.account-diagnosis-guide__steps {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.account-diagnosis-guide__steps div,
+.today-stage-rail button {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid var(--shell-outline);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.today-stage-rail {
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.today-stage-rail button {
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.today-stage-rail button:hover,
+.today-stage-rail button:focus-visible {
+  border-color: rgba(37, 99, 235, 0.32);
+  background: rgba(239, 246, 255, 0.9);
+}
+
+.today-stage-rail button:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.28);
+  outline-offset: 2px;
+}
+
+.account-diagnosis-guide__steps strong,
+.today-stage-rail strong {
+  color: var(--semi-color-text-0);
+  font-size: 13px;
+}
+
+.account-diagnosis-guide__steps span,
+.today-stage-rail span {
+  color: var(--semi-color-text-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.incident-diagnosis-card__error {
+  margin: 0;
+}
+
+.incident-diagnosis-card__advice {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 11px;
+  background: rgba(239, 246, 255, 0.72);
+}
+
+.incident-diagnosis-card__advice strong {
+  color: var(--shell-accent);
+  font-size: 12px;
+}
+
+.incident-diagnosis-card__advice span {
+  color: var(--semi-color-text-1);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .daily-task-workbench {
   display: grid;
   gap: 12px;
@@ -991,8 +1241,19 @@ html.dark .daily-ops-hero__incident-action {
 
 html.dark .daily-task-lane,
 html.dark .daily-task-card,
-html.dark .daily-task-lane__empty {
+html.dark .daily-task-lane__empty,
+html.dark .workflow-console__step,
+html.dark .onboarding-guide__step,
+html.dark .onboarding-guide__provider,
+html.dark .provider-template-card,
+html.dark .account-diagnosis-guide__steps div,
+html.dark .today-stage-rail button {
   background: rgba(15, 23, 42, 0.58);
+}
+
+html.dark .provider-template-panel,
+html.dark .incident-diagnosis-card__advice {
+  background: rgba(30, 41, 59, 0.58);
 }
 
 html.dark .daily-task-lane--attention {
@@ -1017,7 +1278,13 @@ html.dark .reports-filter-shell {
 }
 
 @media (max-width: 1180px) {
-  .daily-task-lanes {
+  .daily-task-lanes,
+  .workflow-console__grid,
+  .onboarding-guide__providers,
+  .onboarding-guide__steps,
+  .provider-template-panel__grid,
+  .account-diagnosis-guide__steps,
+  .today-stage-rail {
     grid-template-columns: 1fr;
   }
 }

@@ -364,9 +364,19 @@ const showStatusTasks = (status: TaskCenterTodayTaskView['status'] | 'all') => {
   statusFilter.value = 'all'
 }
 
+const focusStatusTasks = (status: TaskCenterTodayTaskView['status'] | 'all', message: string) => {
+  showStatusTasks(status)
+  actionMessage.value = t(message)
+}
+
 const showIncidentTasks = () => {
   incidentOnly.value = true
   statusFilter.value = 'all'
+}
+
+const focusIncidentTasks = () => {
+  showIncidentTasks()
+  actionMessage.value = t('已聚焦失败或阻塞任务')
 }
 
 const isTaskBusy = (taskId: string, action?: 'run' | 'retry') => {
@@ -695,6 +705,28 @@ const visibleTasks = computed(() => {
       <StatusBadge :label="t('失败 {count}', { count: today?.failed_tasks || 0 })" :state="(today?.failed_tasks || 0) > 0 ? 'failed' : 'neutral'" />
       <StatusBadge :label="t('今日额度 {count}', { count: today?.total_quota_awarded || 0 })" :state="(today?.total_quota_awarded || 0) > 0 ? 'configured' : 'neutral'" />
     </div>
+    <section class="today-stage-rail surface-card" data-testid="today-stage-rail">
+      <button type="button" @click="focusStatusTasks('pending', '已聚焦待执行任务')">
+        <strong>{{ t('待执行') }}</strong>
+        <span>{{ t('等待执行的账号任务') }}</span>
+        <StatusBadge :label="String((today?.pending_tasks || 0) + (today?.running_tasks || 0))" state="info" :dot="false" />
+      </button>
+      <button type="button" @click="focusIncidentTasks">
+        <strong>{{ t('失败或阻塞') }}</strong>
+        <span>{{ t('需要人工检查或重试的账号') }}</span>
+        <StatusBadge :label="String((today?.failed_tasks || 0) + (today?.blocked_tasks || 0))" :state="((today?.failed_tasks || 0) + (today?.blocked_tasks || 0)) ? 'failed' : 'neutral'" :dot="false" />
+      </button>
+      <button type="button" @click="focusStatusTasks('success', '已聚焦成功任务')">
+        <strong>{{ t('已完成') }}</strong>
+        <span>{{ t('已经成功或产生收益的账号') }}</span>
+        <StatusBadge :label="String(today?.success_tasks || 0)" state="success" :dot="false" />
+      </button>
+      <button type="button" @click="focusStatusTasks('all', '已显示全部今日任务')">
+        <strong>{{ t('全部任务') }}</strong>
+        <span>{{ t('恢复查看所有账号任务') }}</span>
+        <StatusBadge :label="String(today?.total_tasks || 0)" state="configured" :dot="false" />
+      </button>
+    </section>
     <section class="card surface-card">
       <div class="section-head">
         <h2 class="card__title">{{ t('账号任务列表') }}</h2>

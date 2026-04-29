@@ -114,26 +114,36 @@ const runToday = async () => {
     />
     <div class="daily-ops-grid">
       <DailyTaskWorkbench :tasks="today?.tasks || []" :recent-accounts="recentAccounts" />
-      <section class="card surface-card daily-ops-next">
-        <div class="section-head">
-          <h2 class="card__title">{{ t('下一步') }}</h2>
-          <StatusBadge :label="t(status?.scheduler_enabled ? '自动调度已启用' : '自动调度未启用')" :state="status?.scheduler_enabled ? 'success' : 'neutral'" />
-        </div>
-        <div class="daily-ops-step-list">
-          <NuxtLink to="/setup" class="daily-ops-step">
-            <strong>{{ t('接入站点和账号') }}</strong>
-            <span>{{ t('当前站点 {sites} 个，启用账号 {accounts} 个', { sites: sites.length, accounts: totalAccounts }) }}</span>
-          </NuxtLink>
-          <NuxtLink to="/today" class="daily-ops-step">
-            <strong>{{ t('复核今日任务') }}</strong>
-            <span>{{ t('今日任务 {count} 条，待处理 {pending} 条', { count: today?.total_tasks || 0, pending: pendingTasks }) }}</span>
-          </NuxtLink>
-          <NuxtLink to="/incidents" class="daily-ops-step">
-            <strong>{{ t('处理异常账号') }}</strong>
-            <span>{{ t('异常或阻塞 {count} 条', { count: failedTasks }) }}</span>
-          </NuxtLink>
-        </div>
-      </section>
+      <div class="daily-ops-side-stack">
+        <DashboardControlConsole
+          :status="status"
+          :sites="sites"
+          :accounts="accounts"
+          :today="today"
+          :failed-count="failedTasks"
+          :pending-count="pendingTasks"
+        />
+        <section class="card surface-card daily-ops-next">
+          <div class="section-head">
+            <h2 class="card__title">{{ t('下一步') }}</h2>
+            <StatusBadge :label="t(status?.scheduler_enabled ? '自动调度已启用' : '自动调度未启用')" :state="status?.scheduler_enabled ? 'success' : 'neutral'" />
+          </div>
+          <div class="daily-ops-step-list">
+            <NuxtLink to="/setup" class="daily-ops-step">
+              <strong>{{ t('接入站点和账号') }}</strong>
+              <span>{{ t('当前站点 {sites} 个，启用账号 {accounts} 个', { sites: sites.length, accounts: totalAccounts }) }}</span>
+            </NuxtLink>
+            <NuxtLink to="/today" class="daily-ops-step">
+              <strong>{{ t('复核今日任务') }}</strong>
+              <span>{{ t('今日任务 {count} 条，待处理 {pending} 条', { count: today?.total_tasks || 0, pending: pendingTasks }) }}</span>
+            </NuxtLink>
+            <NuxtLink to="/incidents" class="daily-ops-step">
+              <strong>{{ t('处理异常账号') }}</strong>
+              <span>{{ t('异常或阻塞 {count} 条', { count: failedTasks }) }}</span>
+            </NuxtLink>
+          </div>
+        </section>
+      </div>
     </div>
   </AppShell>
 </template>

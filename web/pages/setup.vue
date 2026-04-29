@@ -49,6 +49,13 @@ const refreshAll = async () => {
       </template>
     </PageHeader>
     <p v-if="message" class="status-note" aria-live="polite">{{ message }}</p>
+    <SetupOnboardingGuide
+      :site-count="sites.length"
+      :enabled-site-count="enabledSites"
+      :account-count="accounts.length"
+      :enabled-account-count="enabledAccounts"
+      :today-task-count="todayResponse?.total_tasks || 0"
+    />
     <section class="setup-flow surface-card">
       <div class="setup-flow__summary">
         <p>{{ t('先添加站点，再添加账号；接入完成后系统会生成今日签到任务。') }}</p>
