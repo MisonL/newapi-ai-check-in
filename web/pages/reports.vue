@@ -16,6 +16,14 @@ const showEmptyDays = ref(false)
 const reportBusy = ref(false)
 const reportMessage = ref('')
 
+const setQuickRange = async (days: number) => {
+  const end = new Date()
+  const start = new Date(end.getTime() - ((days - 1) * 24 * 60 * 60 * 1000))
+  dateFrom.value = formatDateInput(start)
+  dateTo.value = formatDateInput(end)
+  await applyFilters(days === 7 ? '已切换到最近7天' : '已切换到最近30天')
+}
+
 const { data: reportsResponse, refresh: refreshReports } = await useAsyncData(
   'task-center-reports-real',
   () => api.getTaskCenterReports(dateFrom.value, dateTo.value)
@@ -170,40 +178,50 @@ const applyFilters = async (successMessage = '报表筛选已应用') => {
         </div>
       </template>
     </PageHeader>
-    <div class="panel-grid panel-grid--two reports-filters">
-      <FieldBlock for-id="reports-date-from" :label="t('开始日期')" :description="t('定义报表统计起点')">
-        <input id="reports-date-from" v-model="dateFrom" class="input input--code" type="date">
-      </FieldBlock>
-      <FieldBlock for-id="reports-date-to" :label="t('结束日期')" :description="t('定义报表统计终点')">
-        <input id="reports-date-to" v-model="dateTo" class="input input--code" type="date">
-      </FieldBlock>
-      <FieldBlock for-id="reports-site-filter" :label="t('站点筛选')" :description="t('按站点聚焦汇总结果')">
-        <AppSelect
-          id="reports-site-filter"
-          :model-value="siteFilter"
-          :options="siteOptions"
-          @update:model-value="siteFilter = String($event || 'all')"
-        />
-      </FieldBlock>
-      <FieldBlock for-id="reports-date-range" :label="t('统计区间')" :description="t('当前报表请求的日期边界')">
-        <input
-          id="reports-date-range"
-          class="input input--code"
-          :value="`${reportsResponse?.date_from || dateFrom} ~ ${reportsResponse?.date_to || dateTo}`"
-          readonly
-        >
-      </FieldBlock>
-      <FieldBlock for-id="reports-show-empty-days" :label="t('趋势展示')" :description="t('筛选后只展示存在任务的日期，减少报表噪音')">
-        <AppSelect
-          id="reports-show-empty-days"
-          :model-value="showEmptyDays ? 'all' : 'active'"
-          :options="[
-            { label: t('仅看有任务的日期'), value: 'active' },
-            { label: t('显示空白日期'), value: 'all' },
-          ]"
-          @update:model-value="showEmptyDays = $event === 'all'"
-        />
-      </FieldBlock>
+    <div class="reports-filter-shell">
+      <div class="reports-quick-ranges" role="group" :aria-label="t('快捷时间范围')">
+        <button type="button" class="button button--secondary" :disabled="reportBusy" @click="setQuickRange(7)">
+          {{ t('最近7天') }}
+        </button>
+        <button type="button" class="button button--secondary" :disabled="reportBusy" @click="setQuickRange(30)">
+          {{ t('最近30天') }}
+        </button>
+      </div>
+      <div class="panel-grid panel-grid--two reports-filters">
+        <FieldBlock for-id="reports-date-from" :label="t('开始日期')" :description="t('定义报表统计起点')">
+          <input id="reports-date-from" v-model="dateFrom" class="input input--code" type="date">
+        </FieldBlock>
+        <FieldBlock for-id="reports-date-to" :label="t('结束日期')" :description="t('定义报表统计终点')">
+          <input id="reports-date-to" v-model="dateTo" class="input input--code" type="date">
+        </FieldBlock>
+        <FieldBlock for-id="reports-site-filter" :label="t('站点筛选')" :description="t('按站点聚焦汇总结果')">
+          <AppSelect
+            id="reports-site-filter"
+            :model-value="siteFilter"
+            :options="siteOptions"
+            @update:model-value="siteFilter = String($event || 'all')"
+          />
+        </FieldBlock>
+        <FieldBlock for-id="reports-date-range" :label="t('统计区间')" :description="t('当前报表请求的日期边界')">
+          <input
+            id="reports-date-range"
+            class="input input--code"
+            :value="`${reportsResponse?.date_from || dateFrom} ~ ${reportsResponse?.date_to || dateTo}`"
+            readonly
+          >
+        </FieldBlock>
+        <FieldBlock for-id="reports-show-empty-days" :label="t('趋势展示')" :description="t('筛选后只展示存在任务的日期，减少报表噪音')">
+          <AppSelect
+            id="reports-show-empty-days"
+            :model-value="showEmptyDays ? 'all' : 'active'"
+            :options="[
+              { label: t('仅看有任务的日期'), value: 'active' },
+              { label: t('显示空白日期'), value: 'all' },
+            ]"
+            @update:model-value="showEmptyDays = $event === 'all'"
+          />
+        </FieldBlock>
+      </div>
     </div>
     <p v-if="reportMessage" class="status-note" aria-live="polite">{{ reportMessage }}</p>
     <div class="stat-grid reports-summary-grid">

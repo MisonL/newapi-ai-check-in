@@ -169,16 +169,16 @@ const resolveIncident = async (incident: IncidentRecordView) => {
             <button type="button" class="button button--secondary" :disabled="actionBusy[incident.id]" @click="resolveIncident(incident)">
               {{ actionBusy[incident.id] ? t('处理中') : t('标记已解决') }}
             </button>
-            <NuxtLink v-if="incident.account_id" class="button button--secondary" :to="`/accounts`">
+            <NuxtLink v-if="incident.account_id" class="button button--secondary" :to="`/accounts?edit=${encodeURIComponent(incident.account_id)}`">
               {{ t('编辑账号') }}
             </NuxtLink>
           </div>
         </article>
       </div>
-      <div v-else class="dashboard-empty dashboard-empty--compact">
+      <div v-else class="dashboard-empty dashboard-empty--compact incident-empty--healthy">
         <span class="dashboard-empty__icon"><AppIcon name="incidents" :size="18" /></span>
         <div class="dashboard-empty__copy">
-          <strong>{{ t('最近没有异常记录') }}</strong>
+          <strong>{{ t('当前筛选下没有待处理异常') }}</strong>
           <p class="muted">{{ t('当账号任务进入失败或阻塞状态后，这里会自动聚合并展示。') }}</p>
         </div>
       </div>

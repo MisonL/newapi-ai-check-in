@@ -3,6 +3,8 @@ import type { AccountRecordView, SiteRecordView } from '../types/controlPlane'
 
 const api = useControlPlane()
 const { t, translateRequestError } = useAppI18n()
+const route = useRoute()
+const router = useRouter()
 
 type AccountAuthMode = AccountRecordView['auth_mode']
 
@@ -171,11 +173,46 @@ const editAccount = (account: AccountRecordView) => {
   Object.assign(draft, account)
   cookiesJson.value = account.auth_mode === 'cookies' ? JSON.stringify(account.session_cookies || {}, null, 2) : ''
   saveMessage.value = t('正在编辑账号 {name}', { name: account.display_name || account.username })
-  nextTick(() => {
-    editorSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    document.getElementById('account-display-name')?.focus({ preventScroll: true })
-  })
+  if (import.meta.client) {
+    nextTick(() => {
+      editorSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      document.getElementById('account-display-name')?.focus({ preventScroll: true })
+    })
+  }
 }
+
+const accountEditQuery = computed(() => {
+  const value = route.query.edit
+  if (Array.isArray(value)) {
+    return String(value[0] || '')
+  }
+  return String(value || '')
+})
+
+const applyAccountEditQuery = () => {
+  if (!import.meta.client) {
+    return
+  }
+  const accountId = accountEditQuery.value
+  if (!accountId || editingId.value === accountId) {
+    return
+  }
+  const account = accounts.value.find((item) => item.id === accountId)
+  if (!account) {
+    return
+  }
+  siteFilter.value = account.site_id
+  authFilter.value = account.auth_mode
+  editAccount(account)
+  const nextQuery = { ...route.query }
+  delete nextQuery.edit
+  void router.replace({ path: route.path, query: nextQuery })
+}
+
+onMounted(() => {
+  applyAccountEditQuery()
+  watch([accounts, accountEditQuery], applyAccountEditQuery)
+})
 
 const isCookieMode = computed(() => draft.auth_mode === 'cookies')
 const parseCookies = () => {

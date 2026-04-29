@@ -24,6 +24,9 @@ const completionText = computed(() => {
 })
 
 const stateText = computed(() => {
+  if (props.busy) {
+    return t('正在同步今日签到')
+  }
   if (props.failedAccounts > 0) {
     return t('有账号需要处理')
   }
@@ -63,8 +66,24 @@ const stateText = computed(() => {
         >
           {{ t('刷新') }}
         </button>
-        <NuxtLink class="button button--secondary" to="/incidents">{{ t('处理异常') }}</NuxtLink>
+        <NuxtLink
+          v-if="props.failedAccounts > 0"
+          class="button button--secondary daily-ops-hero__incident-action"
+          data-testid="daily-ops-incident-action"
+          to="/incidents"
+        >
+          {{ t('处理异常') }}
+        </NuxtLink>
       </div>
+      <p
+        v-if="props.busy"
+        class="daily-ops-hero__sync"
+        data-testid="daily-ops-sync-status"
+        role="status"
+        aria-live="polite"
+      >
+        {{ t('正在同步今日签到') }}
+      </p>
     </div>
     <div class="daily-ops-hero__panel">
       <div class="daily-ops-hero__state">
@@ -72,19 +91,23 @@ const stateText = computed(() => {
         <strong>{{ stateText }}</strong>
       </div>
       <div class="daily-ops-hero__metrics">
-        <div>
+        <div class="daily-ops-hero__metric">
           <span>{{ t('完成账号') }}</span>
           <strong>{{ completionText }}</strong>
         </div>
-        <div>
+        <div class="daily-ops-hero__metric">
           <span>{{ t('待处理') }}</span>
           <strong>{{ props.pendingAccounts }}</strong>
         </div>
-        <div>
+        <div
+          class="daily-ops-hero__metric"
+          :class="{ 'daily-ops-hero__metric--alert': props.failedAccounts > 0 }"
+          data-testid="daily-ops-failed-metric"
+        >
           <span>{{ t('异常') }}</span>
           <strong>{{ props.failedAccounts }}</strong>
         </div>
-        <div>
+        <div class="daily-ops-hero__metric">
           <span>{{ t('今日额度') }}</span>
           <strong>{{ props.quotaAwarded }}</strong>
         </div>

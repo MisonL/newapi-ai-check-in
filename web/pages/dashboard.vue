@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import type { TaskCenterTodayTaskView } from '../types/controlPlane'
-
 const api = useControlPlane()
-const { t, translateError, translateRequestError } = useAppI18n()
-const { formatDateTime } = useUiDateTime()
+const { t, translateRequestError } = useAppI18n()
 
 const runBusy = ref(false)
 const refreshBusy = ref(false)
@@ -29,68 +26,19 @@ const summary = computed(() => summaryEnvelope.value?.today)
 const sites = computed(() => sitesResponse.value || [])
 const accounts = computed(() => accountsResponse.value || [])
 const today = computed(() => todayResponse.value)
-const failedTasks = computed(() => (today.value?.failed_tasks || 0) + (today.value?.blocked_tasks || 0))
+const recentAccounts = computed(() => summaryEnvelope.value?.recent_accounts || [])
+const todayTasks = computed(() => today.value?.tasks || [])
+const todayTaskAccountIds = computed(() => new Set(todayTasks.value.map((task) => task.account_id)))
+const recentAccountAlerts = computed(() => recentAccounts.value
+  .filter((account) => account.enabled)
+  .filter((account) => ['failed', 'blocked'].includes(account.last_checkin_status))
+  .filter((account) => !todayTaskAccountIds.value.has(account.id)))
+const failedTasks = computed(() => (today.value?.failed_tasks || 0) + (today.value?.blocked_tasks || 0) + recentAccountAlerts.value.length)
 const pendingTasks = computed(() => (today.value?.pending_tasks || 0) + (today.value?.running_tasks || 0))
 const totalAccounts = computed(() => summary.value?.enabled_accounts || accounts.value.filter((account) => account.enabled).length)
 const successAccounts = computed(() => today.value?.success_tasks || summary.value?.today_success || 0)
 const quotaAwarded = computed(() => today.value?.total_quota_awarded || summary.value?.today_quota_awarded || 0)
 const hasTodayTasks = computed(() => (today.value?.total_tasks || 0) > 0)
-const recentAccounts = computed(() => summaryEnvelope.value?.recent_accounts || [])
-
-const taskState = (task: TaskCenterTodayTaskView) => {
-  if (task.status === 'success') {
-    return 'success'
-  }
-  if (task.status === 'failed' || task.status === 'blocked') {
-    return 'failed'
-  }
-  if (task.status === 'skipped') {
-    return 'skipped'
-  }
-  return 'neutral'
-}
-
-const taskPriority = (task: TaskCenterTodayTaskView) => {
-  if (task.status === 'failed' || task.status === 'blocked') {
-    return 0
-  }
-  if (task.status === 'pending') {
-    return 1
-  }
-  return 2
-}
-
-const recentOutcomes = computed(() => {
-  const taskOutcomes = [...(today.value?.tasks || [])]
-    .sort((left, right) => taskPriority(left) - taskPriority(right))
-    .map((task) => ({
-      id: task.id,
-      title: task.account_display_name,
-      subtitle: `${task.site_name} / ${task.username}`,
-      status: task.status,
-      statusState: taskState(task),
-      quota: task.quota_awarded,
-      detail: task.error_message
-        ? translateError(task.error_message, '任务执行失败')
-        : formatDateTime(task.finished_at || task.started_at),
-    }))
-  const accountOutcomes = recentAccounts.value
-    .filter((account) => ['failed', 'blocked', 'success', 'skipped'].includes(account.last_checkin_status))
-    .map((account) => ({
-      id: `account-${account.id}`,
-      title: account.display_name || account.username,
-      subtitle: account.username,
-      status: account.last_checkin_status,
-      statusState: account.last_checkin_status === 'success'
-        ? 'success'
-        : ['failed', 'blocked'].includes(account.last_checkin_status) ? 'failed' : 'neutral',
-      quota: account.last_quota_awarded,
-      detail: account.last_error_message
-        ? translateError(account.last_error_message, '任务执行失败')
-        : formatDateTime(account.last_checkin_at),
-    }))
-  return [...accountOutcomes, ...taskOutcomes].slice(0, 5)
-})
 
 const refreshAll = async () => {
   await Promise.all([refreshDashboard(), refreshSummary(), refreshSites(), refreshAccounts(), refreshToday()])
@@ -165,17 +113,7 @@ const runToday = async () => {
       @refresh="refreshWithMessage"
     />
     <div class="daily-ops-grid">
-      <section class="card surface-card">
-        <div class="section-head">
-          <h2 class="card__title">{{ t('近期结果') }}</h2>
-          <NuxtLink class="button button--secondary" to="/today">{{ t('查看今日任务') }}</NuxtLink>
-        </div>
-        <QuickOutcomeList
-          :items="recentOutcomes"
-          :empty-title="t('今日还没有账号任务')"
-          :empty-description="t('接入账号后可在首页一键生成并执行今日签到。')"
-        />
-      </section>
+      <DailyTaskWorkbench :tasks="today?.tasks || []" :recent-accounts="recentAccounts" />
       <section class="card surface-card daily-ops-next">
         <div class="section-head">
           <h2 class="card__title">{{ t('下一步') }}</h2>
