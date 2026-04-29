@@ -4,9 +4,11 @@ import {
   createPasswordAccountViaApi,
   createSiteViaApi,
   adminPassword,
+  clearTaskCenterDataViaApi,
   login,
   revealPasswordField,
   selectAppOption,
+  uniqueLocalBaseUrl,
   uniqueSuffix,
   waitForUiReady,
 } from './helpers'
@@ -67,12 +69,14 @@ test('登录页、Shell 导航、主题切换和退出登录动作正常', async
 
 test('普通用户主路径包含接入、首页一键签到和今日任务高级筛选', async ({ page }) => {
   await login(page)
+  await clearTaskCenterDataViaApi(page)
 
   await page.goto('/dashboard')
   await waitForUiReady(page)
   await expect(page.getByRole('heading', { name: /今日签到运营台/ })).toBeVisible()
   await expect(page.getByTestId('daily-ops-primary-action')).toBeVisible()
-  await expect(page.getByRole('link', { name: '处理异常', exact: true })).toBeVisible()
+  await expect(page.getByTestId('daily-ops-incident-action')).toHaveCount(0)
+  await expect(page.locator('.global-topbar__nav').getByRole('link', { name: /异常|Incidents/ })).toBeVisible()
 
   await page.locator('.global-topbar__nav').getByRole('link', { name: /^接入$/ }).click()
   await expect(page).toHaveURL(/\/setup$/)
@@ -141,6 +145,56 @@ test('主要刷新按钮均有明确点击反馈', async ({ page }) => {
   await expect(page.getByText(/异常已刷新|Incidents refreshed/)).toBeVisible()
 })
 
+test('首页一键签到执行中提供即时同步反馈', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await login(page)
+
+  const suffix = uniqueSuffix('dashboard-sync')
+  const site = await createSiteViaApi(page, {
+    name: `E2E Dashboard Sync Site ${suffix}`,
+    base_url: uniqueLocalBaseUrl('dashboard-sync'),
+  })
+  await createPasswordAccountViaApi(page, String(site.id), {
+    display_name: `E2E Dashboard Sync Account ${suffix}`,
+    username: `dashboard-sync-${suffix}`,
+    password: 'dashboard-sync-password',
+  })
+  await page.evaluate(async () => {
+    await fetch('/api/ui/task-center/tasks/generate-today', { method: 'POST' })
+  })
+
+  let releaseExecute: () => void = () => {}
+  const executeStarted = new Promise<void>((resolve) => {
+    releaseExecute = resolve
+  })
+  await page.route('**/api/ui/task-center/tasks/execute-today**', async (route) => {
+    releaseExecute()
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        total_selected: 1,
+        executed_count: 1,
+        success_count: 0,
+        skipped_count: 0,
+        blocked_count: 0,
+        failed_count: 1,
+      }),
+    })
+  })
+
+  await page.goto('/dashboard')
+  await waitForUiReady(page)
+  await page.getByTestId('daily-ops-primary-action').click()
+  await executeStarted
+
+  await expect(page.getByTestId('daily-ops-primary-action')).toBeDisabled()
+  const syncStatus = page.getByTestId('daily-ops-sync-status')
+  await expect(syncStatus).toContainText(/正在同步今日签到|Syncing today's check-in/)
+  await expect.poll(() => syncStatus.evaluate((element) => getComputedStyle(element).animationName)).toBe('none')
+})
+
 test('核心页面可见启用按钮均无遮挡可命中', async ({ page }) => {
   await login(page)
 
@@ -170,9 +224,8 @@ test('站点与账号表单的创建、编辑、筛选和重置动作正常', as
 
   const suffix = uniqueSuffix('assets')
   const siteName = `E2E UI Site ${suffix}`
-  const sitePort = 39000 + Math.floor(Math.random() * 1000)
-  const siteUrl = `http://127.0.0.1:${sitePort}/api/user/checkin`
-  const normalizedSiteUrl = `http://127.0.0.1:${sitePort}`
+  const normalizedSiteUrl = uniqueLocalBaseUrl('assets')
+  const siteUrl = `${normalizedSiteUrl}/api/user/checkin`
   const passwordAccountName = `E2E Password ${suffix}`
   const cookieAccountName = `E2E Cookie ${suffix}`
 
@@ -241,13 +294,35 @@ test('站点与账号表单的创建、编辑、筛选和重置动作正常', as
   await expect(page.getByText(`${passwordAccountName} Updated`).first()).toHaveCount(0)
 })
 
+test('账号编辑链接支持直接刷新进入编辑状态', async ({ page }) => {
+  await login(page)
+
+  const suffix = uniqueSuffix('direct-edit')
+  const site = await createSiteViaApi(page, {
+    name: `E2E Direct Edit Site ${suffix}`,
+    base_url: uniqueLocalBaseUrl('direct-edit'),
+  })
+  const account = await createPasswordAccountViaApi(page, String(site.id), {
+    display_name: `E2E Direct Edit Account ${suffix}`,
+    username: `direct-edit-${suffix}`,
+    password: 'direct-edit-password',
+  })
+
+  await page.goto(`/accounts?edit=${account.id}`)
+  await waitForUiReady(page)
+
+  await expect(page).toHaveURL(/\/accounts$/)
+  await expect(page.getByText(new RegExp(`正在编辑账号 ${account.display_name}|Editing account ${account.display_name}`))).toBeVisible()
+  await expect(page.locator('#account-display-name')).toHaveValue(String(account.display_name))
+})
+
 test('站点与账号清单支持删除并同步级联结果', async ({ page }) => {
   await login(page)
 
   const suffix = uniqueSuffix('delete-assets')
   const site = await createSiteViaApi(page, {
     name: `E2E Delete Site ${suffix}`,
-    base_url: `http://127.0.0.1:${37000 + Math.floor(Math.random() * 1000)}`,
+    base_url: uniqueLocalBaseUrl('delete-assets'),
   })
   const account = await createPasswordAccountViaApi(page, String(site.id), {
     display_name: `E2E Delete Account ${suffix}`,
@@ -315,16 +390,64 @@ test('今日任务、异常处理和报表筛选动作正常', async ({ page }) 
   await selectAppOption(page, '#incident-severity-filter', /high|高/)
   await expect(page.getByText(String(account.display_name)).first()).toBeVisible()
   const incidentCard = page.locator('.subcard').filter({ hasText: String(account.display_name) }).first()
-  await incidentCard.getByRole('button', { name: /标记已解决|Mark Resolved/ }).click()
+  await incidentCard.getByRole('link', { name: /编辑账号|Edit Account/ }).click()
+  await expect(page.getByText(new RegExp(`正在编辑账号 ${account.display_name}|Editing account ${account.display_name}`))).toBeVisible()
+  await expect(page).toHaveURL(/\/accounts$/)
+  await expect(page.locator('#account-display-name')).toHaveValue(String(account.display_name))
+
+  await page.goto('/incidents')
+  await waitForUiReady(page)
+  await selectAppOption(page, '#incident-site-filter', String(site.name))
+  const incidentCardAfterEdit = page.locator('.subcard').filter({ hasText: String(account.display_name) }).first()
+  await incidentCardAfterEdit.getByRole('button', { name: /标记已解决|Mark Resolved/ }).click()
   await expect(page.getByText(/异常已标记为已解决|Incident marked resolved/)).toBeVisible()
   await expect(page.locator('.subcard').filter({ hasText: String(account.display_name) })).toHaveCount(0)
+  await expect(page.getByText(/当前筛选下没有待处理异常|No pending incidents match the current filters/)).toBeVisible()
 
   await page.goto('/reports')
   await waitForUiReady(page)
+  const expectedSevenDayRange = await page.evaluate(() => {
+    const formatDate = (value: Date) => {
+      const year = value.getFullYear()
+      const month = String(value.getMonth() + 1).padStart(2, '0')
+      const date = String(value.getDate()).padStart(2, '0')
+      return `${year}-${month}-${date}`
+    }
+    const end = new Date()
+    const start = new Date(end.getTime() - 6 * 24 * 60 * 60 * 1000)
+    return { from: formatDate(start), to: formatDate(end) }
+  })
+  await page.getByRole('button', { name: /最近7天|Last 7 Days/ }).click()
+  await expect(page.locator('#reports-date-from')).toHaveValue(expectedSevenDayRange.from)
+  await expect(page.locator('#reports-date-to')).toHaveValue(expectedSevenDayRange.to)
   await page.locator('#reports-date-from').fill('2099-01-02')
   await page.locator('#reports-date-to').fill('2099-01-01')
   await page.getByRole('button', { name: /应用筛选|Apply Filters/ }).click()
   await expect(page.getByText(/开始日期不能晚于结束日期|Start date/)).toBeVisible()
+})
+
+test('控制台导航和报表吸顶区域使用可维护的视觉变量', async ({ page }) => {
+  await login(page)
+
+  await page.goto('/dashboard')
+  await waitForUiReady(page)
+  const legacyLinkColor = await page.locator('.legacy-link').first().evaluate((element) => {
+    const color = getComputedStyle(element).color
+    const alphaMatch = color.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([^)]+)\)/)
+    return alphaMatch ? Number(alphaMatch[1]) : 1
+  })
+  expect(legacyLinkColor).toBeGreaterThanOrEqual(0.82)
+
+  await page.goto('/reports')
+  await waitForUiReady(page)
+  const stickyMetrics = await page.locator('.reports-filter-shell').evaluate((element) => {
+    return {
+      stickyOffset: getComputedStyle(document.documentElement).getPropertyValue('--reports-filter-sticky-top').trim(),
+      stickyTop: getComputedStyle(element).top,
+    }
+  })
+  expect(stickyMetrics.stickyOffset).toBeTruthy()
+  expect(stickyMetrics.stickyTop).toBe(stickyMetrics.stickyOffset)
 })
 
 test('今日任务页单账号动作完成后保留下一步按钮入口', async ({ page }) => {
@@ -334,7 +457,7 @@ test('今日任务页单账号动作完成后保留下一步按钮入口', async
   const suffix = uniqueSuffix('today-next-action')
   const site = await createSiteViaApi(page, {
     name: `E2E Next Action Site ${suffix}`,
-    base_url: `http://127.0.0.1:${38000 + Math.floor(Math.random() * 1000)}`,
+    base_url: uniqueLocalBaseUrl('today-next-action'),
   })
   const account = await createPasswordAccountViaApi(page, String(site.id), {
     display_name: `E2E Next Action Account ${suffix}`,
@@ -372,7 +495,7 @@ test('今日任务页执行类按钮有忙碌锁和结果反馈', async ({ page 
   const suffix = uniqueSuffix('today-lock')
   const site = await createSiteViaApi(page, {
     name: `E2E Lock Site ${suffix}`,
-    base_url: `http://127.0.0.1:${36000 + Math.floor(Math.random() * 1000)}`,
+    base_url: uniqueLocalBaseUrl('today-lock'),
   })
   const account = await createPasswordAccountViaApi(page, String(site.id), {
     display_name: `E2E Lock Account ${suffix}`,

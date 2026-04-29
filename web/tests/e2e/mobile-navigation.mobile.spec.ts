@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { login, waitForUiReady } from './helpers'
+import { createPasswordAccountViaApi, createSiteViaApi, login, uniqueLocalBaseUrl, uniqueSuffix, waitForUiReady } from './helpers'
 
 test('移动端页面导航可切换到历史与报表', async ({ page }) => {
   await login(page)
@@ -49,4 +49,41 @@ test('移动端账号空态显式禁用无站点创建路径', async ({ page }) 
   await expect(page.locator('#account-site')).toBeDisabled()
   await expect(page.getByRole('button', { name: /Create Account|创建账号/ })).toBeDisabled()
   await expect(page.getByRole('link', { name: /Open Sites|前往站点/ }).first()).toBeVisible()
+})
+
+test('移动端今日任务操作按钮使用完整触控热区', async ({ page }) => {
+  await login(page)
+
+  const suffix = uniqueSuffix('mobile-touch')
+  const site = await createSiteViaApi(page, {
+    name: `E2E Mobile Touch Site ${suffix}`,
+    base_url: uniqueLocalBaseUrl('mobile-touch'),
+  })
+  const account = await createPasswordAccountViaApi(page, String(site.id), {
+    display_name: `E2E Mobile Touch Account ${suffix}`,
+    username: `mobile-touch-${suffix}`,
+    password: 'mobile-touch-password',
+  })
+  await page.evaluate(async () => {
+    await fetch('/api/ui/task-center/tasks/generate-today', { method: 'POST' })
+  })
+
+  await page.goto('/today')
+  await waitForUiReady(page)
+  const taskRow = page.locator('.task-row').filter({ hasText: String(account.display_name) }).first()
+  const actionButton = taskRow.getByRole('button', { name: /执行账号任务|Run Account Task/ })
+  await expect(actionButton).toBeVisible()
+
+  const metrics = await actionButton.evaluate((button) => {
+    const buttonBox = button.getBoundingClientRect()
+    const rowBox = button.closest('.task-row')?.getBoundingClientRect()
+    return {
+      buttonHeight: buttonBox.height,
+      buttonWidth: buttonBox.width,
+      rowWidth: rowBox?.width || 0,
+    }
+  })
+
+  expect(metrics.buttonHeight).toBeGreaterThanOrEqual(44)
+  expect(metrics.buttonWidth).toBeGreaterThanOrEqual(metrics.rowWidth * 0.9)
 })

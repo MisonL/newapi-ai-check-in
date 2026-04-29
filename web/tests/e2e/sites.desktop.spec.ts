@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test'
 
-import { login, waitForUiReady } from './helpers'
+import { login, uniqueSuffix, waitForUiReady } from './helpers'
 
 test('站点页会将完整 API 链接归一化为站点根地址', async ({ page }) => {
   await login(page)
   await page.goto('/sites')
   await waitForUiReady(page)
 
-  const suffix = `${Date.now()}-${Math.floor(Math.random() * 1000)}`
+  const suffix = uniqueSuffix('site-normalize')
   const inputUrl = `https://example-${suffix}.com/api/user/checkin?month=2026-04`
   const normalizedUrl = `https://example-${suffix}.com`
 
